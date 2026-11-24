@@ -885,6 +885,21 @@ class LocalSerialOrTokenConnection extends TokenConnection {
     private terminated = false;
     private timerId: number;
     private ports: { name: string; description: string }[] = [];
+    // the port this connection selected by itself (not chosen by the user)
+    private autoPort = '';
+
+    /** the port of the last successful upload, remembered across restarts (e.g. COM5, while COM1 and COM3 exist, too) */
+    private static lastUploadPort(port?: string): string {
+        try {
+            if (port !== undefined) {
+                localStorage.setItem('openroberta.localSerial.lastUploadPort', port);
+                return port;
+            }
+            return localStorage.getItem('openroberta.localSerial.lastUploadPort') || '';
+        } catch (e) {
+            return '';
+        }
+    }
 
     public override init(): void {
         super.init();
@@ -939,14 +954,30 @@ class LocalSerialOrTokenConnection extends TokenConnection {
         $.ajax({ url: LocalSerialOrTokenConnection.PORTS_URL, type: 'GET', dataType: 'json' }).done((response) => this.updatePorts(response));
     }
 
+    /**
+     * keeps the selected port while it exists. Otherwise (or if the port was selected automatically) the port of the last upload is
+     * selected as soon as it is there again, e.g. after the robot was unplugged; if there is only one port, that one.
+     */
     private updatePorts(response): void {
         this.ports = (response && response.ports) || [];
         const names = this.ports.map((port) => port.name);
-        if (names.indexOf(GUISTATE_C.getRobotPort()) < 0) {
+        const current = GUISTATE_C.getRobotPort();
+        const last = LocalSerialOrTokenConnection.lastUploadPort();
+        if (names.indexOf(current) < 0) {
             GUISTATE_C.setRobotPort('');
         }
-        if (this.ports.length === 1 && GUISTATE_C.getRobotPort() === '') {
-            ROBOT_C.setPort(this.ports[0].name);
+        const chosenByUser = GUISTATE_C.getRobotPort() !== '' && GUISTATE_C.getRobotPort() !== this.autoPort;
+        if (!chosenByUser) {
+            let wanted = '';
+            if (last !== '' && names.indexOf(last) >= 0) {
+                wanted = last;
+            } else if (names.length === 1) {
+                wanted = names[0];
+            }
+            if (wanted !== '' && wanted !== GUISTATE_C.getRobotPort()) {
+                this.autoPort = wanted;
+                ROBOT_C.setPort(wanted);
+            }
         }
         this.setState();
     }
@@ -1036,6 +1067,7 @@ class LocalSerialOrTokenConnection extends TokenConnection {
         })
             .done((answer) => {
                 if (answer.rc === 'ok') {
+                    LocalSerialOrTokenConnection.lastUploadPort(port);
                     // @ts-ignore
                     MSG.displayMessage('LOCAL_SERIAL_UPLOAD_SUCCESS', 'TOAST', port);
                 } else {
