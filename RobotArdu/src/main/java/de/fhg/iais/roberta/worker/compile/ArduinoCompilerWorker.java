@@ -40,6 +40,21 @@ public class ArduinoCompilerWorker implements ICompilerWorker {
     @Override
     public void execute(Project project) {
         CompilerSetupBean compilerWorkflowBean = project.getWorkerResult(CompilerSetupBean.class);
+        // a program is built in <tempDir>/<token>/<programName>. Two builds of the same program at the same time (e.g. the run button was
+        // clicked twice) would overwrite and delete each other's intermediate files: they are run one after the other.
+        String buildDirectory = compilerWorkflowBean.getTempDir() + project.getToken() + "/" + project.getProgramName();
+        synchronized ( lockFor(buildDirectory) ) {
+            build(project, compilerWorkflowBean);
+        }
+    }
+
+    private static final java.util.concurrent.ConcurrentHashMap<String, Object> BUILD_LOCKS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static Object lockFor(String buildDirectory) {
+        return BUILD_LOCKS.computeIfAbsent(buildDirectory, key -> new Object());
+    }
+
+    private void build(Project project, CompilerSetupBean compilerWorkflowBean) {
         String compilerResourcesDir = compilerWorkflowBean.getCompilerResourcesDir();
         String tempDir = compilerWorkflowBean.getTempDir();
         String programName = project.getProgramName();

@@ -464,12 +464,22 @@ public class Util {
      * @param override whether the specific files should override content of the upstream files
      * @throws DbcException if an inconsistency is detected
      */
+    /**
+     * the shared SnakeYAML instance is not thread safe: two workflows running at the same time (e.g. the run button clicked twice) broke the
+     * parsing of the same YAML file
+     */
+    private static Map<?, ?> loadYaml(InputStream in) {
+        synchronized ( YAML ) {
+            return YAML.load(in);
+        }
+    }
+
     public static void loadYAMLRecursive(String prefixForDebug, JSONObject accumulator, String uri, boolean override) {
         Assert.notNull(accumulator, "accumulating JSONObject must not be null");
         Assert.nonEmptyString(uri, "URI is null or empty at %s", prefixForDebug);
         InputStream in = getInputStream(uri);
         try {
-            Map<?, ?> map = YAML.load(in);
+            Map<?, ?> map = loadYaml(in);
             JSONObject toAdd = new JSONObject(map);
             Object includeObject = toAdd.remove("include");
             Util.mergeJsonIntoFirst(prefixForDebug, accumulator, toAdd, override);
@@ -503,7 +513,7 @@ public class Util {
         Assert.nonEmptyString(uri, "URI is null or empty");
         InputStream in = getInputStream(uri);
         try {
-            Map<?, ?> map = YAML.load(in);
+            Map<?, ?> map = loadYaml(in);
             return new JSONObject(map);
         } catch ( Exception e ) {
             throw new DbcException("invalid YAML file " + uri, e);
