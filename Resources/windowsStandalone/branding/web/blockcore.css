@@ -119,3 +119,21 @@ li:has(> #menuRobotInfo),
     border: 0; background: none; font-size: 20px; line-height: 1; color: #999; cursor: pointer; padding: 0 4px;
 }
 #blockcoreUpdate .bc-update-close:hover { color: #333; }
+
+/* program workspace: the BlockCore logo as a faint watermark instead of the Arduino boards */
+#blocklyDiv {
+    background-color: #fff !important; background-image: url(/blockcore/workspace-bg.svg) !important; background-repeat: no-repeat !important;
+    background-position: center 55% !important; background-size: min(46%, 560px) auto !important;
+}
+#blockcoreUpdate .bc-update-body { display: flex; flex-direction: column; gap: 6px; }
+#blockcoreUpdate .bc-update-bar { display: none; height: 5px; width: 240px; border-radius: 3px; background: #eef0e4; overflow: hidden; }
+#blockcoreUpdate .bc-update-fill {
+    height: 100%; width: 0; border-radius: 3px; transition: width 0.3s;
+    background: linear-gradient(90deg, #8ea60f 0%, #bacc1e 50%, #8ea60f 100%); background-size: 200% 100%; animation: bc-shine 1.2s linear infinite;
+}
+#blockcoreUpdate.bc-updating .bc-update-bar { display: block; }
+#blockcoreUpdate.bc-updating .bc-update-link, #blockcoreUpdate.bc-updating .bc-update-close { display: none; }
+#blockcoreUpdate.bc-updating .bc-update-icon { background: none; border: 3px solid #e3e8c8; border-top-color: #8ea60f; box-sizing: border-box; animation: bc-spin 0.8s linear infinite; }
+#blockcoreUpdate.bc-updating .bc-update-icon::after { display: none; }
+#blockcoreUpdate.bc-failed { border-left-color: #d9534f; }
+#blockcoreUpdate.bc-failed .bc-update-icon { background: #d9534f; }

@@ -37,9 +37,12 @@ account.
 ## Version and updates
 
 The version (e.g. `v1.0.15`) is shown below the BlockCore logo and in **Settings → Apps**. When BlockCore starts, it asks GitHub
-once whether a newer version exists. If so, a small note with a **Download** button appears at the bottom right; it closes
-itself. Without internet nothing is shown. To update, simply install the new `BlockCore-Setup.exe` over the old one – your programs
-are kept.
+once whether a newer version exists. If so, a small note appears at the bottom right; it closes itself. Without internet nothing is
+shown.
+
+- **Installed BlockCore:** click **Update now**. The update is downloaded (with progress), BlockCore closes, the installer shows its
+  progress and BlockCore starts again – no questions asked. Your programs are kept.
+- **Portable BlockCore (unzipped):** **Download** opens the release page; unzip the new `BlockCore-portable.zip`.
 
 ## Serial monitor
 

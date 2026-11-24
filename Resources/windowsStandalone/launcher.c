@@ -16,6 +16,8 @@
  *   3. the server is started hidden (output -> logs\server.log)
  *   4. the lab opens in its own window: Microsoft Edge or Google Chrome in app mode with a profile of its own
  *   5. when all BlockCore windows (lab and serial monitor) are closed, the server is stopped (found by their title)
+ *   6. update: if the server ends with exit code 42, it has downloaded a new installer (see LocalUpdate.java). The windows are closed and
+ *      the installer is started with /UPDATE; it installs without questions and starts BlockCore again.
  *   If neither Edge nor Chrome is found, the default browser is used and a small dialog stops BlockCore.
  *   If BlockCore is already running, only a new window is opened.
  *
@@ -34,6 +36,7 @@
 #include <shlobj.h>
 #include <stdio.h>
 #include <wchar.h>
+#include <math.h>
 
 #define PORT 1999
 #define START_TIMEOUT_SECONDS 180
@@ -41,15 +44,18 @@
 #define WM_APP_STATUS (WM_APP + 1)
 #define WM_APP_READY (WM_APP + 2)
 #define WM_APP_FAILED (WM_APP + 3)
+#define EXIT_CODE_UPDATE 42
+#define ANIMATION_TIMER 1
 
 static wchar_t appDir[MAX_PATH];
 static wchar_t dataDir[MAX_PATH];
-static wchar_t status[256] = L"starting ...";
+static wchar_t status[256] = L"Starting \x2026";
 static wchar_t failure[512];
 static HWND splash;
 static HANDLE job;
 static HANDLE server;
 static HICON icon;
+static DWORD splashStart;
 
 /* ---------------------------------------------------------------- helpers */
 
@@ -234,36 +240,136 @@ static int countBlockCoreWindows(void) {
     return counter;
 }
 
-/* ---------------------------------------------------------------- start window */
+/* ---------------------------------------------------------------- start window (animated) */
+
+#define SPLASH_W 500
+#define SPLASH_H 270
+
+static double clamp01(double v) {
+    return v < 0 ? 0 : (v > 1 ? 1 : v);
+}
+
+/* ease out with a small overshoot */
+static double easeOutBack(double t) {
+    double c = 1.4;
+    t = clamp01(t) - 1;
+    return 1 + (c + 1) * t * t * t + c * t * t;
+}
+
+static COLORREF mix(COLORREF a, COLORREF b, double t) {
+    t = clamp01(t);
+    return RGB((int) (GetRValue(a) + (GetRValue(b) - GetRValue(a)) * t), (int) (GetGValue(a) + (GetGValue(b) - GetGValue(a)) * t),
+        (int) (GetBValue(a) + (GetBValue(b) - GetBValue(a)) * t));
+}
+
+static void fillRound(HDC dc, int x, int y, int w, int h, int r, COLORREF color) {
+    HBRUSH brush = CreateSolidBrush(color);
+    HPEN pen = CreatePen(PS_SOLID, 1, color);
+    HGDIOBJ oldBrush = SelectObject(dc, brush);
+    HGDIOBJ oldPen = SelectObject(dc, pen);
+    RoundRect(dc, x, y, x + w, y + h, r, r);
+    SelectObject(dc, oldBrush);
+    SelectObject(dc, oldPen);
+    DeleteObject(brush);
+    DeleteObject(pen);
+}
+
+/* one block of the logo: a bar with the notch of a puzzle block */
+static void drawBlock(HDC dc, int x, int y, int w, COLORREF color) {
+    fillRound(dc, x, y, w, 30, 10, color);
+    fillRound(dc, x + 14, y + 26, 22, 9, 6, color);
+    fillRound(dc, x + 14, y - 4, 22, 8, 6, RGB(255, 255, 255));
+}
+
+static void paintSplash(HDC dc, RECT *rc) {
+    static const COLORREF colors[3] = {RGB(0xba, 0xcc, 0x1e), RGB(0xf2, 0x94, 0x00), RGB(0x2f, 0x8f, 0xbf)};
+    static const int offsets[3] = {0, 16, 0};
+    double t = (GetTickCount() - splashStart) / 1000.0;
+    HFONT bold = CreateFontW(-46, 0, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
+    HFONT light = CreateFontW(-46, 0, 0, 0, FW_LIGHT, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI Light");
+    HFONT small = CreateFontW(-15, 0, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
+    HGDIOBJ old;
+    int i, barX = 48, barY = 218, barW = SPLASH_W - 96;
+    double p, segment, pos;
+
+    FillRect(dc, rc, (HBRUSH) GetStockObject(WHITE_BRUSH));
+
+    /* the three blocks fall into place one after the other */
+    for ( i = 0; i < 3; i++ ) {
+        p = easeOutBack((t - 0.12 * i) / 0.55);
+        if ( t - 0.12 * i <= 0 ) {
+            continue;
+        }
+        drawBlock(dc, 96 + offsets[i] - (int) ((1 - p) * 60), 40 + 46 * i, 120, mix(RGB(255, 255, 255), colors[i], clamp01((t - 0.12 * i) / 0.3)));
+    }
+
+    /* the name fades in */
+    SetBkMode(dc, TRANSPARENT);
+    p = clamp01((t - 0.35) / 0.5);
+    old = SelectObject(dc, bold);
+    SetTextColor(dc, mix(RGB(255, 255, 255), RGB(0x39, 0x40, 0x4a), p));
+    TextOutW(dc, 262 + (int) ((1 - p) * 20), 44, L"Block", 5);
+    SelectObject(dc, light);
+    TextOutW(dc, 262 + (int) ((1 - p) * 30), 94, L"Core", 4);
+
+    /* status */
+    SelectObject(dc, small);
+    SetTextColor(dc, mix(RGB(255, 255, 255), RGB(0x6c, 0x75, 0x7d), clamp01((t - 0.6) / 0.4)));
+    TextOutW(dc, barX, barY - 28, status, (int) wcslen(status));
+    SelectObject(dc, old);
+
+    /* moving bar in the colours of the logo */
+    fillRound(dc, barX, barY, barW, 6, 6, RGB(0xee, 0xf0, 0xe4));
+    if ( t > 0.6 ) {
+        segment = barW * 0.28;
+        pos = fmod((t - 0.6) * 0.75, 1.0);
+        pos = pos < 0.5 ? 2 * pos * pos : 1 - 2 * (1 - pos) * (1 - pos); /* ease in and out */
+        {
+            int x = barX + (int) (pos * (barW + segment)) - (int) segment;
+            int from = x < barX ? barX : x;
+            int to = x + (int) segment > barX + barW ? barX + barW : x + (int) segment;
+            int colorIndex = (int) ((t - 0.6) * 0.75) % 3;
+            if ( to > from ) {
+                fillRound(dc, from, barY, to - from, 6, 6, colors[colorIndex]);
+            }
+        }
+    }
+    DeleteObject(bold);
+    DeleteObject(light);
+    DeleteObject(small);
+}
 
 static LRESULT CALLBACK splashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if ( msg == WM_PAINT ) {
         PAINTSTRUCT ps;
         RECT rc;
         HDC dc = BeginPaint(hwnd, &ps);
-        HFONT title = CreateFontW(-34, 0, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
-        HFONT text = CreateFontW(-16, 0, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
-        HGDIOBJ old;
+        HDC buffer = CreateCompatibleDC(dc);
+        HBITMAP bitmap;
+        HGDIOBJ oldBitmap;
         GetClientRect(hwnd, &rc);
-        FillRect(dc, &rc, (HBRUSH) GetStockObject(WHITE_BRUSH));
-        if ( icon != NULL ) {
-            DrawIconEx(dc, 36, 52, icon, 96, 96, 0, NULL, DI_NORMAL);
-        }
-        SetBkMode(dc, TRANSPARENT);
-        old = SelectObject(dc, title);
-        SetTextColor(dc, RGB(0x39, 0x40, 0x4a));
-        TextOutW(dc, 156, 62, L"BlockCore", 9);
-        SelectObject(dc, text);
-        SetTextColor(dc, RGB(0x6c, 0x75, 0x7d));
-        TextOutW(dc, 158, 110, status, (int) wcslen(status));
-        SelectObject(dc, old);
-        DeleteObject(title);
-        DeleteObject(text);
+        bitmap = CreateCompatibleBitmap(dc, rc.right, rc.bottom);
+        oldBitmap = SelectObject(buffer, bitmap);
+        paintSplash(buffer, &rc);
+        BitBlt(dc, 0, 0, rc.right, rc.bottom, buffer, 0, 0, SRCCOPY);
+        SelectObject(buffer, oldBitmap);
+        DeleteObject(bitmap);
+        DeleteDC(buffer);
         EndPaint(hwnd, &ps);
         return 0;
     }
+    if ( msg == WM_ERASEBKGND ) {
+        return 1;
+    }
+    if ( msg == WM_TIMER ) {
+        /* fade in during the first 250 ms */
+        double alpha = clamp01((GetTickCount() - splashStart) / 250.0);
+        SetLayeredWindowAttributes(hwnd, 0, (BYTE) (alpha * 255), LWA_ALPHA);
+        InvalidateRect(hwnd, NULL, FALSE);
+        return 0;
+    }
     if ( msg == WM_APP_STATUS ) {
-        InvalidateRect(hwnd, NULL, TRUE);
+        InvalidateRect(hwnd, NULL, FALSE);
         return 0;
     }
     if ( msg == WM_APP_READY || msg == WM_APP_FAILED ) {
@@ -273,18 +379,36 @@ static LRESULT CALLBACK splashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
+/* rounded corners on Windows 11 (DwmSetWindowAttribute is loaded at run time: not available on old systems) */
+static void roundCorners(HWND hwnd) {
+    typedef HRESULT(WINAPI * SetAttribute)(HWND, DWORD, LPCVOID, DWORD);
+    HMODULE dwm = LoadLibraryW(L"dwmapi.dll");
+    if ( dwm != NULL ) {
+        SetAttribute set = (SetAttribute) (void *) GetProcAddress(dwm, "DwmSetWindowAttribute");
+        if ( set != NULL ) {
+            DWORD round = 2; /* DWMWCP_ROUND */
+            set(hwnd, 33 /* DWMWA_WINDOW_CORNER_PREFERENCE */, &round, sizeof(round));
+        }
+    }
+}
+
 static void createSplash(HINSTANCE instance) {
     WNDCLASSW wc;
-    int width = 440, height = 200;
     ZeroMemory(&wc, sizeof(wc));
+    wc.style = CS_DROPSHADOW;
     wc.lpfnWndProc = splashProc;
     wc.hInstance = instance;
     wc.hCursor = LoadCursor(NULL, IDC_APPSTARTING);
     wc.hIcon = icon;
     wc.lpszClassName = L"BlockCoreSplash";
     RegisterClassW(&wc);
-    splash = CreateWindowExW(WS_EX_APPWINDOW, L"BlockCoreSplash", L"BlockCore", WS_POPUP | WS_BORDER,
-        (GetSystemMetrics(SM_CXSCREEN) - width) / 2, (GetSystemMetrics(SM_CYSCREEN) - height) / 2, width, height, NULL, NULL, instance, NULL);
+    splashStart = GetTickCount();
+    splash = CreateWindowExW(WS_EX_APPWINDOW | WS_EX_LAYERED, L"BlockCoreSplash", L"BlockCore", WS_POPUP,
+        (GetSystemMetrics(SM_CXSCREEN) - SPLASH_W) / 2, (GetSystemMetrics(SM_CYSCREEN) - SPLASH_H) / 2, SPLASH_W, SPLASH_H, NULL, NULL,
+        instance, NULL);
+    SetLayeredWindowAttributes(splash, 0, 0, LWA_ALPHA);
+    roundCorners(splash);
+    SetTimer(splash, ANIMATION_TIMER, 16, NULL);
     ShowWindow(splash, SW_SHOW);
     UpdateWindow(splash);
 }
@@ -316,7 +440,7 @@ static DWORD WINAPI startServer(LPVOID unused) {
     if ( GetFileAttributesW(path) == INVALID_FILE_ATTRIBUTES ) {
         HANDLE create;
         DWORD exitCode = 1;
-        setStatus(L"first start: creating the database ...");
+        setStatus(L"First start: preparing BlockCore \x2026");
         addJavaStart(cmd, L"de.fhg.iais.roberta.main.Administration");
         addArg(cmd, L"create-empty-db");
         swprintf(path, MAX_PATH, L"jdbc:hsqldb:file:%ls\\db\\openroberta-db", dataDir);
@@ -333,7 +457,7 @@ static DWORD WINAPI startServer(LPVOID unused) {
         }
     }
 
-    setStatus(L"starting ...");
+    setStatus(L"Starting \x2026");
     cmd[0] = 0;
     addJavaStart(cmd, L"de.fhg.iais.roberta.main.ServerStarter");
     addProperty(cmd, L"database.mode", L"embedded");
@@ -351,6 +475,13 @@ static DWORD WINAPI startServer(LPVOID unused) {
     addProperty(cmd, L"robot.whitelist", L"uno, nano, mega");
     addProperty(cmd, L"robot.default", L"uno");
     addProperty(cmd, L"server.admin.dir", dataDir);
+    /* installed with the installer (not unzipped): BlockCore may update itself */
+    swprintf(path, MAX_PATH, L"%ls\\Uninstall.exe", appDir);
+    if ( GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES ) {
+        swprintf(path, MAX_PATH, L"%ls\\update", dataDir);
+        CreateDirectoryW(path, NULL);
+        addProperty(cmd, L"server.local.update.dir", path);
+    }
     server = startHidden(cmd, log);
     free(cmd);
     if ( server == NULL ) {
@@ -367,6 +498,88 @@ static DWORD WINAPI startServer(LPVOID unused) {
         }
     }
     return fail(L"The BlockCore server did not answer in time.");
+}
+
+/* ---------------------------------------------------------------- update */
+
+static BOOL CALLBACK closeWindow(HWND hwnd, LPARAM unused) {
+    wchar_t title[64];
+    wchar_t className[64];
+    (void) unused;
+    if ( GetClassNameW(hwnd, className, 64) > 0 && wcsncmp(className, L"Chrome_WidgetWin", 16) == 0 && GetWindowTextW(hwnd, title, 64) > 0 &&
+        wcsncmp(title, L"BlockCore", 9) == 0 ) {
+        PostMessageW(hwnd, WM_CLOSE, 0, 0);
+    }
+    return TRUE;
+}
+
+/* true, if the server stopped to install an update */
+static BOOL serverWantsUpdate(void) {
+    DWORD exitCode = 0;
+    return server != NULL && WaitForSingleObject(server, 0) == WAIT_OBJECT_0 && GetExitCodeProcess(server, &exitCode) &&
+        exitCode == EXIT_CODE_UPDATE;
+}
+
+/* starts the installer the server downloaded (its path is in update\pending.txt); it must be in the update directory */
+static void startUpdate(void) {
+    wchar_t pendingPath[MAX_PATH];
+    wchar_t installer[MAX_PATH];
+    wchar_t updateDir[MAX_PATH];
+    wchar_t *cmd;
+    char bytes[3 * MAX_PATH];
+    DWORD read = 0;
+    HANDLE file;
+    STARTUPINFOW si;
+    PROCESS_INFORMATION pi;
+    swprintf(updateDir, MAX_PATH, L"%ls\\update\\", dataDir);
+    swprintf(pendingPath, MAX_PATH, L"%lspending.txt", updateDir);
+    file = CreateFileW(pendingPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if ( file == INVALID_HANDLE_VALUE ) {
+        return;
+    }
+    ReadFile(file, bytes, sizeof(bytes) - 1, &read, NULL);
+    CloseHandle(file);
+    DeleteFileW(pendingPath);
+    bytes[read] = 0;
+    if ( MultiByteToWideChar(CP_UTF8, 0, bytes, -1, installer, MAX_PATH) == 0 ) {
+        return;
+    }
+    if ( _wcsnicmp(installer, updateDir, wcslen(updateDir)) != 0 || wcsstr(installer, L"..") != NULL ||
+        GetFileAttributesW(installer) == INVALID_FILE_ATTRIBUTES ) {
+        showError(L"The update could not be started.");
+        return;
+    }
+    EnumWindows(closeWindow, 0);
+    cmd = (wchar_t *) calloc(CMD_MAX, sizeof(wchar_t));
+    addArg(cmd, installer);
+    wcscat_s(cmd, CMD_MAX, L" /UPDATE");
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    if ( CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL, updateDir, &si, &pi) ) {
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+    } else {
+        showError(L"The installer of the update could not be started.");
+    }
+    free(cmd);
+}
+
+/* installers of earlier updates are not needed any more (one that is still running cannot be deleted and stays until the next start) */
+static void removeOldInstallers(void) {
+    wchar_t pattern[MAX_PATH];
+    wchar_t file[MAX_PATH];
+    WIN32_FIND_DATAW found;
+    HANDLE search;
+    swprintf(pattern, MAX_PATH, L"%ls\\update\\BlockCore-Setup-*", dataDir);
+    search = FindFirstFileW(pattern, &found);
+    if ( search == INVALID_HANDLE_VALUE ) {
+        return;
+    }
+    do {
+        swprintf(file, MAX_PATH, L"%ls\\update\\%ls", dataDir, found.cFileName);
+        DeleteFileW(file);
+    } while ( FindNextFileW(search, &found) );
+    FindClose(search);
 }
 
 /* ---------------------------------------------------------------- main */
@@ -399,6 +612,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE prev, LPWSTR cmdLine, int show
     CreateDirectoryW(dataDir, NULL);
     swprintf(path, MAX_PATH, L"%ls\\db", dataDir);
     CreateDirectoryW(path, NULL);
+    removeOldInstallers();
 
     /* already running (or just starting): open another window only */
     instanceMutex = CreateMutexW(NULL, TRUE, L"Local\\BlockCoreLauncher");
@@ -460,6 +674,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE prev, LPWSTR cmdLine, int show
             /* stop the server when all BlockCore windows are closed (checked every second, 3 s grace for reloads) */
             while ( missing < 3 ) {
                 Sleep(1000);
+                if ( serverWantsUpdate() ) {
+                    startUpdate();
+                    break;
+                }
                 missing = countBlockCoreWindows() > 0 ? 0 : missing + 1;
             }
         } else {

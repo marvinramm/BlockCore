@@ -20,8 +20,8 @@
     var LOCAL_ACCOUNT = 'blockcore';
     var LOCAL_PASSWORD = 'blockcore-local';
     var TEXT = {
-        de: { update: 'BlockCore {version} ist verfügbar', download: 'Herunterladen', board: 'Board', compiling: 'Programm wird übersetzt …', uploading: 'Wird auf {port} hochgeladen …', done: 'Auf {port} hochgeladen', failed: 'Hochladen fehlgeschlagen', compileFailed: 'Programm hat Fehler' },
-        en: { update: 'BlockCore {version} is available', download: 'Download', board: 'Board', compiling: 'Compiling program …', uploading: 'Uploading to {port} …', done: 'Uploaded to {port}', failed: 'Upload failed', compileFailed: 'Program has errors' }
+        de: { update: 'BlockCore {version} ist verfügbar', download: 'Herunterladen', install: 'Jetzt aktualisieren', downloading: 'Update wird geladen … {percent} %', installing: 'Update wird installiert – BlockCore startet neu …', updateFailed: 'Update fehlgeschlagen', board: 'Board', compiling: 'Programm wird übersetzt …', uploading: 'Wird auf {port} hochgeladen …', done: 'Auf {port} hochgeladen', failed: 'Hochladen fehlgeschlagen', compileFailed: 'Programm hat Fehler' },
+        en: { update: 'BlockCore {version} is available', download: 'Download', install: 'Update now', downloading: 'Downloading update … {percent} %', installing: 'Installing update – BlockCore restarts …', updateFailed: 'Update failed', board: 'Board', compiling: 'Compiling program …', uploading: 'Uploading to {port} …', done: 'Uploaded to {port}', failed: 'Upload failed', compileFailed: 'Program has errors' }
     };
 
     function store(key, value) {
@@ -391,13 +391,23 @@
             });
     }
 
+    /*
+     * note about a newer version. An installed BlockCore installs the update itself ("update now": the server downloads the installer,
+     * then BlockCore.exe closes the windows and starts it); an unzipped one links to the download page.
+     */
     function showUpdate(G, version, url) {
         var texts = TEXT[language(G)] || TEXT.en;
         var note = document.createElement('div');
+        var closeTimer = null;
+        var installable = false;
         note.id = 'blockcoreUpdate';
-        note.innerHTML = '<span class="bc-update-icon"></span><span class="bc-update-text"></span><a class="bc-update-link" target="_blank" rel="noopener"></a><button type="button" class="bc-update-close" aria-label="close">&times;</button>';
-        note.querySelector('.bc-update-text').textContent = texts.update.replace('{version}', version);
+        note.innerHTML = '<span class="bc-update-icon"></span><div class="bc-update-body"><span class="bc-update-text"></span>' +
+            '<div class="bc-update-bar"><div class="bc-update-fill"></div></div></div>' +
+            '<a class="bc-update-link" target="_blank" rel="noopener"></a><button type="button" class="bc-update-close" aria-label="close">&times;</button>';
+        var textElement = note.querySelector('.bc-update-text');
+        var fill = note.querySelector('.bc-update-fill');
         var link = note.querySelector('.bc-update-link');
+        textElement.textContent = texts.update.replace('{version}', version);
         link.textContent = texts.download;
         link.href = /^https:\/\/github\.com\//.test(url || '') ? url : 'https://github.com/marvinramm/BlockCore/releases/latest';
         function close() {
@@ -408,15 +418,82 @@
                 }
             }, 400);
         }
+        function poll() {
+            fetch('/rest/local/update', { cache: 'no-store' })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (status) {
+                    if (status.state === 'DOWNLOADING') {
+                        textElement.textContent = texts.downloading.replace('{percent}', status.percent || 0);
+                        fill.style.width = (status.percent || 0) + '%';
+                        setTimeout(poll, 400);
+                    } else if (status.state === 'READY') {
+                        note.classList.add('bc-installing');
+                        textElement.textContent = texts.installing;
+                        fill.style.width = '100%';
+                    } else if (status.state === 'FAILED') {
+                        failed();
+                    } else {
+                        setTimeout(poll, 400);
+                    }
+                })
+                .catch(function () {
+                    // the server stops for the installation: that is expected after READY
+                    if (!note.classList.contains('bc-installing')) {
+                        failed();
+                    }
+                });
+        }
+        function failed() {
+            note.classList.remove('bc-updating');
+            note.classList.add('bc-failed');
+            textElement.textContent = texts.updateFailed;
+            link.textContent = texts.download;
+            link.onclick = null;
+        }
         note.querySelector('.bc-update-close').addEventListener('click', close);
-        link.addEventListener('click', function () {
-            setTimeout(close, 300);
-        });
         document.body.appendChild(note);
+        // installed (not unzipped)? then the update is installed directly
+        fetch('/rest/local/update', { cache: 'no-store' })
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (status) {
+                if (status.canInstall) {
+                    installable = true;
+                    link.textContent = texts.install;
+                    link.removeAttribute('target');
+                    link.onclick = function (event) {
+                        event.preventDefault();
+                        clearTimeout(closeTimer);
+                        note.classList.add('bc-updating');
+                        textElement.textContent = texts.downloading.replace('{percent}', 0);
+                        fetch('/rest/local/update', { method: 'POST', cache: 'no-store' })
+                            .then(function () {
+                                poll();
+                            })
+                            .catch(failed);
+                    };
+                }
+            })
+            .catch(function () {
+                // keep the download link
+            });
+        link.addEventListener('click', function () {
+            // the download page opens in the browser: the note is not needed any more (not so for "update now")
+            if (!installable) {
+                setTimeout(close, 300);
+            }
+        });
         setTimeout(function () {
             note.classList.add('bc-visible');
         }, 50);
-        setTimeout(close, 20000);
+        closeTimer = setTimeout(function () {
+            if (!note.classList.contains('bc-updating')) {
+                close();
+            }
+        }, 20000);
     }
 
     whenLabReady(function () {

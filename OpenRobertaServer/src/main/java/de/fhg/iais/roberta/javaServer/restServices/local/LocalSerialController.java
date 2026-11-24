@@ -60,6 +60,48 @@ public class LocalSerialController {
         return serverProperties.getBooleanProperty("server.local.serial") && robot != null && AvrdudeTarget.forRobot(robot) != null;
     }
 
+    /**
+     * state of the update: may BlockCore install updates itself (installed, not unzipped), and the progress of a download
+     */
+    @GET
+    @javax.ws.rs.Path("/update")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateStatus(@Context HttpServletRequest request) {
+        Response rejection = checkAccess(request);
+        if ( rejection != null ) {
+            return rejection;
+        }
+        JSONObject json = LocalUpdate.status(updateDir() != null);
+        json.put("rc", "ok");
+        return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();
+    }
+
+    /**
+     * downloads the installer of the latest release; then the server stops and the launcher installs it (see {@link LocalUpdate})
+     */
+    @POST
+    @javax.ws.rs.Path("/update")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response startUpdate(@Context HttpServletRequest request) {
+        Response rejection = checkAccess(request);
+        if ( rejection != null ) {
+            return rejection;
+        }
+        Path updateDir = updateDir();
+        Path staticResources = LocalUpdate.path(this.serverProperties.getStringProperty("server.staticresources.dir"));
+        if ( updateDir == null || staticResources == null ) {
+            return answer(Response.Status.CONFLICT, false, "this BlockCore cannot update itself");
+        }
+        LocalUpdate.start(updateDir, staticResources);
+        JSONObject json = LocalUpdate.status(true);
+        json.put("rc", "ok");
+        return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();
+    }
+
+    private Path updateDir() {
+        return LocalUpdate.path(this.serverProperties.getStringProperty("server.local.update.dir"));
+    }
+
     @GET
     @javax.ws.rs.Path("/ports")
     @Produces(MediaType.APPLICATION_JSON)

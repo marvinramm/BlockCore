@@ -77,7 +77,7 @@ cp "$SCRIPT_DIR/branding/logo-word.svg" "$WEB/css/svg/logo-word.svg"
 cp "$SCRIPT_DIR/branding/icon-144.png" "$WEB/css/img/Nepo_N.png"
 cp "$SCRIPT_DIR/branding/blockcore.ico" "$WEB/css/img/NEPO.ico"
 mkdir -p "$WEB/blockcore"
-cp "$SCRIPT_DIR"/branding/web/blockcore.js "$SCRIPT_DIR"/branding/web/blockcore.css "$SCRIPT_DIR"/branding/web/icon-*.png "$WEB/blockcore/"
+cp "$SCRIPT_DIR"/branding/web/blockcore.js "$SCRIPT_DIR"/branding/web/blockcore.css "$SCRIPT_DIR"/branding/web/icon-*.png "$SCRIPT_DIR"/branding/web/*.svg "$WEB/blockcore/"
 cp "$SCRIPT_DIR/branding/web/manifest.webapp.json" "$WEB/manifest.webapp.json"
 printf '{"version":"%s"}\n' "$VERSION" > "$WEB/blockcore/version.json"
 sed -i -e 's|<title>Open Roberta Lab</title>|<title>BlockCore</title>|' \
