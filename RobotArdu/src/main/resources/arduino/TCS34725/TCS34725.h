@@ -11,7 +11,7 @@
  * a good resolution. colour() classifies the reading as red, green, white or black; every other reading is reported as "none".
  *
  * The colour channels are compared after a white balance: the sensor sees much more green than red even on white paper (about 31 % red,
- * 45 % green, 38 % blue of the clear channel), so every channel is divided by its share on white first. A clear colour is recognised
+ * 45 % green, 39 % blue of the clear channel), so every channel is divided by its share on white first. A clear colour is recognised
  * before black, because a red or green surface may be dark, too.
  *
  * lightPercent() is independent of the gain: 100 % is the largest value the clear channel reaches with 4x gain and 50 ms integration time
@@ -53,7 +53,8 @@ class TCS34725 {
             if ( red_ > RED_FACTOR * green_ && red_ > RED_FACTOR * blue_ ) {
                 return red;
             }
-            if ( green_ > GREEN_FACTOR * red_ && green_ > GREEN_FACTOR * blue_ ) {
+            // green paper reflects much blue, too: green only has to be stronger than blue, but clearly stronger than red
+            if ( green_ > GREEN_FACTOR * red_ && green_ > blue_ ) {
                 return green;
             }
         }
@@ -112,12 +113,13 @@ class TCS34725 {
     static constexpr double LOW_LIMIT = 0.08 * 65535.0;
     static constexpr double HIGH_LIMIT = 0.80 * 65535.0;
     // share of the colour channels in the clear channel on white paper (measured with the sensor's LED)
-    static constexpr double WHITE_RED = 0.31;
-    static constexpr double WHITE_GREEN = 0.45;
-    static constexpr double WHITE_BLUE = 0.38;
-    // a colour is recognised, if its white balanced channel is this much stronger than both others
-    static constexpr double RED_FACTOR = 1.12;
-    static constexpr double GREEN_FACTOR = 1.05;
+    static constexpr double WHITE_RED = 0.313;
+    static constexpr double WHITE_GREEN = 0.450;
+    static constexpr double WHITE_BLUE = 0.386;
+    // red: balanced red this much stronger than green and blue; green: balanced green this much stronger than red (and stronger than blue).
+    // Checked with 22 readings of green and 19 readings of red paper of a real sensor: all recognised.
+    static constexpr double RED_FACTOR = 1.06;
+    static constexpr double GREEN_FACTOR = 1.10;
     // below this brightness (in %) the channels are too noisy to tell colours
     static constexpr double MIN_COLOUR_LIGHT = 0.3;
     static const uint8_t GAIN_SETTINGS[4];
