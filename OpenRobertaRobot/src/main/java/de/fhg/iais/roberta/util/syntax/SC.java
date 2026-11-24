@@ -4,6 +4,7 @@ public interface SC {
     String ROBOT = "ROBOT";
     String MOTOR = "MOTOR";
     String L293D_MOTOR = "L293D_MOTOR";
+    String TCS34725 = "TCS34725";
     String MOTOR_REGULATION = "MOTOR_REGULATION";
     String MOTOR_REVERSE = "MOTOR_REVERSE";
     String MOTOR_DRIVE = "MOTOR_DRIVE";

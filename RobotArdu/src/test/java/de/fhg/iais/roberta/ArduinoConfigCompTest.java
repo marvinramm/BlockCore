@@ -175,6 +175,18 @@ public class ArduinoConfigCompTest extends AstTest {
     }
 
     @Test
+    public void tcs34725_make_ByDefault_ReturnInstanceOfConfigurationComponentClass() {
+        String expectedResult =
+            "BlockAST [project=[ConfigurationComponent[componentType=TCS34725,category=CONFIGURATION_SENSOR,userDefinedName=F,portName=F,componentProperties={TCS34725_BLACK=2, TCS34725_WHITE=12}]]]";
+        UnitTestHelper.checkConfigAstEquality(testFactory, expectedResult, "/ast/config/arduino/robConf_tcs34725.xml");
+    }
+
+    @Test
+    public void tcs34725_astToBlock_XMLtoJAXBtoASTtoXML_ReturnsSameXML() throws Exception {
+        UnitTestHelper.checkConfigReverseTransformation(testFactory, "/ast/config/arduino/robConf_tcs34725.xml");
+    }
+
+    @Test
     public void light_make_ByDefault_ReturnInstanceOfConfigurationComponentClass() {
         String expectedResult =
             "BlockAST [project=[ConfigurationComponent[componentType=LIGHT,category=CONFIGURATION_SENSOR,userDefinedName=L4,portName=L4,componentProperties={OUTPUT=A0}]]]";

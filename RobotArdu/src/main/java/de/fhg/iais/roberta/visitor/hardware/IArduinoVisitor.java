@@ -38,6 +38,7 @@ import de.fhg.iais.roberta.syntax.sensor.generic.TimerReset;
 import de.fhg.iais.roberta.syntax.sensor.generic.TimerSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.UltrasonicSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.VoltageSensor;
+import de.fhg.iais.roberta.syntax.sensors.arduino.tcs34725.Tcs34725ColorSensor;
 import de.fhg.iais.roberta.visitor.IVisitor;
 
 public interface IArduinoVisitor<V> extends IVisitor<V> {
@@ -98,6 +99,8 @@ public interface IArduinoVisitor<V> extends IVisitor<V> {
     V visitTimerReset(TimerReset timerReset);
 
     V visitUltrasonicSensor(UltrasonicSensor ultrasonicSensor);
+
+    V visitTcs34725ColorSensor(Tcs34725ColorSensor tcs34725ColorSensor);
 
     V visitVoltageSensor(VoltageSensor potentiometer);
 

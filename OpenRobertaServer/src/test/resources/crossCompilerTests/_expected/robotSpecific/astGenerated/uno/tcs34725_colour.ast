@@ -1,0 +1,8 @@
+
+(repeat [FOREVER_ARDU, BoolConst[value: true]]
+AktionStmt [SerialWriteAction[value: Binary [EQ, SensorExpr [Tcs34725ColorSensor [F, COLOUR, - EMPTY_SLOT -]], ColorConst[hexValue: #cc0000]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [Tcs34725ColorSensor [F, LIGHT, - EMPTY_SLOT -]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [Tcs34725ColorSensor [F, REDCHANNEL, - EMPTY_SLOT -]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [Tcs34725ColorSensor [F, GREENCHANNEL, - EMPTY_SLOT -]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [Tcs34725ColorSensor [F, BLUECHANNEL, - EMPTY_SLOT -]]]]
+)

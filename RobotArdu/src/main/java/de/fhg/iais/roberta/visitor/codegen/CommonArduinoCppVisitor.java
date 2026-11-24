@@ -49,6 +49,8 @@ import de.fhg.iais.roberta.syntax.sensor.generic.RfidSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.TemperatureSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.UltrasonicSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.VoltageSensor;
+import de.fhg.iais.roberta.hardware.Tcs34725ColorSensorHardware;
+import de.fhg.iais.roberta.syntax.sensors.arduino.tcs34725.Tcs34725ColorSensor;
 import de.fhg.iais.roberta.util.ast.BlocklyProperties;
 import de.fhg.iais.roberta.util.dbc.DbcException;
 import de.fhg.iais.roberta.util.syntax.SC;
@@ -263,6 +265,32 @@ public abstract class CommonArduinoCppVisitor extends NepoArduinoCppVisitor impl
     @Override
     public final Void visitUltrasonicSensor(UltrasonicSensor ultrasonicSensor) {
         this.src.add("_getUltrasonicDistance(_trigger_", ultrasonicSensor.getUserDefinedPort(), ", ", "_echo_", ultrasonicSensor.getUserDefinedPort(), ")");
+        return null;
+    }
+
+    @Override
+    public final Void visitTcs34725ColorSensor(Tcs34725ColorSensor tcs34725ColorSensor) {
+        String sensor = "_tcs34725_" + tcs34725ColorSensor.getUserDefinedPort();
+        switch ( tcs34725ColorSensor.getMode() ) {
+            case SC.COLOUR:
+                this.src.add(sensor, ".colour(", Tcs34725ColorSensorHardware.RED, ", ", Tcs34725ColorSensorHardware.GREEN, ", ", Tcs34725ColorSensorHardware.WHITE, ", ");
+                this.src.add(Tcs34725ColorSensorHardware.BLACK, ", ", Tcs34725ColorSensorHardware.NONE, ")");
+                break;
+            case SC.LIGHT:
+                this.src.add(sensor, ".lightPercent()");
+                break;
+            case "REDCHANNEL":
+                this.src.add(sensor, ".redPercent()");
+                break;
+            case "GREENCHANNEL":
+                this.src.add(sensor, ".greenPercent()");
+                break;
+            case "BLUECHANNEL":
+                this.src.add(sensor, ".bluePercent()");
+                break;
+            default:
+                throw new DbcException("Invalid mode for TCS34725 colour sensor: " + tcs34725ColorSensor.getMode());
+        }
         return null;
     }
 
@@ -633,6 +661,10 @@ public abstract class CommonArduinoCppVisitor extends NepoArduinoCppVisitor impl
                 case SC.L293D_MOTOR:
                     headerFiles.add("#include \"L293DMotor/L293DMotor.h\"");
                     break;
+                case SC.TCS34725:
+                    headerFiles.add("#include <Wire.h>");
+                    headerFiles.add("#include \"TCS34725/TCS34725.h\"");
+                    break;
                 case SC.LSM9DS1:
                     headerFiles.add("#include <Arduino_LSM9DS1.h>");
                     break;
@@ -762,6 +794,10 @@ public abstract class CommonArduinoCppVisitor extends NepoArduinoCppVisitor impl
                     break;
                 case SC.STEPMOTOR:
                 case SC.L293D_MOTOR:
+                    break;
+                case SC.TCS34725:
+                    this.src.add("_tcs34725_", usedConfigurationBlock.userDefinedPortName, ".begin();");
+                    nlIndent();
                     break;
                 case SC.SERVOMOTOR:
                     if ( this.getBean(UsedHardwareBean.class).isActorUsed(SC.SERVOMOTOR) ) {
@@ -946,6 +982,10 @@ public abstract class CommonArduinoCppVisitor extends NepoArduinoCppVisitor impl
                     break;
                 case SC.RELAY:
                     this.src.add("int _relay_", blockName, " = ", cc.getProperty("IN"), ";");
+                    nlIndent();
+                    break;
+                case SC.TCS34725:
+                    this.src.add("TCS34725 _tcs34725_", blockName, "(", Tcs34725ColorSensorHardware.getBlackThreshold(cc), ", ", Tcs34725ColorSensorHardware.getWhiteThreshold(cc), ");");
                     nlIndent();
                     break;
                 case SC.L293D_MOTOR:

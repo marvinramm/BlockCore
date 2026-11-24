@@ -147,6 +147,7 @@
         <block type="robSensors_potentiometer_getSample"/>
         <block type="robSensors_moisture_getSample"/>
         <block type="robSensors_ultrasonic_getSample"/>
+        <block type="robSensors_tcs34725_getSample"/>
         <block type="robSensors_rfid_getSample"/>
     </category>
     <category name="TOOLBOX_CONTROL" svg="true">
@@ -333,6 +334,12 @@
         </block>
         <block type="robColour_picker">
             <field name="COLOUR">#cc33cc</field>
+        </block>
+        <block type="robColour_picker">
+            <field name="COLOUR">#ffffff</field>
+        </block>
+        <block type="robColour_picker">
+            <field name="COLOUR">#000000</field>
         </block>
         <block type="naoColour_rgb">
             <value name="RED">

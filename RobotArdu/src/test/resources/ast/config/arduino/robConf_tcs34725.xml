@@ -1,0 +1,9 @@
+<block_set xmlns="http://de.fhg.iais.roberta.blockly" description="" robottype="arduino" tags="" xmlversion="3.1">
+    <instance x="343" y="261">
+        <block id="tcs34725-config" intask="true" type="robConf_tcs34725">
+            <field name="NAME">F</field>
+            <field name="TCS34725_BLACK">2</field>
+            <field name="TCS34725_WHITE">12</field>
+        </block>
+    </instance>
+</block_set>

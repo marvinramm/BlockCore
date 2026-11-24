@@ -1,0 +1,99 @@
+<export xmlns="http://de.fhg.iais.roberta.blockly">
+    <program>
+        <block_set xmlns="http://de.fhg.iais.roberta.blockly" robottype="arduino" xmlversion="3.1" description="" tags="">
+            <instance x="20" y="20">
+                <block type="robControls_start_ardu" id="start" intask="true" deletable="false">
+                    <mutation declare="false"></mutation>
+                    <field name="DEBUG"></field>
+                </block>
+                <block type="robControls_loopForever_ardu" id="forever" intask="true" deletable="false" movable="false">
+                    <statement name="DO">
+                        <block type="robActions_serial_print" id="print-0" intask="true">
+                            <value name="OUT">
+                                <block type="logic_compare" id="compare-red" intask="true">
+                                    <field name="OP">EQ</field>
+                                    <value name="A">
+                                    <block type="robSensors_tcs34725_getSample" id="tcs-0" intask="true">
+                                        <mutation mode="COLOUR"></mutation>
+                                        <field name="MODE">COLOUR</field>
+                                        <field name="SENSORPORT">F</field>
+                                        <field name="SLOT"></field>
+                                    </block>
+                                    </value>
+                                    <value name="B">
+                                        <block type="robColour_picker" id="red" intask="true">
+                                            <field name="COLOUR">#cc0000</field>
+                                        </block>
+                                    </value>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-1" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_tcs34725_getSample" id="tcs-1" intask="true">
+                                    <mutation mode="LIGHT"></mutation>
+                                    <field name="MODE">LIGHT</field>
+                                    <field name="SENSORPORT">F</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-2" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_tcs34725_getSample" id="tcs-2" intask="true">
+                                    <mutation mode="REDCHANNEL"></mutation>
+                                    <field name="MODE">REDCHANNEL</field>
+                                    <field name="SENSORPORT">F</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-3" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_tcs34725_getSample" id="tcs-3" intask="true">
+                                    <mutation mode="GREENCHANNEL"></mutation>
+                                    <field name="MODE">GREENCHANNEL</field>
+                                    <field name="SENSORPORT">F</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-4" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_tcs34725_getSample" id="tcs-4" intask="true">
+                                    <mutation mode="BLUECHANNEL"></mutation>
+                                    <field name="MODE">BLUECHANNEL</field>
+                                    <field name="SENSORPORT">F</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                    </statement>
+                </block>
+            </instance>
+        </block_set>
+    </program>
+    <config>
+        <block_set xmlns="http://de.fhg.iais.roberta.blockly" robottype="arduino" xmlversion="3.1" description="" tags="">
+            <instance x="20" y="20">
+                <block type="robConf_tcs34725" id="colour-sensor-config" intask="true">
+                    <field name="NAME">F</field>
+                    <field name="TCS34725_BLACK">2</field>
+                    <field name="TCS34725_WHITE">12</field>
+                </block>
+            </instance>
+            <instance x="20" y="120">
+                <block type="robConf_ultrasonic" id="ultrasonic-config" intask="true">
+                    <field name="NAME">U</field>
+                    <field name="TRIG">A0</field>
+                    <field name="ECHO">A1</field>
+                </block>
+            </instance>
+            <instance x="20" y="220">
+                <block type="robConf_robot" id="robot" intask="true">
+                    <field name="NAME">undefined</field>
+                </block>
+            </instance>
+        </block_set>
+    </config>
+</export>

@@ -26,4 +26,17 @@ public class ArduinoCompilerWorkerTest {
         Assert.assertTrue(header.contains("class L293DMotor"));
         Assert.assertTrue(header.contains("void run(int speed) const"));
     }
+
+    @Test
+    public void storeBundledHeader_copiesTcs34725HeaderIntoGeneratedSourceDirectory() throws Exception {
+        Path sourceDir = this.temporaryFolder.newFolder("source").toPath();
+
+        ArduinoCompilerWorker.storeBundledHeader(sourceDir, "/arduino/TCS34725/TCS34725.h", "TCS34725/TCS34725.h");
+
+        Path copiedHeader = sourceDir.resolve("TCS34725/TCS34725.h");
+        Assert.assertTrue(Files.isRegularFile(copiedHeader));
+        String header = new String(Files.readAllBytes(copiedHeader), StandardCharsets.UTF_8);
+        Assert.assertTrue(header.contains("class TCS34725"));
+        Assert.assertTrue(header.contains("T colour(T red, T green, T white, T black, T none)"));
+    }
 }

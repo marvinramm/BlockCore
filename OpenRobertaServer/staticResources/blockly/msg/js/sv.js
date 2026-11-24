@@ -497,6 +497,12 @@ Blockly.Msg.KEY_TOOLTIP = "Representerar en knapp";
 Blockly.Msg.L293DMOTOR_RUN = "run";  // untranslated
 Blockly.Msg.L293DMOTOR_RUN_TOOLTIP = "Runs an L293D shield motor at a signed speed from -100 to 100 percent. Negative values reverse direction and zero releases the motor.";  // untranslated
 Blockly.Msg.L293DMOTOR_TOOLTIP = "Represents a DC motor connected to port M1, M2, M3 or M4 of an L293D Motor Shield.";  // untranslated
+Blockly.Msg.SENSOR_TCS34725 = "colour sensor TCS34725";  // untranslated
+Blockly.Msg.TCS34725_TOOLTIP = "Represents a TCS34725 colour sensor connected via I²C (SDA = A4, SCL = A5 on the Uno). The thresholds for black and white are given in percent of the maximal brightness.";  // untranslated
+Blockly.Msg.SENSOR_TCS34725_GETSAMPLE_TOOLTIP = "Gets the current reading from the TCS34725 colour sensor. In colour mode the sensor returns red, green, white or black; any other colour is returned as grey (#999999).";  // untranslated
+Blockly.Msg.TCS34725_BLACK = "black below %";  // untranslated
+Blockly.Msg.TCS34725_WHITE = "white above %";  // untranslated
+Blockly.Msg.CONFIGURATION_ERROR_TCS34725_THRESHOLD = "The thresholds for black and white must be numbers between 0 and 100!";  // untranslated
 Blockly.Msg.LANGUAGE = "språk";
 Blockly.Msg.LANGUAGE_ARABIC = "Arabic";  // untranslated
 Blockly.Msg.LANGUAGE_BRAZILIAN = "Brazilian";  // untranslated

@@ -53,6 +53,7 @@ import de.fhg.iais.roberta.syntax.sensor.generic.TimerReset;
 import de.fhg.iais.roberta.syntax.sensor.generic.TimerSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.UltrasonicSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.VoltageSensor;
+import de.fhg.iais.roberta.syntax.sensors.arduino.tcs34725.Tcs34725ColorSensor;
 import de.fhg.iais.roberta.util.syntax.SC;
 import de.fhg.iais.roberta.visitor.hardware.IArduinoVisitor;
 
@@ -69,6 +70,7 @@ public class ArduinoValidatorAndCollectorVisitor extends CommonNepoAndMotorValid
         put("HUMIDITY_SENSING", SC.HUMIDITY);
         put("VOLTAGE_SENSING", SC.POTENTIOMETER);
         put("ENCODER_SENSING", SC.ENCODER);
+        put("TCS34725_SENSING", SC.TCS34725);
     }});
 
     public ArduinoValidatorAndCollectorVisitor(ConfigurationAst brickConfiguration, ClassToInstanceMap<IProjectBean.IBuilder> beanBuilders) {
@@ -363,6 +365,13 @@ public class ArduinoValidatorAndCollectorVisitor extends CommonNepoAndMotorValid
     @Override
     public Void visitUltrasonicSensor(UltrasonicSensor ultrasonicSensor) {
         usedHardwareBuilder.addUsedSensor(new UsedSensor(ultrasonicSensor.getUserDefinedPort(), SC.ULTRASONIC, ultrasonicSensor.getMode()));
+        return null;
+    }
+
+    @Override
+    public Void visitTcs34725ColorSensor(Tcs34725ColorSensor tcs34725ColorSensor) {
+        checkSensorPort(tcs34725ColorSensor);
+        usedHardwareBuilder.addUsedSensor(new UsedSensor(tcs34725ColorSensor.getUserDefinedPort(), SC.TCS34725, tcs34725ColorSensor.getMode()));
         return null;
     }
 

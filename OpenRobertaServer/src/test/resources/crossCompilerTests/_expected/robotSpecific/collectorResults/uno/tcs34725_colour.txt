@@ -1,0 +1,6 @@
+Sensors: 
+[UsedSensor [F, TCS34725, COLOUR], UsedSensor [F, TCS34725, LIGHT], UsedSensor [F, TCS34725, REDCHANNEL], UsedSensor [F, TCS34725, GREENCHANNEL], UsedSensor [F, TCS34725, BLUECHANNEL]]
+Actors: 
+[UsedActor [SERIAL, SERIAL]]
+Methods: 
+[]

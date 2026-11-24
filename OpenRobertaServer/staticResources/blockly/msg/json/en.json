@@ -2205,5 +2205,11 @@
 	"BLE_ERROR_STOP": "Stopping the program execution does not work, your robot is maybe disconnected?<br>You can always use the Center Button on the hub to stop the program yourself.",
 	"ORA_COMPILERWORKFLOW_ERROR_EXTERN_FAILED": "It looks like the external compilation service used for this robot is currently unavailable. Please try again later and report the problem if it persists.",
 	"WEBUSB_NOT_SUPPORTED": "Your browser does not support WebUSB. To download the programme to your robot, please switch to one of the following browsers: Chrome, Edge or Opera",
-	"SIM_VALUES_NEURON": "Neuron Values"
+	"SIM_VALUES_NEURON": "Neuron Values",
+	"SENSOR_TCS34725": "colour sensor TCS34725",
+	"TCS34725_TOOLTIP": "Represents a TCS34725 colour sensor connected via I²C (SDA = A4, SCL = A5 on the Uno). The thresholds for black and white are given in percent of the maximal brightness.",
+	"SENSOR_TCS34725_GETSAMPLE_TOOLTIP": "Gets the current reading from the TCS34725 colour sensor. In colour mode the sensor returns red, green, white or black; any other colour is returned as grey (#999999).",
+	"TCS34725_BLACK": "black below %",
+	"TCS34725_WHITE": "white above %",
+	"CONFIGURATION_ERROR_TCS34725_THRESHOLD": "The thresholds for black and white must be numbers between 0 and 100!"
 }

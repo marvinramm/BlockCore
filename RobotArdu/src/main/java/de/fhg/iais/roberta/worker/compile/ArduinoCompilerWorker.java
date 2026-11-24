@@ -33,6 +33,9 @@ public class ArduinoCompilerWorker implements ICompilerWorker {
     private static final String L293D_MOTOR_HEADER_INCLUDE = "#include \"L293DMotor/L293DMotor.h\"";
     private static final String L293D_MOTOR_HEADER_RESOURCE = "/arduino/L293DMotor/L293DMotor.h";
     private static final String L293D_MOTOR_HEADER_PATH = "L293DMotor/L293DMotor.h";
+    private static final String TCS34725_HEADER_INCLUDE = "#include \"TCS34725/TCS34725.h\"";
+    private static final String TCS34725_HEADER_RESOURCE = "/arduino/TCS34725/TCS34725.h";
+    private static final String TCS34725_HEADER_PATH = "TCS34725/TCS34725.h";
 
     @Override
     public void execute(Project project) {
@@ -122,6 +125,9 @@ public class ArduinoCompilerWorker implements ICompilerWorker {
         String targetDir = tempDir + token + "/" + programName + "/target/";
         if ( crosscompilerSource.contains(L293D_MOTOR_HEADER_INCLUDE) ) {
             storeBundledHeader(Paths.get(sourceDir), L293D_MOTOR_HEADER_RESOURCE, L293D_MOTOR_HEADER_PATH);
+        }
+        if ( crosscompilerSource.contains(TCS34725_HEADER_INCLUDE) ) {
+            storeBundledHeader(Paths.get(sourceDir), TCS34725_HEADER_RESOURCE, TCS34725_HEADER_PATH);
         }
         ArrayList<String> parameters = new ArrayList<String>();
 

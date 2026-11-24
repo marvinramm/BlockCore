@@ -38,6 +38,7 @@ import de.fhg.iais.roberta.syntax.sensor.generic.PinGetValueSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.PulseSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.RfidSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.VoltageSensor;
+import de.fhg.iais.roberta.syntax.sensors.arduino.tcs34725.Tcs34725ColorSensor;
 import de.fhg.iais.roberta.typecheck.NepoInfo;
 import de.fhg.iais.roberta.util.ast.ExternalSensorBean;
 import de.fhg.iais.roberta.util.syntax.FunctionNames;
@@ -74,6 +75,41 @@ public class ArduinoValidatorAndCollectorWorkflowTest extends WorkflowTestHelper
         executeWorkflow();
 
         assertHasNoNepoInfo(keysSensor);
+    }
+
+    @Test
+    public void visitTcs34725ColorSensor_withoutPort() {
+        Tcs34725ColorSensor sensor = new Tcs34725ColorSensor(bp, new ExternalSensorBean("F", SC.COLOUR, "", null));
+        phrases.add(sensor);
+
+        executeWorkflow();
+
+        assertHasNepoInfo(sensor, NepoInfo.Severity.ERROR, "CONFIGURATION_ERROR_SENSOR_MISSING");
+    }
+
+    @Test
+    public void visitTcs34725ColorSensor_withPort() {
+        configurationComponents.add(new ConfigurationComponent(SC.TCS34725, "CONFIGURATION_SENSOR", "F", "F", new HashMap<>()));
+
+        Tcs34725ColorSensor sensor = new Tcs34725ColorSensor(bp, new ExternalSensorBean("F", SC.COLOUR, "", null));
+        phrases.add(sensor);
+
+        Project project = executeWorkflow();
+
+        assertHasUsedSensor(project, "F", SC.TCS34725, SC.COLOUR);
+        assertHasNoNepoInfo(sensor);
+    }
+
+    @Test
+    public void visitTcs34725ColorSensor_withPortWrongSensor() {
+        configurationComponents.add(new ConfigurationComponent(SC.ULTRASONIC, "CONFIGURATION_SENSOR", "F", "F", new HashMap<>()));
+
+        Tcs34725ColorSensor sensor = new Tcs34725ColorSensor(bp, new ExternalSensorBean("F", SC.COLOUR, "", null));
+        phrases.add(sensor);
+
+        executeWorkflow();
+
+        assertHasNepoInfo(sensor, NepoInfo.Severity.ERROR, "CONFIGURATION_ERROR_SENSOR_WRONG");
     }
 
     @Test

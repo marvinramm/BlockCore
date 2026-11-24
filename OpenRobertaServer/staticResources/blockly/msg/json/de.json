@@ -360,5 +360,11 @@
 	"MESSAGE_PROGRAM_COMPILING": "Das Programm wird kompiliert",
 	"MESSAGE_PROGRAM_FLASHING": "Das Programm wird geflasht, warten Sie bitte",
 	"MESSAGE_PROGRAM_FLASHED": "Das Programm ist geflasht",
-	"MESSAGE_ROBOT_DISCONNECTED": "Ein aktiver Roboter wurde getrennt"
+	"MESSAGE_ROBOT_DISCONNECTED": "Ein aktiver Roboter wurde getrennt",
+	"SENSOR_TCS34725": "Farbsensor TCS34725",
+	"TCS34725_TOOLTIP": "Block für den Farbsensor TCS34725 am I²C-Bus (SDA = A4, SCL = A5 beim Uno). Die Schwellwerte für Schwarz und Weiß sind in Prozent der maximalen Helligkeit angegeben.",
+	"SENSOR_TCS34725_GETSAMPLE_TOOLTIP": "Gibt den aktuellen Wert des Farbsensors TCS34725 zurück. Im Modus Farbe liefert der Sensor Rot, Grün, Weiß oder Schwarz, jede andere Farbe wird als Grau (#999999) zurückgegeben.",
+	"TCS34725_BLACK": "Schwarz unter %",
+	"TCS34725_WHITE": "Weiß über %",
+	"CONFIGURATION_ERROR_TCS34725_THRESHOLD": "Die Schwellwerte für Schwarz und Weiß müssen Zahlen zwischen 0 und 100 sein!"
 }

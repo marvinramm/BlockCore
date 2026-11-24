@@ -27,6 +27,7 @@
         <block type="robConf_potentiometer" />
         <block type="robConf_moisture" />
         <block type="robConf_ultrasonic" />
+        <block type="robConf_tcs34725" />
         <block type="robConf_rfid" />
     </category>
 </toolbox_set>
