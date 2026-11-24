@@ -67,6 +67,10 @@ mkdir -p "$STAGE/lib"
 cp "$SERVER_JARS"/*.jar "$STAGE/lib/"
 cp -r "$REPO_DIR/OpenRobertaServer/staticResources" "$STAGE/staticResources"
 
+# version: set by the release workflow (e.g. 1.0.15), otherwise "<VERSION>-dev"
+VERSION="${BLOCKCORE_VERSION:-$(tr -d '[:space:]' < "$REPO_DIR/VERSION")-dev}"
+echo "== version $VERSION"
+
 echo '== branding (BlockCore instead of the Open Roberta name and logo) and the simplified BlockCore user interface'
 WEB="$STAGE/staticResources"
 cp "$SCRIPT_DIR/branding/logo-word.svg" "$WEB/css/svg/logo-word.svg"
@@ -75,6 +79,7 @@ cp "$SCRIPT_DIR/branding/blockcore.ico" "$WEB/css/img/NEPO.ico"
 mkdir -p "$WEB/blockcore"
 cp "$SCRIPT_DIR"/branding/web/blockcore.js "$SCRIPT_DIR"/branding/web/blockcore.css "$SCRIPT_DIR"/branding/web/icon-*.png "$WEB/blockcore/"
 cp "$SCRIPT_DIR/branding/web/manifest.webapp.json" "$WEB/manifest.webapp.json"
+printf '{"version":"%s"}\n' "$VERSION" > "$WEB/blockcore/version.json"
 sed -i -e 's|<title>Open Roberta Lab</title>|<title>BlockCore</title>|' \
        -e "s|alt='Open Roberta Lab logo'|alt='BlockCore logo'|" \
        -e "s|</head>|<link href='/blockcore/blockcore.css' rel='stylesheet' type='text/css'>\\n<script defer src='/blockcore/blockcore.js'></script>\\n</head>|" \
@@ -118,7 +123,7 @@ cp "$SCRIPT_DIR/README.txt" "$STAGE/README.txt"
 
 echo '== installer'
 cp "$OUT_DIR/tmp/BlockCore.ico" "$STAGE/BlockCore.ico"
-makensis -V2 -DSTAGE="$STAGE" -DOUTFILE="$OUT_DIR/BlockCore-Setup.exe" "$SCRIPT_DIR/installer.nsi"
+makensis -V2 -DVERSION="$VERSION" -DSTAGE="$STAGE" -DOUTFILE="$OUT_DIR/BlockCore-Setup.exe" "$SCRIPT_DIR/installer.nsi"
 
 echo '== portable zip'
 rm -f "$OUT_DIR/BlockCore-portable.zip"

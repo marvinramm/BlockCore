@@ -88,3 +88,34 @@ li:has(> #menuRobotInfo),
 @keyframes bc-pulse { 50% { opacity: 0.45; } }
 @keyframes bc-shine { from { background-position: 200% 0; } to { background-position: 0 0; } }
 @keyframes bc-pop { 0% { transform: scale(0.3); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
+
+/* version next to the logo */
+#blockcoreVersion {
+    /* below the logo, which is placed absolutely at the top right of the header (18px margin, 60px high) */
+    position: absolute; top: 74px; right: 20px; font-size: 11px; color: #8a8f7a; letter-spacing: 0.03em; white-space: nowrap;
+    pointer-events: none;
+}
+
+/* note about a newer version: small, bottom right, closes itself */
+#blockcoreUpdate {
+    position: fixed; right: 16px; bottom: 16px; z-index: 4000; display: flex; align-items: center; gap: 10px;
+    max-width: calc(100vw - 32px); background: #fff; color: #333; border-radius: 10px; padding: 10px 10px 10px 14px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font-size: 14px; border-left: 4px solid #8ea60f;
+    transform: translateY(150%); opacity: 0; transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity 0.3s;
+}
+#blockcoreUpdate.bc-visible { transform: translateY(0); opacity: 1; }
+#blockcoreUpdate .bc-update-icon {
+    width: 20px; height: 20px; flex: none; border-radius: 50%; background: #8ea60f; position: relative;
+}
+#blockcoreUpdate .bc-update-icon::after {
+    content: ""; position: absolute; left: 6px; top: 4px; width: 8px; height: 8px; border: solid #fff; border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg);
+}
+#blockcoreUpdate .bc-update-link {
+    color: #fff; background: #8ea60f; border-radius: 6px; padding: 4px 10px; text-decoration: none; font-weight: 600; white-space: nowrap;
+}
+#blockcoreUpdate .bc-update-link:hover { background: #7a8f0c; }
+#blockcoreUpdate .bc-update-close {
+    border: 0; background: none; font-size: 20px; line-height: 1; color: #999; cursor: pointer; padding: 0 4px;
+}
+#blockcoreUpdate .bc-update-close:hover { color: #333; }

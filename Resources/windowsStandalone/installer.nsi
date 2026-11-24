@@ -1,5 +1,5 @@
 ; Installer of BlockCore (standalone block programming lab for Arduino, based on the Open Roberta Lab). Built by build-windows.sh:
-;   makensis -DSTAGE=<dir with BlockCore.exe, jre, lib, ...> -DOUTFILE=<setup exe> installer.nsi
+;   makensis -DVERSION=<version> -DSTAGE=<dir with BlockCore.exe, jre, lib, ...> -DOUTFILE=<setup exe> installer.nsi
 ; Installs for the current user only (no admin rights needed). User data (%LOCALAPPDATA%\BlockCore) is kept on uninstall.
 
 Unicode true
@@ -9,9 +9,12 @@ SetCompressor /SOLID lzma
 
 !define APPNAME "BlockCore"
 !define APPKEY "BlockCore"
+!ifndef VERSION
+    !define VERSION "dev"
+!endif
 !define UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPKEY}"
 
-Name "${APPNAME}"
+Name "${APPNAME} ${VERSION}"
 OutFile "${OUTFILE}"
 InstallDir "$LOCALAPPDATA\Programs\${APPKEY}"
 InstallDirRegKey HKCU "Software\${APPKEY}" "InstallDir"
@@ -48,6 +51,7 @@ Section "Install"
     WriteRegStr HKCU "${UNINSTKEY}" "DisplayName" "${APPNAME}"
     WriteRegStr HKCU "${UNINSTKEY}" "DisplayIcon" "$INSTDIR\BlockCore.exe"
     WriteRegStr HKCU "${UNINSTKEY}" "Publisher" "Marvin Ramm"
+    WriteRegStr HKCU "${UNINSTKEY}" "DisplayVersion" "${VERSION}"
     WriteRegStr HKCU "${UNINSTKEY}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
     WriteRegDWORD HKCU "${UNINSTKEY}" "NoModify" 1
     WriteRegDWORD HKCU "${UNINSTKEY}" "NoRepair" 1

@@ -3,6 +3,7 @@
  * - the board (Uno, Nano, Mega) is chosen directly in the robot menu; the start page with all robot systems is never shown
  * - only English (default) and German; the choice is remembered
  * - a local user is created and logged in automatically, so that "my programs" and "save" work without a login dialog
+ * - the version is shown next to the logo; at start, a small note appears if a newer version was released on GitHub
  */
 (function () {
     'use strict';
@@ -15,11 +16,12 @@
         ['de', 'Deutsch'],
         ['en', 'English']
     ];
+    var RELEASES_API = 'https://api.github.com/repos/marvinramm/BlockCore/releases/latest';
     var LOCAL_ACCOUNT = 'blockcore';
     var LOCAL_PASSWORD = 'blockcore-local';
     var TEXT = {
-        de: { board: 'Board', compiling: 'Programm wird übersetzt …', uploading: 'Wird auf {port} hochgeladen …', done: 'Auf {port} hochgeladen', failed: 'Hochladen fehlgeschlagen', compileFailed: 'Programm hat Fehler' },
-        en: { board: 'Board', compiling: 'Compiling program …', uploading: 'Uploading to {port} …', done: 'Uploaded to {port}', failed: 'Upload failed', compileFailed: 'Program has errors' }
+        de: { update: 'BlockCore {version} ist verfügbar', download: 'Herunterladen', board: 'Board', compiling: 'Programm wird übersetzt …', uploading: 'Wird auf {port} hochgeladen …', done: 'Auf {port} hochgeladen', failed: 'Hochladen fehlgeschlagen', compileFailed: 'Programm hat Fehler' },
+        en: { update: 'BlockCore {version} is available', download: 'Download', board: 'Board', compiling: 'Compiling program …', uploading: 'Uploading to {port} …', done: 'Uploaded to {port}', failed: 'Upload failed', compileFailed: 'Program has errors' }
     };
 
     function store(key, value) {
@@ -314,11 +316,115 @@
         });
     }
 
+    /** "1.0.15" -> [1, 0, 15]; null for anything else (e.g. "1.0-dev") */
+    function parseVersion(text) {
+        var match = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(String(text || '').trim());
+        return match ? [+match[1], +match[2], +match[3]] : null;
+    }
+
+    function isNewer(a, b) {
+        for (var i = 0; i < 3; i++) {
+            if (a[i] !== b[i]) {
+                return a[i] > b[i];
+            }
+        }
+        return false;
+    }
+
+    /* shows the version next to the logo and looks (once per start, silently) for a newer release */
+    function setupVersion(G) {
+        fetch('/blockcore/version.json', { cache: 'no-store' })
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (info) {
+                var version = String(info.version || '');
+                var logo = document.getElementById('logoShowStart');
+                if (version && logo && !document.getElementById('blockcoreVersion')) {
+                    var label = document.createElement('span');
+                    label.id = 'blockcoreVersion';
+                    label.textContent = 'v' + version;
+                    logo.parentNode.insertBefore(label, logo.nextSibling);
+                }
+                document.title = 'BlockCore ' + version;
+                checkForUpdate(G, version);
+            })
+            .catch(function () {
+                // no version file (development): nothing to show
+            });
+    }
+
+    function checkForUpdate(G, version) {
+        var current = parseVersion(version);
+        if (!current || !window.fetch) {
+            return;
+        }
+        try {
+            // once per start of BlockCore, not after every F5 (the window keeps its session storage until it is closed)
+            if (sessionStorage.getItem('blockcore.updateChecked') === 'yes') {
+                return;
+            }
+            sessionStorage.setItem('blockcore.updateChecked', 'yes');
+        } catch (e) {
+            // no session storage: check anyway
+        }
+        var controller = window.AbortController ? new AbortController() : null;
+        var timeout = setTimeout(function () {
+            if (controller) {
+                controller.abort();
+            }
+        }, 8000);
+        fetch(RELEASES_API, { cache: 'no-store', signal: controller ? controller.signal : undefined, headers: { Accept: 'application/vnd.github+json' } })
+            .then(function (response) {
+                return response.ok ? response.json() : null;
+            })
+            .then(function (release) {
+                clearTimeout(timeout);
+                var latest = release && parseVersion(release.tag_name);
+                if (latest && isNewer(latest, current)) {
+                    showUpdate(G, latest.join('.'), release.html_url);
+                }
+            })
+            .catch(function () {
+                // offline or GitHub not reachable: say nothing
+                clearTimeout(timeout);
+            });
+    }
+
+    function showUpdate(G, version, url) {
+        var texts = TEXT[language(G)] || TEXT.en;
+        var note = document.createElement('div');
+        note.id = 'blockcoreUpdate';
+        note.innerHTML = '<span class="bc-update-icon"></span><span class="bc-update-text"></span><a class="bc-update-link" target="_blank" rel="noopener"></a><button type="button" class="bc-update-close" aria-label="close">&times;</button>';
+        note.querySelector('.bc-update-text').textContent = texts.update.replace('{version}', version);
+        var link = note.querySelector('.bc-update-link');
+        link.textContent = texts.download;
+        link.href = /^https:\/\/github\.com\//.test(url || '') ? url : 'https://github.com/marvinramm/BlockCore/releases/latest';
+        function close() {
+            note.classList.remove('bc-visible');
+            setTimeout(function () {
+                if (note.parentNode) {
+                    note.parentNode.removeChild(note);
+                }
+            }, 400);
+        }
+        note.querySelector('.bc-update-close').addEventListener('click', close);
+        link.addEventListener('click', function () {
+            setTimeout(close, 300);
+        });
+        document.body.appendChild(note);
+        setTimeout(function () {
+            note.classList.add('bc-visible');
+        }, 50);
+        setTimeout(close, 20000);
+    }
+
     whenLabReady(function () {
         modules(['guiState.controller', 'robot.controller', 'user.model'], function (G, R, U) {
             setupLanguages(G);
             setupBoards(G, R);
             setupUploadDisplay(G);
+            setupVersion(G);
             autoLogin(G, U);
             // the robot or the language can change elsewhere (e.g. loading a program): keep the check marks right
             setInterval(function () {

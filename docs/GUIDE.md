@@ -34,6 +34,13 @@ Choose the board (Uno, Nano, Mega) in the **robot** menu under **Board**:
 Switch the language (English / German) in the **languages** menu. BlockCore saves your programs on this PC – you do not need an
 account.
 
+## Version and updates
+
+The version (e.g. `v1.0.15`) is shown below the BlockCore logo and in **Settings → Apps**. When BlockCore starts, it asks GitHub
+once whether a newer version exists. If so, a small note with a **Download** button appears at the bottom right; it closes
+itself. Without internet nothing is shown. To update, simply install the new `BlockCore-Setup.exe` over the old one – your programs
+are kept.
+
 ## Serial monitor
 
 With the block **show on Serial Monitor** the Arduino sends text to the PC. You see it under **robot → Serial Monitor** in a window of its
