@@ -82,20 +82,20 @@ cannot classify is returned as grey.
 the configuration block shows A4 / A5. A4 and A5 are the only I²C pins of the Uno, so the configuration reports an error if another part
 uses them as normal pins (move e.g. an ultrasonic sensor to A0 / A1). I²C displays may share the bus.
 
-**Calibration:** the configuration block has two thresholds, *black below %* (default 2) and *white above %* (default 2.5, set for the sensor without its LED; with a bright LED raise it to just below your white value). Print *light*,
+**Calibration:** the configuration block has two thresholds, *black below %* and *white above %* (both 2.7 by default: tuned for the sensor without its LED, black measured up to 2.4 %, white 3.0 %; with a bright LED set them between your black and white values). Print *light*,
 *red*, *green* and *blue* on the serial monitor, hold the sensor about 1 cm above each surface and set the thresholds between the values.
 The colour mode decides in this order:
 
 1. **white balance:** each channel is divided by its share on white paper (red 31 %, green 45 %, blue 39 % – the sensor sees much more
    green than red even on white)
 2. balanced red > 1.06 × green and > 1.06 × blue → **red**
-3. balanced green > 1.10 × red and > blue → **green** (green paper reflects much blue, too)
+3. balanced green > 1.10 × red and > 1.025 × blue → **green** (green paper reflects much blue, too; black has too little red as well, but there green and blue are equal)
 4. light below *black below %* → **black**
 5. light above *white above %* → **white**
 6. otherwise **grey**
 
-Red and green are checked before black, because a coloured surface can be dark, too. The factors were tuned with readings of a real
-sensor (22 × green, 19 × red, white): all recognised.
+Red and green are checked before black, because a coloured surface can be dark, too. The factors were tuned with 61 readings of a real
+sensor (22 × green, 19 × red, 18 × black, 2 × white): all recognised.
 
 The driver is a small header ([`TCS34725.h`](RobotArdu/src/main/resources/arduino/TCS34725/TCS34725.h), 154 ms integration time,
 automatic gain 1× … 60×) and needs no Adafruit library. *light* keeps the scale of 4× gain and 50 ms, so the thresholds stay comparable.
@@ -198,7 +198,7 @@ java --add-opens java.base/java.lang=ALL-UNNAMED -Dora.arduino.directBuild=true 
 
 | Version | Changes |
 |---|---|
-| next | Colour detection tuned with real sensor readings (red, green, white recognised), default *white above* 2.5. Fix for "avr-objcopy … .elf: No such file" when run was clicked twice |
+| next | Colour detection tuned with real sensor readings (red, green, white recognised), defaults *black below* / *white above* 2.7, black no longer mistaken for green. Fix for "avr-objcopy … .elf: No such file" when run was clicked twice |
 | Build 6–7 | English by default, all texts in English. Colour sensor with automatic gain (154 ms, 1× … 60×) for dark surfaces. Launcher watches the BlockCore windows (no "click OK to quit" dialog) |
 | Build 4 | No console: start window and app window, server stops with the window. Board selection in the robot menu, German / English only, automatic local login, no online requests. Ultrasonic sensor fixed (10 µs trigger instead of 10 ms, 30 ms timeout). Trimmed Java 21 runtime and AVR toolchain (smaller, faster start) |
 | Build 3 | BlockCore name and logo, own app window, serial monitor |

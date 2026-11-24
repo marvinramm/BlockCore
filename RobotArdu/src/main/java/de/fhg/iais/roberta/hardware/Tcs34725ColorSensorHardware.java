@@ -18,8 +18,8 @@ import de.fhg.iais.roberta.syntax.configuration.ConfigurationComponent;
 public final class Tcs34725ColorSensorHardware {
     public static final String BLACK_PROPERTY = "TCS34725_BLACK";
     public static final String WHITE_PROPERTY = "TCS34725_WHITE";
-    public static final String DEFAULT_BLACK_PERCENT = "2";
-    public static final String DEFAULT_WHITE_PERCENT = "2.5";
+    public static final String DEFAULT_BLACK_PERCENT = "2.7";
+    public static final String DEFAULT_WHITE_PERCENT = "2.7";
 
     public static final String RED = "RGB(0xCC, 0x00, 0x00)";
     public static final String GREEN = "RGB(0x33, 0xCC, 0x00)";

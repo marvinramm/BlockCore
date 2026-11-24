@@ -53,8 +53,9 @@ class TCS34725 {
             if ( red_ > RED_FACTOR * green_ && red_ > RED_FACTOR * blue_ ) {
                 return red;
             }
-            // green paper reflects much blue, too: green only has to be stronger than blue, but clearly stronger than red
-            if ( green_ > GREEN_FACTOR * red_ && green_ > blue_ ) {
+            // green paper reflects much blue, too: green is only a little stronger than blue, but clearly stronger than red.
+            // Black has too little red as well, but green and blue are equal there.
+            if ( green_ > GREEN_FACTOR * red_ && green_ > GREEN_OVER_BLUE * blue_ ) {
                 return green;
             }
         }
@@ -117,9 +118,11 @@ class TCS34725 {
     static constexpr double WHITE_GREEN = 0.450;
     static constexpr double WHITE_BLUE = 0.386;
     // red: balanced red this much stronger than green and blue; green: balanced green this much stronger than red (and stronger than blue).
-    // Checked with 22 readings of green and 19 readings of red paper of a real sensor: all recognised.
+    // Checked with 61 readings of a real sensor (22 green, 19 red, 18 black, 2 white): all recognised.
+    // Measured green / blue (balanced): green 1.040 - 1.083, black 1.001 - 1.010, white 0.997 - 1.001.
     static constexpr double RED_FACTOR = 1.06;
     static constexpr double GREEN_FACTOR = 1.10;
+    static constexpr double GREEN_OVER_BLUE = 1.025;
     // below this brightness (in %) the channels are too noisy to tell colours
     static constexpr double MIN_COLOUR_LIGHT = 0.3;
     static const uint8_t GAIN_SETTINGS[4];
