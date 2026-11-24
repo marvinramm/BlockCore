@@ -84,7 +84,7 @@
   var out = $('output'), portSel = $('port'), baudSel = $('baud'), stateEl = $('state'), connectBtn = $('connect'), msg = $('message');
   var next = 0, state = 'closed', atLineStart = true, chars = 0, failures = 0;
 
-  document.title = t.title;
+  document.title = 'BlockCore \u2013 ' + t.title; // the launcher keeps the server running while a window titled BlockCore is open
   $('title').textContent = t.title;
   $('clear').textContent = t.clear;
   $('sendButton').textContent = t.send;

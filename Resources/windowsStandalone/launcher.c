@@ -15,7 +15,7 @@
  *   2. on first start an empty database is created
  *   3. the server is started hidden (output -> logs\server.log)
  *   4. the lab opens in its own window: Microsoft Edge or Google Chrome in app mode with a profile of its own
- *   5. when that window is closed, the server is stopped
+ *   5. when all BlockCore windows (lab and serial monitor) are closed, the server is stopped (found by their title)
  *   If neither Edge nor Chrome is found, the default browser is used and a small dialog stops BlockCore.
  *   If BlockCore is already running, only a new window is opened.
  *
@@ -207,6 +207,31 @@ static void openInDefaultBrowser(void) {
     wchar_t url[128];
     swprintf(url, 128, L"http://127.0.0.1:%d/?loadSystem=uno", PORT);
     ShellExecuteW(NULL, L"open", url, NULL, NULL, SW_SHOWNORMAL);
+}
+
+/*
+ * counts the top level browser windows whose title starts with "BlockCore" (the lab and the serial monitor). The browser process cannot
+ * be watched: Edge may hand the window over to another of its processes and end the one that was started.
+ */
+static BOOL CALLBACK countWindow(HWND hwnd, LPARAM counter) {
+    wchar_t title[64];
+    wchar_t className[64];
+    if ( !IsWindowVisible(hwnd) ) {
+        return TRUE;
+    }
+    if ( GetClassNameW(hwnd, className, 64) == 0 || wcsncmp(className, L"Chrome_WidgetWin", 16) != 0 ) {
+        return TRUE;
+    }
+    if ( GetWindowTextW(hwnd, title, 64) > 0 && wcsncmp(title, L"BlockCore", 9) == 0 ) {
+        (*(int *) counter)++;
+    }
+    return TRUE;
+}
+
+static int countBlockCoreWindows(void) {
+    int counter = 0;
+    EnumWindows(countWindow, (LPARAM) &counter);
+    return counter;
 }
 
 /* ---------------------------------------------------------------- start window */
@@ -415,16 +440,34 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE prev, LPWSTR cmdLine, int show
     }
 
     window = openAppWindow();
-    DestroyWindow(splash);
     if ( window != NULL ) {
-        DWORD started = GetTickCount();
-        WaitForSingleObject(window, INFINITE);
+        int halfSeconds;
+        int missing = 0;
+        BOOL seen = FALSE;
         CloseHandle(window);
-        if ( GetTickCount() - started < 5000 ) {
-            /* the browser handed the window over to a running instance: closing it cannot be detected */
-            MessageBoxW(NULL, L"BlockCore läuft.\n\nZum Beenden von BlockCore auf OK klicken.", L"BlockCore", MB_OK | MB_ICONINFORMATION);
+        /* keep the start window until the lab window is there (at most 60 s) */
+        for ( halfSeconds = 0; halfSeconds < 120 && !seen; halfSeconds++ ) {
+            seen = countBlockCoreWindows() > 0;
+            if ( !seen ) {
+                MsgWaitForMultipleObjects(0, NULL, FALSE, 500, QS_ALLINPUT);
+                while ( PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE) ) {
+                    DispatchMessageW(&msg);
+                }
+            }
+        }
+        DestroyWindow(splash);
+        if ( seen ) {
+            /* stop the server when all BlockCore windows are closed (checked every second, 3 s grace for reloads) */
+            while ( missing < 3 ) {
+                Sleep(1000);
+                missing = countBlockCoreWindows() > 0 ? 0 : missing + 1;
+            }
+        } else {
+            MessageBoxW(NULL, L"BlockCore läuft (http://127.0.0.1:1999).\n\nZum Beenden von BlockCore auf OK klicken.", L"BlockCore",
+                MB_OK | MB_ICONINFORMATION);
         }
     } else {
+        DestroyWindow(splash);
         openInDefaultBrowser();
         MessageBoxW(NULL, L"BlockCore läuft im Browser (http://127.0.0.1:1999).\n\nZum Beenden von BlockCore auf OK klicken.", L"BlockCore",
             MB_OK | MB_ICONINFORMATION);
