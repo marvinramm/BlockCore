@@ -20,7 +20,7 @@ program that opens in its own window. On top it adds blocks for the hardware we 
 | **Upload** | over the USB COM port with avrdude, port selected in the lab |
 | **Serial monitor** | own window: baud rate, timestamps, autoscroll, send line; pauses itself during an upload |
 | **Extra blocks** | TCS34725 colour sensor (red / green / white / black, light, RGB channels), L293D motor shield (M1–M4) |
-| **Languages** | German and English, switchable in the program |
+| **Languages** | English (default) and German, switchable in the program |
 | **Inside** | Open Roberta server with a trimmed Java 21 runtime, avr-gcc 7.3 (AVR5/AVR6 only), avrdude 7.3, Arduino AVR core |
 | **Network** | none – the lab listens on `127.0.0.1` only |
 
@@ -56,7 +56,7 @@ Every push to `main` builds a new installer and publishes it as a release
 Programs are saved for a local user that BlockCore creates and logs in automatically – there is no login dialog. The language
 (German / English) is switched in the **languages** menu and remembered.
 
-A German step-by-step guide for students is in **[docs/ANLEITUNG.md](docs/ANLEITUNG.md)**.
+A step-by-step guide for students is in **[docs/GUIDE.md](docs/GUIDE.md)**.
 
 ### Serial monitor
 
@@ -92,8 +92,10 @@ The colour mode decides in this order:
 4. light above *white above %* → **white**
 5. otherwise **grey**
 
-The driver is a small header ([`TCS34725.h`](RobotArdu/src/main/resources/arduino/TCS34725/TCS34725.h), 50 ms integration time, 4× gain)
-and needs no Adafruit library. Only one sensor is possible (fixed I²C address `0x29`).
+The driver is a small header ([`TCS34725.h`](RobotArdu/src/main/resources/arduino/TCS34725/TCS34725.h), 154 ms integration time,
+automatic gain 1× … 60×) and needs no Adafruit library. *light* keeps the scale of 4× gain and 50 ms, so the thresholds stay comparable.
+The sensor needs light: the LED on the board must be on, about 1 cm distance, room light shaded. If *light* is below about 2 % on every
+surface, the sensor reports black. Only one sensor is possible (fixed I²C address `0x29`).
 
 ## L293D motor shield
 
@@ -130,7 +132,7 @@ flowchart LR
   start, starts the server hidden with the bundled Java runtime and opens the lab as an app window (Microsoft Edge or Chrome in app mode
   with a profile of its own, otherwise the default browser). Closing that window stops the server.
 - The package build adds [`blockcore.js`](Resources/windowsStandalone/branding/web/blockcore.js) to the lab: board selection in the robot
-  menu instead of the start page, only German and English, automatic login of a local user, and it hides what a local Arduino lab does
+  menu instead of the start page, only English (default) and German, automatic login of a local user, and it hides what a local Arduino lab does
   not need (gallery, tutorials, online help, simulation). The lab does not contact any other server.
 - The server runs in **local mode** (`server.local.serial=true`): it lists the COM ports (`/rest/local/ports`), compiles without a robot
   token, uploads with avrdude (`/rest/local/upload`) and runs the serial monitor (`/rest/local/monitor/*`). These services only answer
@@ -146,7 +148,7 @@ Resources/windowsStandalone/      Launcher (C), build script, NSIS installer, br
 OpenRobertaServer/                Lab server; local mode in javaServer/restServices/local/, serial monitor page staticResources/serial.html
 OpenRobertaWeb/                   Frontend (TypeScript); LocalSerialOrTokenConnection in .../controller/connections/connections.ts
 RobotArdu/                        Arduino plugin: TCS34725 blocks, L293D shield, direct AVR build, TCS34725.h / L293DMotor.h drivers
-docs/                             German guide, images, CC BY 4.0 license of the documentation
+docs/                             Guide for students, images, CC BY 4.0 license of the documentation
 README.openroberta.md             Original documentation of the Open Roberta Lab
 ```
 
@@ -191,7 +193,8 @@ java --add-opens java.base/java.lang=ALL-UNNAMED -Dora.arduino.directBuild=true 
 
 | Version | Changes |
 |---|---|
-| next | No console: start window and app window, server stops with the window. Board selection in the robot menu, German / English only, automatic local login, no online requests. Ultrasonic sensor fixed (10 µs trigger instead of 10 ms, 30 ms timeout). Trimmed Java 21 runtime and AVR toolchain (smaller, faster start) |
+| next | English by default, all texts in English. Colour sensor with automatic gain (154 ms, 1× … 60×) for dark surfaces. Launcher watches the BlockCore windows (no "click OK to quit" dialog) |
+| Build 4 | No console: start window and app window, server stops with the window. Board selection in the robot menu, German / English only, automatic local login, no online requests. Ultrasonic sensor fixed (10 µs trigger instead of 10 ms, 30 ms timeout). Trimmed Java 21 runtime and AVR toolchain (smaller, faster start) |
 | Build 3 | BlockCore name and logo, own app window, serial monitor |
 | Build 2 | First Windows installer: local COM port upload, direct AVR build, TCS34725 and L293D blocks |
 

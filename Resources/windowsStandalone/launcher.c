@@ -44,7 +44,7 @@
 
 static wchar_t appDir[MAX_PATH];
 static wchar_t dataDir[MAX_PATH];
-static wchar_t status[256] = L"wird gestartet ...";
+static wchar_t status[256] = L"starting ...";
 static wchar_t failure[512];
 static HWND splash;
 static HANDLE job;
@@ -71,7 +71,7 @@ static BOOL portInUse(void) {
 
 static void showError(const wchar_t *text) {
     wchar_t message[1024];
-    swprintf(message, 1024, L"%ls\n\nDetails stehen in\n%ls\\logs\\server.log", text, dataDir[0] ? dataDir : L"%LOCALAPPDATA%\\BlockCore");
+    swprintf(message, 1024, L"%ls\n\nDetails are in\n%ls\\logs\\server.log", text, dataDir[0] ? dataDir : L"%LOCALAPPDATA%\\BlockCore");
     MessageBoxW(NULL, message, L"BlockCore", MB_OK | MB_ICONERROR);
 }
 
@@ -309,31 +309,31 @@ static DWORD WINAPI startServer(LPVOID unused) {
     int halfSeconds;
     (void) unused;
     if ( log == INVALID_HANDLE_VALUE ) {
-        return fail(L"Die Logdatei kann nicht geschrieben werden.");
+        return fail(L"The log file cannot be written.");
     }
 
     swprintf(path, MAX_PATH, L"%ls\\db\\openroberta-db.script", dataDir);
     if ( GetFileAttributesW(path) == INVALID_FILE_ATTRIBUTES ) {
         HANDLE create;
         DWORD exitCode = 1;
-        setStatus(L"Erster Start: die Datenbank wird angelegt ...");
+        setStatus(L"first start: creating the database ...");
         addJavaStart(cmd, L"de.fhg.iais.roberta.main.Administration");
         addArg(cmd, L"create-empty-db");
         swprintf(path, MAX_PATH, L"jdbc:hsqldb:file:%ls\\db\\openroberta-db", dataDir);
         addArg(cmd, path);
         create = startHidden(cmd, log);
         if ( create == NULL ) {
-            return fail(L"Java konnte nicht gestartet werden.");
+            return fail(L"Java could not be started.");
         }
         WaitForSingleObject(create, INFINITE);
         GetExitCodeProcess(create, &exitCode);
         CloseHandle(create);
         if ( exitCode != 0 ) {
-            return fail(L"Die Datenbank konnte nicht angelegt werden.");
+            return fail(L"The database could not be created.");
         }
     }
 
-    setStatus(L"wird gestartet ...");
+    setStatus(L"starting ...");
     cmd[0] = 0;
     addJavaStart(cmd, L"de.fhg.iais.roberta.main.ServerStarter");
     addProperty(cmd, L"database.mode", L"embedded");
@@ -354,19 +354,19 @@ static DWORD WINAPI startServer(LPVOID unused) {
     server = startHidden(cmd, log);
     free(cmd);
     if ( server == NULL ) {
-        return fail(L"Java konnte nicht gestartet werden.");
+        return fail(L"Java could not be started.");
     }
 
     for ( halfSeconds = 0; halfSeconds < 2 * START_TIMEOUT_SECONDS; halfSeconds++ ) {
         if ( WaitForSingleObject(server, 500) == WAIT_OBJECT_0 ) {
-            return fail(L"Der BlockCore-Server wurde unerwartet beendet.");
+            return fail(L"The BlockCore server stopped unexpectedly.");
         }
         if ( portInUse() ) {
             PostMessageW(splash, WM_APP_READY, 0, 0);
             return 0;
         }
     }
-    return fail(L"Der BlockCore-Server hat nicht rechtzeitig geantwortet.");
+    return fail(L"The BlockCore server did not answer in time.");
 }
 
 /* ---------------------------------------------------------------- main */
@@ -392,7 +392,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE prev, LPWSTR cmdLine, int show
         *lastSlash = 0;
     }
     if ( SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, 0, localAppData) != S_OK ) {
-        showError(L"Der Ordner %LOCALAPPDATA% wurde nicht gefunden.");
+        showError(L"The folder %LOCALAPPDATA% was not found.");
         return 1;
     }
     swprintf(dataDir, MAX_PATH, L"%ls\\BlockCore", localAppData);
@@ -463,13 +463,13 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE prev, LPWSTR cmdLine, int show
                 missing = countBlockCoreWindows() > 0 ? 0 : missing + 1;
             }
         } else {
-            MessageBoxW(NULL, L"BlockCore läuft (http://127.0.0.1:1999).\n\nZum Beenden von BlockCore auf OK klicken.", L"BlockCore",
+            MessageBoxW(NULL, L"BlockCore is running (http://127.0.0.1:1999).\n\nClick OK to quit BlockCore.", L"BlockCore",
                 MB_OK | MB_ICONINFORMATION);
         }
     } else {
         DestroyWindow(splash);
         openInDefaultBrowser();
-        MessageBoxW(NULL, L"BlockCore läuft im Browser (http://127.0.0.1:1999).\n\nZum Beenden von BlockCore auf OK klicken.", L"BlockCore",
+        MessageBoxW(NULL, L"BlockCore is running in your browser (http://127.0.0.1:1999).\n\nClick OK to quit BlockCore.", L"BlockCore",
             MB_OK | MB_ICONINFORMATION);
     }
 

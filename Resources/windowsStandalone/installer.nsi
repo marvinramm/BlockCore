@@ -20,9 +20,9 @@ RequestExecutionLevel user
 !define MUI_ICON "${STAGE}\BlockCore.ico"
 !define MUI_UNICON "${STAGE}\BlockCore.ico"
 !define MUI_FINISHPAGE_RUN "$INSTDIR\BlockCore.exe"
-!define MUI_FINISHPAGE_RUN_TEXT "BlockCore jetzt starten"
-!define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\LIESMICH.txt"
-!define MUI_FINISHPAGE_SHOWREADME_TEXT "LIESMICH anzeigen"
+!define MUI_FINISHPAGE_RUN_TEXT "Start BlockCore now"
+!define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\README.txt"
+!define MUI_FINISHPAGE_SHOWREADME_TEXT "Show README"
 !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
 
 !insertmacro MUI_PAGE_WELCOME
@@ -31,7 +31,7 @@ RequestExecutionLevel user
 !insertmacro MUI_PAGE_FINISH
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
-!insertmacro MUI_LANGUAGE "German"
+!insertmacro MUI_LANGUAGE "English"
 
 Section "Install"
     ; remove an old version first (outdated jars would break the server)
@@ -54,7 +54,7 @@ Section "Install"
 
     CreateDirectory "$SMPROGRAMS\${APPNAME}"
     CreateShortcut "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk" "$INSTDIR\BlockCore.exe" "" "$INSTDIR\BlockCore.exe"
-    CreateShortcut "$SMPROGRAMS\${APPNAME}\${APPNAME} deinstallieren.lnk" "$INSTDIR\Uninstall.exe"
+    CreateShortcut "$SMPROGRAMS\${APPNAME}\Uninstall ${APPNAME}.lnk" "$INSTDIR\Uninstall.exe"
     CreateShortcut "$DESKTOP\${APPNAME}.lnk" "$INSTDIR\BlockCore.exe" "" "$INSTDIR\BlockCore.exe"
 SectionEnd
 

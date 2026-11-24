@@ -4,7 +4,7 @@
 #   BlockCore-portable.zip  the same files, unzip and start BlockCore.exe
 #
 # The lab runs completely on the Windows computer: server, Arduino compiler (avr-gcc) and upload (avrdude). The robot is selected by its COM port
-# in the lab ("Roboter -> Verbinden"). Supported: Arduino Uno, Nano and Mega (incl. the TCS34725 colour sensor and the L293D motor shield).
+# in the lab ("robot -> connect"). Supported: Arduino Uno, Nano and Mega (incl. the TCS34725 colour sensor and the L293D motor shield).
 #
 # BlockCore is based on the Open Roberta Lab of Fraunhofer IAIS. "Open Roberta" and its logos are trademarks of the Fraunhofer Society and must not
 # be used for modified versions (see NOTICE). Therefore the package is branded as BlockCore (branding/).
@@ -114,7 +114,7 @@ cp "$SCRIPT_DIR/branding/blockcore.ico" "$OUT_DIR/tmp/BlockCore.ico"
 printf '1 ICON "BlockCore.ico"\n' > "$OUT_DIR/tmp/launcher.rc"
 (cd "$OUT_DIR/tmp" && x86_64-w64-mingw32-windres launcher.rc -O coff -o launcher.res)
 x86_64-w64-mingw32-gcc -O2 -Wall -Wextra -municode -mwindows -static -o "$STAGE/BlockCore.exe" "$SCRIPT_DIR/launcher.c" "$OUT_DIR/tmp/launcher.res" -lws2_32 -lshell32 -luser32 -lgdi32
-cp "$SCRIPT_DIR/LIESMICH.txt" "$STAGE/LIESMICH.txt"
+cp "$SCRIPT_DIR/README.txt" "$STAGE/README.txt"
 
 echo '== installer'
 cp "$OUT_DIR/tmp/BlockCore.ico" "$STAGE/BlockCore.ico"

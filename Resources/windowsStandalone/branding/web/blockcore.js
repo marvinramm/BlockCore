@@ -1,7 +1,7 @@
 /*
  * BlockCore: adapts the lab to a local, single-user Arduino lab. Injected into index.html by build-windows.sh (after the lab's own scripts).
  * - the board (Uno, Nano, Mega) is chosen directly in the robot menu; the start page with all robot systems is never shown
- * - only German and English; the choice is remembered
+ * - only English (default) and German; the choice is remembered
  * - a local user is created and logged in automatically, so that "my programs" and "save" work without a login dialog
  */
 (function () {
@@ -102,7 +102,8 @@
                 }, 500);
             });
         });
-        var wanted = store('language');
+        // English on the first start, afterwards the language chosen last
+        var wanted = store('language') || 'en';
         if (wanted && wanted !== language(G)) {
             var link = document.querySelector('#language a[lang="' + wanted + '"]');
             if (link) {

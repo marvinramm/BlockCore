@@ -50,13 +50,13 @@ jobs:
         with:
           tag_name: windows-${{ github.run_number }}
           target_commitish: ${{ github.sha }}
-          name: BlockCore für Windows (Build ${{ github.run_number }})
+          name: BlockCore for Windows (build ${{ github.run_number }})
           make_latest: true
           body: |
-            **BlockCore-Setup.exe** herunterladen und installieren (keine Admin-Rechte nötig).
-            Alternativ **BlockCore-portable.zip** entpacken und `BlockCore.exe` starten.
+            Download **BlockCore-Setup.exe** and install it (no admin rights needed).
+            Or unzip **BlockCore-portable.zip** and start `BlockCore.exe`.
 
-            Anleitung und Hilfe: siehe [README](https://github.com/${{ github.repository }}#readme).
+            Guide and help: see the [README](https://github.com/${{ github.repository }}#readme).
 
             Commit: ${{ github.sha }}
           files: |
