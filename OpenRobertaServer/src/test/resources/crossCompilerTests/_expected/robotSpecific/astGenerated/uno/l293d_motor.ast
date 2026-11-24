@@ -1,0 +1,6 @@
+
+(repeat [FOREVER_ARDU, BoolConst[value: true]]
+AktionStmt [L293DMotorRunAction[port: leftMotor, speed: Var [speed]]]
+AktionStmt [L293DMotorRunAction[port: rightMotor, speed: NumConst[value: -60]]]
+AktionStmt [L293DMotorRunAction[port: leftMotor, speed: NumConst[value: 0]]]
+)

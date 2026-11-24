@@ -1,0 +1,8 @@
+<block_set xmlns="http://de.fhg.iais.roberta.blockly" description="" robottype="arduino" tags="" xmlversion="3.1">
+    <instance x="343" y="261">
+        <block id="l293d-motor-config" intask="true" type="robConf_l293dmotor">
+            <field name="NAME">leftMotor</field>
+            <field name="PORT">M1</field>
+        </block>
+    </instance>
+</block_set>

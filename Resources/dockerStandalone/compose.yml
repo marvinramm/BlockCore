@@ -1,0 +1,18 @@
+name: openroberta
+
+services:
+  openroberta-lab:
+    image: ghcr.io/rosslight/openroberta-lab:${OPENROBERTA_VERSION:-5.2.33-rosslight.1}
+    platform: linux/amd64
+    restart: unless-stopped
+    ports:
+      - '${OPENROBERTA_PORT:-1999}:1999'
+    volumes:
+      - openroberta-db:/opt/db
+      - openroberta-tmp:/tmp/openrobertaTmp
+
+volumes:
+  openroberta-db:
+    name: openroberta-db
+  openroberta-tmp:
+    name: openroberta-tmp

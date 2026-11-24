@@ -1,0 +1,74 @@
+<export xmlns="http://de.fhg.iais.roberta.blockly">
+    <program>
+        <block_set xmlns="http://de.fhg.iais.roberta.blockly" robottype="arduino" xmlversion="3.1" description="" tags="">
+            <instance x="20" y="20">
+                <block type="robControls_start_ardu" id="start" intask="true" deletable="false">
+                    <mutation declare="true"></mutation>
+                    <field name="DEBUG"></field>
+                    <statement name="ST">
+                        <block type="robGlobalVariables_declare" id="speed-variable" intask="true" deletable="false" movable="false">
+                            <mutation next="false" declaration_type="Number"></mutation>
+                            <field name="VAR">speed</field>
+                            <field name="TYPE">Number</field>
+                            <value name="VALUE">
+                                <block type="math_number" id="initial-speed" intask="true">
+                                    <field name="NUM">60</field>
+                                </block>
+                            </value>
+                        </block>
+                    </statement>
+                </block>
+                <block type="robControls_loopForever_ardu" id="forever" intask="true" deletable="false" movable="false">
+                    <statement name="DO">
+                        <block type="robActions_l293dmotor_run" id="run-left-forward" intask="true">
+                            <field name="ACTORPORT">leftMotor</field>
+                            <value name="POWER">
+                                <block type="variables_get" id="get-speed" intask="true">
+                                    <mutation datatype="Number"></mutation>
+                                    <field name="VAR">speed</field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_l293dmotor_run" id="run-right-backward" intask="true">
+                            <field name="ACTORPORT">rightMotor</field>
+                            <value name="POWER">
+                                <block type="math_number" id="reverse-speed" intask="true">
+                                    <field name="NUM">-60</field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_l293dmotor_run" id="release-left" intask="true">
+                            <field name="ACTORPORT">leftMotor</field>
+                            <value name="POWER">
+                                <block type="math_number" id="zero-speed" intask="true">
+                                    <field name="NUM">0</field>
+                                </block>
+                            </value>
+                        </block>
+                    </statement>
+                </block>
+            </instance>
+        </block_set>
+    </program>
+    <config>
+        <block_set xmlns="http://de.fhg.iais.roberta.blockly" robottype="arduino" xmlversion="3.1" description="" tags="">
+            <instance x="20" y="20">
+                <block type="robConf_l293dmotor" id="left-motor-config" intask="true">
+                    <field name="NAME">leftMotor</field>
+                    <field name="PORT">M1</field>
+                </block>
+            </instance>
+            <instance x="20" y="100">
+                <block type="robConf_l293dmotor" id="right-motor-config" intask="true">
+                    <field name="NAME">rightMotor</field>
+                    <field name="PORT">M2</field>
+                </block>
+            </instance>
+            <instance x="20" y="180">
+                <block type="robConf_robot" id="robot" intask="true">
+                    <field name="NAME">undefined</field>
+                </block>
+            </instance>
+        </block_set>
+    </config>
+</export>
