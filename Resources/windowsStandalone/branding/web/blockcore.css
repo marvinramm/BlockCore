@@ -137,3 +137,7 @@ li:has(> #menuRobotInfo),
 #blockcoreUpdate.bc-updating .bc-update-icon::after { display: none; }
 #blockcoreUpdate.bc-failed { border-left-color: #d9534f; }
 #blockcoreUpdate.bc-failed .bc-update-icon { background: #d9534f; }
+
+/* "connect": wide enough for "COM3 – USB-SERIAL CH340" */
+#single-modal-list .modal-dialog { max-width: 460px; }
+#single-modal-list #singleModalListInput { min-width: 300px; }

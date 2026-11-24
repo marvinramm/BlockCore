@@ -24,7 +24,7 @@ Without installing: unzip `BlockCore-portable.zip` and start `BlockCore.exe`.
 
 4. In **ROBOT CONFIGURATION**, add what is connected to the Arduino (sensors, motors …).
 5. In **PROGRAM**, snap the blocks together and click **▶**. The program is compiled and uploaded to the Arduino.
-   A message at the top confirms "The program was uploaded to COM3".
+   A panel at the top shows the progress (compiling, uploading) and a check mark: "Uploaded to COM3".
 6. To quit, simply close the **BlockCore window**.
 
 Choose the board (Uno, Nano, Mega) in the **robot** menu under **Board**:
@@ -39,6 +39,8 @@ account.
 The version (e.g. `v1.0.15`) is shown below the BlockCore logo and in **Settings → Apps**. When BlockCore starts, it asks GitHub
 once whether a newer version exists. If so, a small note appears at the bottom right; it closes itself. Without internet nothing is
 shown.
+
+![Update note](images/update.jpg)
 
 - **Installed BlockCore:** click **Update now**. The update is downloaded (with progress), BlockCore closes, the installer shows its
   progress and BlockCore starts again – no questions asked. Your programs are kept.

@@ -6,7 +6,7 @@
 
 **Offline block programming for Arduino on Windows: install it, plug in an Arduino, pick its COM port, snap blocks together and press ▶. Compiler, upload and serial monitor run on your own PC – no internet, no server, no connector app.**
 
-![BlockCore with a colour sorter program](docs/images/hero.jpg)
+![BlockCore with a line follower program, just uploaded to COM3](docs/images/hero.jpg)
 
 BlockCore is a standalone edition of the [Open Roberta Lab](https://lab.open-roberta.org) by Fraunhofer IAIS. The online lab needs a server
 and a separate connector program to reach the robot; BlockCore packs the whole lab, the AVR compiler and the uploader into one Windows
@@ -22,7 +22,7 @@ program that opens in its own window. On top it adds blocks for the hardware we 
 | **Extra blocks** | TCS34725 colour sensor (red / green / white / black, light, RGB channels), L293D motor shield (M1–M4) |
 | **Languages** | English (default) and German, switchable in the program |
 | **Inside** | Open Roberta server with a trimmed Java 21 runtime, avr-gcc 7.3 (AVR5/AVR6 only), avrdude 7.3, Arduino AVR core |
-| **Network** | none – the lab listens on `127.0.0.1` only |
+| **Network** | the lab listens on `127.0.0.1` only; at start it asks GitHub once whether a newer version exists (silent when offline) |
 
 ## Download
 
@@ -49,7 +49,7 @@ Every push to `main` builds a new installer and publishes it as a release
    ![Choosing the COM port](docs/images/connect.jpg)
 
 4. Describe the hardware in **ROBOT CONFIGURATION** (sensors, motors …), build the program in **PROGRAM** and press **▶**.
-   The program is compiled on your PC and uploaded; a message confirms the upload.
+   The program is compiled on your PC and uploaded; a panel at the top shows the progress and a check mark when it is on the Arduino.
 5. **robot → Serial Monitor** shows what the Arduino prints with *show on Serial Monitor*.
 6. Close the BlockCore window to quit; the server stops with it.
 
@@ -64,6 +64,14 @@ A step-by-step guide for students is in **[docs/GUIDE.md](docs/GUIDE.md)**.
 
 Works like the one in the Arduino IDE: choose port and baud rate (9600 by default), read the output with or without timestamps, send a
 line with the chosen line ending. You do not have to close it before uploading: BlockCore pauses the monitor, uploads, and connects again.
+
+### Updates
+
+![Update note](docs/images/update.jpg)
+
+The version is shown below the logo. When a newer release exists, a small note slides in at the bottom right. In an installed BlockCore
+**Update now** downloads the installer, closes BlockCore, installs the update without questions and starts BlockCore again; the portable
+version links to the download. Without internet nothing is shown.
 
 ## TCS34725 colour sensor
 
@@ -138,7 +146,7 @@ flowchart LR
   with a profile of its own, otherwise the default browser). Closing that window stops the server.
 - The package build adds [`blockcore.js`](Resources/windowsStandalone/branding/web/blockcore.js) to the lab: board selection in the robot
   menu instead of the start page, only English (default) and German, automatic login of a local user, and it hides what a local Arduino lab does
-  not need (gallery, tutorials, online help, simulation). The lab does not contact any other server.
+  not need (gallery, tutorials, online help, simulation). Apart from the update check (GitHub, once per start) the lab contacts no other server.
 - The server runs in **local mode** (`server.local.serial=true`): it lists the COM ports (`/rest/local/ports`), compiles without a robot
   token, uploads with avrdude (`/rest/local/upload`) and runs the serial monitor (`/rest/local/monitor/*`). These services only answer
   requests from the same PC and from pages of this server.
@@ -198,7 +206,8 @@ java --add-opens java.base/java.lang=ALL-UNNAMED -Dora.arduino.directBuild=true 
 
 | Version | Changes |
 |---|---|
-| next | Colour detection tuned with real sensor readings (red, green, white recognised), defaults *black below* / *white above* 2.7, black no longer mistaken for green. Fix for "avr-objcopy … .elf: No such file" when run was clicked twice |
+| 1.0.15 – 1.0.16 | Versioned releases, version below the logo, update check and one-click update, upload panel with progress bar and check mark, USB symbol, COM port of the last upload is selected again, animated start window, BlockCore logo in the workspace, motor driver and colour sensor no longer slow down fast loops |
+| Build 8–14 | Colour detection tuned with real sensor readings (red, green, white recognised), defaults *black below* / *white above* 2.7, black no longer mistaken for green. Fix for "avr-objcopy … .elf: No such file" when run was clicked twice |
 | Build 6–7 | English by default, all texts in English. Colour sensor with automatic gain (154 ms, 1× … 60×) for dark surfaces. Launcher watches the BlockCore windows (no "click OK to quit" dialog) |
 | Build 4 | No console: start window and app window, server stops with the window. Board selection in the robot menu, German / English only, automatic local login, no online requests. Ultrasonic sensor fixed (10 µs trigger instead of 10 ms, 30 ms timeout). Trimmed Java 21 runtime and AVR toolchain (smaller, faster start) |
 | Build 3 | BlockCore name and logo, own app window, serial monitor |
