@@ -30,22 +30,38 @@ class L293DMotor {
 
         latchState() = 0;
         writeLatch();
+        for ( uint8_t i = 0; i < 4; i++ ) {
+            lastSpeed()[i] = 0;
+        }
         digitalWrite(OUTPUT_ENABLE_PIN, LOW);
     }
 
+    /**
+     * Sets the speed in percent (-100 .. 100, negative = backwards, 0 = off). Calling it again with the same speed changes nothing, so it
+     * may be called in every pass of a loop: the motor is only switched off briefly when its direction changes.
+     */
     void run(int speed) const {
         speed = constrain(speed, -100, 100);
+        int8_t& last = lastSpeed()[this->port];
+        if ( speed == last ) {
+            return;
+        }
+        uint8_t pwm = static_cast<uint8_t>(abs(speed) * 255L / 100);
+        bool sameDirection = (speed > 0 && last > 0) || (speed < 0 && last < 0);
+        last = static_cast<int8_t>(speed);
+        if ( sameDirection ) {
+            analogWrite(pwmPins()[this->port], pwm);
+            return;
+        }
         analogWrite(pwmPins()[this->port], 0);
-
         uint8_t directionMask = (1U << directionA()[this->port]) | (1U << directionB()[this->port]);
         latchState() &= static_cast<uint8_t>(~directionMask);
         if ( speed != 0 ) {
             latchState() |= 1U << (speed > 0 ? directionA()[this->port] : directionB()[this->port]);
         }
         writeLatch();
-
         if ( speed != 0 ) {
-            analogWrite(pwmPins()[this->port], static_cast<uint8_t>(abs(speed) * 255L / 100));
+            analogWrite(pwmPins()[this->port], pwm);
         }
     }
 
@@ -70,6 +86,12 @@ class L293DMotor {
     static const uint8_t* directionB() {
         static const uint8_t bits[4] = {3, 4, 7, 6};
         return bits;
+    }
+
+    /** speed set last for each port (0 after setup()) */
+    static int8_t* lastSpeed() {
+        static int8_t speeds[4] = {0, 0, 0, 0};
+        return speeds;
     }
 
     static uint8_t& latchState() {

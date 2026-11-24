@@ -8,7 +8,8 @@
  * Minimal driver for the TCS34725 colour sensor (I2C address 0x29, SDA = A4, SCL = A5 on the Uno).
  *
  * The sensor measures for 154 ms and adjusts its gain (1x, 4x, 16x, 60x) itself, so that dark and bright surfaces are both measured with
- * a good resolution. colour() classifies the reading as red, green, white or black; every other reading is reported as "none".
+ * a good resolution. Reading never waits: the sensor delivers a new measurement every 154 ms, in between (and while a new gain settles)
+ * the last measurement is returned again. So the blocks can be used in a fast loop, e.g. by a line follower. colour() classifies the reading as red, green, white or black; every other reading is reported as "none".
  *
  * The colour channels are compared after a white balance: the sensor sees much more green than red even on white paper (about 31 % red,
  * 45 % green, 39 % blue of the clear channel), so every channel is divided by its share on white first. A clear colour is recognised
@@ -20,7 +21,8 @@
 class TCS34725 {
   public:
     TCS34725(float blackMaxPercent, float whiteMinPercent)
-        : blackMaxPercent(blackMaxPercent), whiteMinPercent(whiteMinPercent), found(false), gainIndex(2), c(0), r(0), g(0), b(0) {
+        : blackMaxPercent(blackMaxPercent), whiteMinPercent(whiteMinPercent), found(false), gainIndex(2), readingGainIndex(2), lastRead(0),
+          gainChanged(0), c(0), r(0), g(0), b(0) {
     }
 
     void begin() {
@@ -31,6 +33,8 @@ class TCS34725 {
         delay(3);
         write8(REG_ENABLE, ENABLE_PON | ENABLE_AEN);
         delay(INTEGRATION_MS + 10);
+        readRaw();
+        this->lastRead = millis();
     }
 
     /**
@@ -132,25 +136,39 @@ class TCS34725 {
     const float whiteMinPercent;
     bool found;
     uint8_t gainIndex;
+    // gain of the measurement in c, r, g, b
+    uint8_t readingGainIndex;
+    unsigned long lastRead;
+    unsigned long gainChanged;
     uint16_t c;
     uint16_t r;
     uint16_t g;
     uint16_t b;
 
-    /** reads the last measurement; if it is too dark or too bright, the gain is changed and measured again (at most twice) */
+    /**
+     * reads a new measurement if the sensor has one, without waiting. If it is too dark or too bright, the gain is changed: the
+     * measurements of the next two cycles may still use the old gain, so the last measurement is kept until the new gain is in use.
+     */
     void read() {
+        unsigned long now = millis();
+        if ( now - this->gainChanged < 2 * INTEGRATION_MS + 10 || (this->found && now - this->lastRead < INTEGRATION_MS) ) {
+            return;
+        }
         readRaw();
-        for ( uint8_t step = 0; step < 2 && this->found; step++ ) {
-            if ( this->c < LOW_LIMIT && this->gainIndex < 3 ) {
-                this->gainIndex++;
-            } else if ( this->c > HIGH_LIMIT && this->gainIndex > 0 ) {
-                this->gainIndex--;
-            } else {
-                return;
-            }
-            write8(REG_CONTROL, GAIN_SETTINGS[this->gainIndex]);
-            delay(INTEGRATION_MS + 10);
-            readRaw();
+        this->lastRead = now;
+        if ( !this->found ) {
+            return;
+        }
+        uint8_t wanted = this->gainIndex;
+        if ( this->c < LOW_LIMIT && wanted < 3 ) {
+            wanted++;
+        } else if ( this->c > HIGH_LIMIT && wanted > 0 ) {
+            wanted--;
+        }
+        if ( wanted != this->gainIndex ) {
+            this->gainIndex = wanted;
+            write8(REG_CONTROL, GAIN_SETTINGS[wanted]);
+            this->gainChanged = now;
         }
     }
 
@@ -163,6 +181,7 @@ class TCS34725 {
             return;
         }
         this->found = true;
+        this->readingGainIndex = this->gainIndex;
         this->c = read16FromWire();
         this->r = read16FromWire();
         this->g = read16FromWire();
@@ -170,7 +189,7 @@ class TCS34725 {
     }
 
     double light() const {
-        double reference = this->c * (REFERENCE_GAIN / GAIN_FACTORS[this->gainIndex]) * (REFERENCE_MS / INTEGRATION_MS);
+        double reference = this->c * (REFERENCE_GAIN / GAIN_FACTORS[this->readingGainIndex]) * (REFERENCE_MS / INTEGRATION_MS);
         double percent = reference * 100.0 / REFERENCE_COUNT;
         return percent > 100.0 ? 100.0 : percent;
     }
