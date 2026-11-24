@@ -10,7 +10,7 @@ Unterstuetzte Boards: Arduino Uno, Arduino Nano, Arduino Mega
 So geht's
 ---------
 1. "BlockCore" starten (Desktop oder Startmenue).
-   Ein schwarzes Fenster oeffnet sich (der Server), danach das BlockCore-Fenster.
+   Nach einem kurzen Startfenster oeffnet sich das BlockCore-Fenster.
 2. Den Arduino per USB anschliessen.
 3. In BlockCore: "Roboter -> Verbinden" und den COM-Port waehlen.
    Ist nur ein Arduino angeschlossen, wird er automatisch gewaehlt.
@@ -19,7 +19,10 @@ So geht's
 5. Ausgaben des Arduino ("zeige auf Serial Monitor") siehst du unter
    "Roboter -> Serieller Monitor". Beim Hochladen pausiert der Monitor
    automatisch und verbindet sich danach wieder.
-6. Zum Beenden das schwarze Fenster schliessen.
+6. Zum Beenden das BlockCore-Fenster schliessen.
+
+Das Board (Uno, Nano, Mega) waehlst du unter "Roboter -> Board", die Sprache
+unter "Sprachen". Programme werden automatisch auf diesem PC gespeichert.
 
 Probleme?
 ---------

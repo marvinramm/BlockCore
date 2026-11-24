@@ -1,0 +1,34 @@
+/* BlockCore: hides what a local, single-user Arduino lab does not need. Injected into index.html by build-windows.sh. */
+
+/* menus: gallery, tutorials, help (online pages), login (BlockCore logs in a local user automatically), neural network tabs */
+#head-navigation-gallery,
+#head-navigation-tutorial,
+#head-navigation-help,
+#head-navigation-user,
+.tabLinkNN,
+/* edit menu: simulation, online examples, program links; robot menu: start page with all systems, robot info, WLAN */
+li:has(> #menuRunSim),
+li:has(> #menuRunMulipleSim),
+li:has(> #menuListExamples),
+li:has(> #menuLinkProg),
+li:has(> #menuRobotSwitch),
+li:has(> #menuRobotInfo),
+#robotWlan,
+#feedbackButton {
+    display: none !important;
+}
+
+/* languages: only German and English */
+#language li { display: none !important; }
+#language li.blockcore-language { display: list-item !important; }
+#language li.blockcore-language a { color: inherit; padding: 0.35rem 1rem; }
+#language li.blockcore-language.active a { font-weight: 700; }
+
+/* board entries in the robot menu */
+#head-navigation-robot .blockcore-heading {
+    padding: 0.25rem 1rem; font-size: 0.8em; color: #6c757d; text-transform: uppercase; letter-spacing: 0.05em;
+}
+#head-navigation-robot .blockcore-board a { padding-left: 2.2rem; position: relative; }
+#head-navigation-robot .blockcore-board.active a::before {
+    content: "\2713"; position: absolute; left: 0.9rem; color: #8ea60f; font-weight: 700;
+}

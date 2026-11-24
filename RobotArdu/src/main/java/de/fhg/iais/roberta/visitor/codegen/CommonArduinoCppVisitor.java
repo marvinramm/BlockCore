@@ -245,17 +245,20 @@ public abstract class CommonArduinoCppVisitor extends NepoArduinoCppVisitor impl
         this.src.add("{");
         incrIndentation();
         nlIndent();
+        // trigger pulse of 10 microseconds (data sheet of the HC-SR04). A trigger of 10 milliseconds, as used before, misses the echo of many
+        // modules: they start measuring with the rising edge, the echo is over before pulseIn starts, and pulseIn waits 1 s and returns 0.
+        // The timeout of 30 ms covers the maximal range of about 5 m.
         this.src.add("digitalWrite(trigger, LOW);");
         nlIndent();
-        this.src.add("delay(5);");
+        this.src.add("delayMicroseconds(2);");
         nlIndent();
         this.src.add("digitalWrite(trigger, HIGH);");
         nlIndent();
-        this.src.add("delay(10);");
+        this.src.add("delayMicroseconds(10);");
         nlIndent();
         this.src.add("digitalWrite(trigger, LOW);");
         nlIndent();
-        this.src.add("return pulseIn(echo, HIGH) * 0.03432/2;");
+        this.src.add("return pulseIn(echo, HIGH, 30000UL) * 0.03432/2;");
         decrIndentation();
         nlIndent();
         this.src.add("}");

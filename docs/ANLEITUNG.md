@@ -15,8 +15,7 @@ Ohne Installation: `BlockCore-portable.zip` entpacken und `BlockCore.exe` starte
 
 ## Loslegen
 
-1. **BlockCore** starten. Zuerst geht ein schwarzes Fenster auf – das ist der Server, lass es offen. Danach öffnet sich das
-   BlockCore-Fenster.
+1. **BlockCore** starten. Ein kleines Startfenster zeigt kurz „wird gestartet …“, danach öffnet sich das BlockCore-Fenster.
 2. Den Arduino per USB anschließen.
 3. **Roboter → Verbinden** und den COM-Port wählen, z. B. `COM3 – USB-SERIAL CH340`. Ist nur ein Arduino angeschlossen, wird er
    automatisch gewählt und das Roboter-Symbol oben wird grün.
@@ -26,10 +25,14 @@ Ohne Installation: `BlockCore-portable.zip` entpacken und `BlockCore.exe` starte
 4. Unter **Roboterkonfiguration** eintragen, was am Arduino hängt (Sensoren, Motoren …).
 5. Unter **Programm** die Blöcke zusammenstecken und auf **▶** klicken. Das Programm wird übersetzt und auf den Arduino geladen.
    Oben erscheint „Das Programm wurde auf COM3 übertragen“.
-6. Zum Beenden das **schwarze Fenster** schließen.
+6. Zum Beenden einfach das **BlockCore-Fenster** schließen.
 
-Andere Boards (Nano, Mega) wählst du über **Roboter → Roboter wechseln**. Um Programme dauerhaft zu speichern, unter
-**Anmelden → Registrieren** ein Benutzerkonto anlegen. Es liegt nur auf deinem PC.
+Das Board (Uno, Nano, Mega) wählst du im Menü **Roboter** unter **Board**:
+
+![Board wählen](images/robot-menu.jpg)
+
+Die Sprache (Deutsch / Englisch) stellst du im Menü **Sprachen** um. Programme speichert BlockCore automatisch für deinen PC –
+ein Benutzerkonto brauchst du nicht.
 
 ## Serieller Monitor
 
@@ -79,7 +82,7 @@ Freie Pins mit Shield: **2, 13, A0–A3** (A4 / A5 für den Farbsensor).
 | Fehler in der Konfiguration bei A4 / A5 | Ein anderes Bauteil steckt auf A4 / A5 – auf A0–A3 umstecken. |
 | Farbsensor meldet immer Grau | Kalibrieren (siehe oben), ca. 1 cm Abstand, die LED am Sensor muss leuchten. |
 | BlockCore-Fenster geht nicht auf | Selbst im Browser <http://127.0.0.1:1999> öffnen. |
-| „BlockCore läuft bereits“ | Es ist schon ein schwarzes Fenster offen – dort weitermachen oder es schließen. |
+| Ultraschallsensor zeigt immer 0 | Trig und Echo richtig herum angeschlossen? VCC an 5V? Nicht auf A4 / A5 stecken, wenn ein Farbsensor dran ist. |
 | Sonstiger Fehler | In `%LOCALAPPDATA%\BlockCore\logs\server.log` steht, was passiert ist. |
 
 Deine Programme liegen in `%LOCALAPPDATA%\BlockCore`. Beim Deinstallieren (Einstellungen → Apps → BlockCore) bleiben sie erhalten.

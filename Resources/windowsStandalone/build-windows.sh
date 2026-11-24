@@ -16,7 +16,11 @@
 
 set -euo pipefail
 
-JRE_URL='https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.25%2B9/OpenJDK11U-jre_x64_windows_hotspot_11.0.25_9.zip'
+# Java runtime: a small runtime is linked with jlink from the Windows JDK; jlink must be of exactly the same version (Linux JDK)
+JDK_LINUX_URL='https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.5%2B11/OpenJDK21U-jdk_x64_linux_hotspot_21.0.5_11.tar.gz'
+JDK_WINDOWS_URL='https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.5%2B11/OpenJDK21U-jdk_x64_windows_hotspot_21.0.5_11.zip'
+# modules needed by the server (Jetty, Jersey, Guice, Hibernate, HSQLDB, JAXB, jSerialComm)
+JAVA_MODULES='java.base,java.compiler,java.datatransfer,java.desktop,java.instrument,java.logging,java.management,java.naming,java.net.http,java.prefs,java.rmi,java.scripting,java.security.jgss,java.security.sasl,java.sql,java.sql.rowset,java.transaction.xa,java.xml,java.xml.crypto,jdk.charsets,jdk.crypto.ec,jdk.localedata,jdk.management,jdk.net,jdk.unsupported,jdk.xml.dom,jdk.zipfs'
 AVR_GCC_URL='https://github.com/ZakKemble/avr-gcc-build/releases/download/v7.3.0-1/avr-gcc-7.3.0-x64-mingw.zip'
 AVRDUDE_URL='https://github.com/avrdudes/avrdude/releases/download/v7.3/avrdude-v7.3-windows-x64.zip'
 ARDUINO_RESOURCES_URL='https://github.com/OpenRoberta/arduino-resources/releases/download/v2023.04.05/arduino-resources.zip'
@@ -29,7 +33,7 @@ DOWNLOAD_DIR="$OUT_DIR/downloads"
 STAGE="$OUT_DIR/BlockCore"
 RSC="$STAGE/ora-cc-rsc/RobotArdu/arduino-resources"
 
-for tool in curl unzip zip x86_64-w64-mingw32-gcc x86_64-w64-mingw32-windres makensis; do
+for tool in curl tar unzip zip x86_64-w64-mingw32-gcc x86_64-w64-mingw32-windres makensis; do
     command -v "$tool" > /dev/null || { echo "missing tool: $tool"; exit 12; }
 done
 SERVER_JARS="$REPO_DIR/OpenRobertaServer/target/resources"
@@ -49,22 +53,34 @@ mkdir -p "$DOWNLOAD_DIR"
 rm -rf "$STAGE" "$OUT_DIR/tmp"
 mkdir -p "$STAGE" "$OUT_DIR/tmp" "$RSC"
 
-echo '== Java runtime'
-unzip -q "$(download "$JRE_URL")" -d "$OUT_DIR/tmp/jre"
-mv "$OUT_DIR"/tmp/jre/* "$STAGE/jre"
+echo '== Java runtime (jlink: only the modules the server needs, German and English locales)'
+mkdir -p "$OUT_DIR/tmp/jdk-linux" "$OUT_DIR/tmp/jdk-windows"
+tar -xzf "$(download "$JDK_LINUX_URL")" -C "$OUT_DIR/tmp/jdk-linux" --strip-components=1
+unzip -q "$(download "$JDK_WINDOWS_URL")" -d "$OUT_DIR/tmp/jdk-windows"
+"$OUT_DIR/tmp/jdk-linux/bin/jlink" --module-path "$(echo "$OUT_DIR"/tmp/jdk-windows/*/jmods)" --add-modules "$JAVA_MODULES" \
+    --include-locales=en,de --strip-debug --no-header-files --no-man-pages --compress=zip-0 --output "$STAGE/jre"
+[ -f "$STAGE/jre/bin/java.exe" ] || { echo "jlink did not create a Windows runtime"; exit 12; }
+rm -rf "$OUT_DIR/tmp/jdk-linux" "$OUT_DIR/tmp/jdk-windows"
 
 echo '== server and frontend'
 mkdir -p "$STAGE/lib"
 cp "$SERVER_JARS"/*.jar "$STAGE/lib/"
 cp -r "$REPO_DIR/OpenRobertaServer/staticResources" "$STAGE/staticResources"
 
-echo '== branding (BlockCore instead of the Open Roberta name and logo)'
+echo '== branding (BlockCore instead of the Open Roberta name and logo) and the simplified BlockCore user interface'
 WEB="$STAGE/staticResources"
 cp "$SCRIPT_DIR/branding/logo-word.svg" "$WEB/css/svg/logo-word.svg"
 cp "$SCRIPT_DIR/branding/icon-144.png" "$WEB/css/img/Nepo_N.png"
+cp "$SCRIPT_DIR/branding/blockcore.ico" "$WEB/css/img/NEPO.ico"
+mkdir -p "$WEB/blockcore"
+cp "$SCRIPT_DIR"/branding/web/blockcore.js "$SCRIPT_DIR"/branding/web/blockcore.css "$SCRIPT_DIR"/branding/web/icon-*.png "$WEB/blockcore/"
+cp "$SCRIPT_DIR/branding/web/manifest.webapp.json" "$WEB/manifest.webapp.json"
 sed -i -e 's|<title>Open Roberta Lab</title>|<title>BlockCore</title>|' \
-       -e "s|alt='Open Roberta Lab logo'|alt='BlockCore logo'|" "$WEB/index.html"
+       -e "s|alt='Open Roberta Lab logo'|alt='BlockCore logo'|" \
+       -e "s|</head>|<link href='/blockcore/blockcore.css' rel='stylesheet' type='text/css'>\\n<script defer src='/blockcore/blockcore.js'></script>\\n</head>|" \
+       "$WEB/index.html"
 grep -q '<title>BlockCore</title>' "$WEB/index.html" || { echo "branding of index.html failed"; exit 12; }
+grep -q '/blockcore/blockcore.js' "$WEB/index.html" || { echo "injecting blockcore.js failed"; exit 12; }
 
 echo '== Arduino resources (only the AVR boards)'
 unzip -q "$(download "$ARDUINO_RESOURCES_URL")" -d "$OUT_DIR/tmp/ardu"
@@ -81,6 +97,11 @@ echo '== AVR toolchain'
 unzip -q "$(download "$AVR_GCC_URL")" -d "$OUT_DIR/tmp/gcc"
 mv "$OUT_DIR"/tmp/gcc/avr-gcc-* "$RSC/avr-gcc"
 rm -rf "$RSC/avr-gcc/doc" "$RSC/avr-gcc/share/doc" "$RSC/avr-gcc/share/man" "$RSC/avr-gcc/share/info" "$RSC/avr-gcc/bin/avrdude"* "$RSC/avr-gcc/etc/avrdude.conf" "$RSC/avr-gcc/bin/make.exe"
+# only the libraries of the architectures used: avr5 (ATmega328P: Uno, Nano) and avr6 (ATmega2560: Mega)
+for arch in avr25 avr3 avr31 avr35 avr4 avr51 avrtiny avrxmega2 avrxmega3 avrxmega4 avrxmega5 avrxmega6 avrxmega7 tiny-stack; do
+    rm -rf "$RSC/avr-gcc/lib/gcc/avr/7.3.0/$arch" "$RSC/avr-gcc/avr/lib/$arch"
+done
+[ -d "$RSC/avr-gcc/lib/gcc/avr/7.3.0/avr5" ] && [ -d "$RSC/avr-gcc/avr/lib/avr6" ] || { echo "avr5/avr6 libraries missing"; exit 12; }
 
 echo '== avrdude'
 mkdir -p "$RSC/avrdude/bin" "$RSC/avrdude/etc"
@@ -92,7 +113,7 @@ echo '== launcher'
 cp "$SCRIPT_DIR/branding/blockcore.ico" "$OUT_DIR/tmp/BlockCore.ico"
 printf '1 ICON "BlockCore.ico"\n' > "$OUT_DIR/tmp/launcher.rc"
 (cd "$OUT_DIR/tmp" && x86_64-w64-mingw32-windres launcher.rc -O coff -o launcher.res)
-x86_64-w64-mingw32-gcc -O2 -Wall -municode -static -o "$STAGE/BlockCore.exe" "$SCRIPT_DIR/launcher.c" "$OUT_DIR/tmp/launcher.res" -lws2_32 -lshell32
+x86_64-w64-mingw32-gcc -O2 -Wall -Wextra -municode -mwindows -static -o "$STAGE/BlockCore.exe" "$SCRIPT_DIR/launcher.c" "$OUT_DIR/tmp/launcher.res" -lws2_32 -lshell32 -luser32 -lgdi32
 cp "$SCRIPT_DIR/LIESMICH.txt" "$STAGE/LIESMICH.txt"
 
 echo '== installer'

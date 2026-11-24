@@ -16,16 +16,17 @@ program that opens in its own window. On top it adds blocks for the hardware we 
 | | |
 |---|---|
 | **Boards** | Arduino Uno, Arduino Nano (new and old bootloader), Arduino Mega 2560 |
-| **Runs on** | Windows 10 / 11 (64 bit), no admin rights needed |
+| **Runs on** | Windows 10 / 11 (64 bit), no admin rights needed; opens as its own window (no browser tabs, no console) |
 | **Upload** | over the USB COM port with avrdude, port selected in the lab |
 | **Serial monitor** | own window: baud rate, timestamps, autoscroll, send line; pauses itself during an upload |
 | **Extra blocks** | TCS34725 colour sensor (red / green / white / black, light, RGB channels), L293D motor shield (M1–M4) |
-| **Inside** | Open Roberta server (Java 11, bundled), avr-gcc 7.3, avrdude 7.3, Arduino AVR core |
+| **Languages** | German and English, switchable in the program |
+| **Inside** | Open Roberta server with a trimmed Java 21 runtime, avr-gcc 7.3 (AVR5/AVR6 only), avrdude 7.3, Arduino AVR core |
 | **Network** | none – the lab listens on `127.0.0.1` only |
 
 ## Download
 
-**[⬇ BlockCore-Setup.exe – latest release](../../releases/latest)** (≈ 115 MB)
+**[⬇ BlockCore-Setup.exe – latest release](../../releases/latest)** (≈ 110 MB)
 
 1. Run the installer. Windows SmartScreen warns about unsigned programs: **More info → Run anyway**.
 2. It installs to `%LOCALAPPDATA%\Programs\BlockCore` and adds shortcuts to the desktop and the start menu.
@@ -37,16 +38,23 @@ Every push to `main` builds a new installer and publishes it as a release
 
 ## Getting started
 
-1. Start **BlockCore**. A black console window opens (that is the server), then the BlockCore window.
+1. Start **BlockCore**. A small start window appears for a few seconds, then the BlockCore window opens.
 2. Plug in the Arduino.
 3. **robot → connect** and pick the COM port. With a single Arduino attached it is selected automatically.
+   The board (Uno, Nano, Mega) is chosen in the same menu:
+
+   ![Robot menu with the board selection](docs/images/robot-menu.jpg)
+
 
    ![Choosing the COM port](docs/images/connect.jpg)
 
 4. Describe the hardware in **ROBOT CONFIGURATION** (sensors, motors …), build the program in **PROGRAM** and press **▶**.
    The program is compiled on your PC and uploaded; a message confirms the upload.
 5. **robot → Serial Monitor** shows what the Arduino prints with *show on Serial Monitor*.
-6. Close the black window to quit.
+6. Close the BlockCore window to quit; the server stops with it.
+
+Programs are saved for a local user that BlockCore creates and logs in automatically – there is no login dialog. The language
+(German / English) is switched in the **languages** menu and remembered.
 
 A German step-by-step guide for students is in **[docs/ANLEITUNG.md](docs/ANLEITUNG.md)**.
 
@@ -118,9 +126,12 @@ flowchart LR
     S <-->|serial monitor| A
 ```
 
-- **`BlockCore.exe`** ([`launcher.c`](Resources/windowsStandalone/launcher.c)) creates the database on the first start, starts the server
-  with the bundled Java runtime and opens the lab as an app window (Microsoft Edge or Chrome in app mode, otherwise the default browser).
-  Closing the console window stops the server.
+- **`BlockCore.exe`** ([`launcher.c`](Resources/windowsStandalone/launcher.c)) shows a start window, creates the database on the first
+  start, starts the server hidden with the bundled Java runtime and opens the lab as an app window (Microsoft Edge or Chrome in app mode
+  with a profile of its own, otherwise the default browser). Closing that window stops the server.
+- The package build adds [`blockcore.js`](Resources/windowsStandalone/branding/web/blockcore.js) to the lab: board selection in the robot
+  menu instead of the start page, only German and English, automatic login of a local user, and it hides what a local Arduino lab does
+  not need (gallery, tutorials, online help, simulation). The lab does not contact any other server.
 - The server runs in **local mode** (`server.local.serial=true`): it lists the COM ports (`/rest/local/ports`), compiles without a robot
   token, uploads with avrdude (`/rest/local/upload`) and runs the serial monitor (`/rest/local/monitor/*`). These services only answer
   requests from the same PC and from pages of this server.
@@ -180,7 +191,8 @@ java --add-opens java.base/java.lang=ALL-UNNAMED -Dora.arduino.directBuild=true 
 
 | Version | Changes |
 |---|---|
-| Build 3+ | BlockCore name and logo, own app window, serial monitor |
+| next | No console: start window and app window, server stops with the window. Board selection in the robot menu, German / English only, automatic local login, no online requests. Ultrasonic sensor fixed (10 µs trigger instead of 10 ms, 30 ms timeout). Trimmed Java 21 runtime and AVR toolchain (smaller, faster start) |
+| Build 3 | BlockCore name and logo, own app window, serial monitor |
 | Build 2 | First Windows installer: local COM port upload, direct AVR build, TCS34725 and L293D blocks |
 
 ## License

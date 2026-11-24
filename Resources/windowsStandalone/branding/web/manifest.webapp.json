@@ -1,0 +1,14 @@
+{
+  "name": "BlockCore",
+  "short_name": "BlockCore",
+  "description": "Block programming for Arduino",
+  "default_locale": "de",
+  "start_url": "/?loadSystem=uno",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#bacc1e",
+  "icons": [
+    { "src": "/blockcore/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/blockcore/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

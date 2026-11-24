@@ -13,11 +13,11 @@ TCS34725 _tcs34725_F(2.0, 12.0);
 double _getUltrasonicDistance(int trigger, int echo)
 {
     digitalWrite(trigger, LOW);
-    delay(5);
+    delayMicroseconds(2);
     digitalWrite(trigger, HIGH);
-    delay(10);
+    delayMicroseconds(10);
     digitalWrite(trigger, LOW);
-    return pulseIn(echo, HIGH) * 0.03432/2;
+    return pulseIn(echo, HIGH, 30000UL) * 0.03432/2;
 }
 
 void setup()
