@@ -18,8 +18,8 @@
     var LOCAL_ACCOUNT = 'blockcore';
     var LOCAL_PASSWORD = 'blockcore-local';
     var TEXT = {
-        de: { board: 'Board' },
-        en: { board: 'Board' }
+        de: { board: 'Board', compiling: 'Programm wird übersetzt …', uploading: 'Wird auf {port} hochgeladen …', done: 'Auf {port} hochgeladen', failed: 'Hochladen fehlgeschlagen', compileFailed: 'Programm hat Fehler' },
+        en: { board: 'Board', compiling: 'Compiling program …', uploading: 'Uploading to {port} …', done: 'Uploaded to {port}', failed: 'Upload failed', compileFailed: 'Program has errors' }
     };
 
     function store(key, value) {
@@ -192,10 +192,133 @@
         });
     }
 
+    /*
+     * upload display: a panel at the top with a progress bar (compiling, uploading, done with a check mark) and a spinning ring around
+     * the run button. The progress is estimated: compiling fills the bar up to 60 %, uploading up to 95 %.
+     */
+    function setupUploadDisplay(G) {
+        var panel = document.createElement('div');
+        panel.id = 'blockcoreUpload';
+        panel.innerHTML = '<div class="bc-row"><span class="bc-icon"></span><span class="bc-text"></span></div><div class="bc-bar"><div class="bc-fill"></div></div>';
+        document.body.appendChild(panel);
+        var fill = panel.querySelector('.bc-fill');
+        var textElement = panel.querySelector('.bc-text');
+        var progress = 0, target = 0, timer = null, hideTimer = null;
+
+        function text(key, port) {
+            return ((TEXT[language(G)] || TEXT.en)[key] || '').replace('{port}', port || '');
+        }
+        function runButton() {
+            return document.getElementById('runOnBrick');
+        }
+        function ring(on) {
+            var button = runButton();
+            if (!button) {
+                return;
+            }
+            var existing = button.querySelector('.bc-ring');
+            if (on && !existing) {
+                var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('class', 'bc-ring');
+                circle.setAttribute('cx', '24');
+                circle.setAttribute('cy', '24');
+                circle.setAttribute('r', '19');
+                button.appendChild(circle);
+            } else if (!on && existing) {
+                existing.parentNode.removeChild(existing);
+            }
+        }
+        function animate() {
+            // move towards the target, slower and slower: the bar never stops completely while waiting
+            progress += Math.max((target - progress) * 0.04, 0.05);
+            if (progress > target) {
+                progress = target;
+            }
+            fill.style.width = progress + '%';
+        }
+        function show(state, message, until) {
+            clearTimeout(hideTimer);
+            panel.className = 'bc-visible bc-' + state;
+            textElement.textContent = message;
+            target = until;
+            if (!timer) {
+                timer = setInterval(animate, 50);
+            }
+            var button = runButton();
+            if (button) {
+                button.classList.toggle('bc-busy', state === 'busy');
+                button.classList.toggle('bc-done', state === 'done');
+            }
+            ring(state === 'busy');
+            if (state !== 'busy') {
+                progress = state === 'done' ? 100 : progress;
+                fill.style.width = progress + '%';
+                clearInterval(timer);
+                timer = null;
+                hideTimer = setTimeout(function () {
+                    panel.className = '';
+                    if (button) {
+                        button.classList.remove('bc-done');
+                    }
+                }, state === 'done' ? 2500 : 4000);
+            }
+        }
+        function start() {
+            progress = 0;
+            fill.style.width = '0%';
+            show('busy', text('compiling'), 60);
+        }
+        function data(options) {
+            try {
+                return JSON.parse(options.data || '{}');
+            } catch (e) {
+                return {};
+            }
+        }
+        // the save button is hidden (blockcore.css): move the buttons right of it into its place
+        (function closeGap() {
+            var save = document.getElementById('saveProgram');
+            if (!save) {
+                setTimeout(closeGap, 500);
+                return;
+            }
+            var x = /translate\((\d+)/.exec(save.getAttribute('transform') || '');
+            Array.prototype.forEach.call(save.parentNode.children, function (button) {
+                var match = /translate\((\d+),\s*(\d+)\)/.exec(button.getAttribute('transform') || '');
+                if (x && match && +match[1] > +x[1]) {
+                    button.setAttribute('transform', 'translate(' + (+match[1] - 50) + ',' + match[2] + ')');
+                }
+            });
+        })();
+        $(document).ajaxSend(function (event, xhr, options) {
+            if (/\/projectWorkflow\/run$/.test(options.url || '')) {
+                start();
+            } else if (/\/local\/upload$/.test(options.url || '')) {
+                show('busy', text('uploading', data(options).port), 95);
+            }
+        });
+        $(document).ajaxComplete(function (event, xhr, options) {
+            var answer = xhr.responseJSON || {};
+            if (/\/projectWorkflow\/run$/.test(options.url || '')) {
+                if (answer.rc !== 'ok' || !answer.compiledCode) {
+                    show('error', text('compileFailed'), progress);
+                }
+            } else if (/\/local\/upload$/.test(options.url || '')) {
+                var port = data(options).port;
+                if (xhr.status === 200 && answer.rc === 'ok') {
+                    show('done', text('done', port), 100);
+                } else {
+                    show('error', text('failed'), progress);
+                }
+            }
+        });
+    }
+
     whenLabReady(function () {
         modules(['guiState.controller', 'robot.controller', 'user.model'], function (G, R, U) {
             setupLanguages(G);
             setupBoards(G, R);
+            setupUploadDisplay(G);
             autoLogin(G, U);
             // the robot or the language can change elsewhere (e.g. loading a program): keep the check marks right
             setInterval(function () {

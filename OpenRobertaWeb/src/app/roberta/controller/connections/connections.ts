@@ -1056,8 +1056,7 @@ class LocalSerialOrTokenConnection extends TokenConnection {
         }
         $('#head-navi-icon-robot').removeClass('wait').addClass('busy');
         GUISTATE_C.setRunEnabled(false);
-        // @ts-ignore
-        MSG.displayMessage('LOCAL_SERIAL_UPLOADING', 'TOAST', port);
+        // progress and success are shown by the BlockCore upload display (blockcore.js), errors as a popup
         $.ajax({
             url: LocalSerialOrTokenConnection.UPLOAD_URL,
             type: 'POST',
@@ -1068,8 +1067,6 @@ class LocalSerialOrTokenConnection extends TokenConnection {
             .done((answer) => {
                 if (answer.rc === 'ok') {
                     LocalSerialOrTokenConnection.lastUploadPort(port);
-                    // @ts-ignore
-                    MSG.displayMessage('LOCAL_SERIAL_UPLOAD_SUCCESS', 'TOAST', port);
                 } else {
                     LOG.error(answer.message);
                     // @ts-ignore

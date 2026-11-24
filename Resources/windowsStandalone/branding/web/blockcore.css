@@ -39,3 +39,52 @@ li:has(> #menuRobotInfo),
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15 7v4h1v2h-3V5h2l-3-4-3 4h2v8H8v-2.07c.7-.37 1.2-1.08 1.2-1.93 0-1.21-.99-2.2-2.2-2.2-1.21 0-2.2.99-2.2 2.2 0 .85.5 1.56 1.2 1.93V13c0 1.11.89 2 2 2h3v3.05c-.71.37-1.2 1.1-1.2 1.95 0 1.22.99 2.2 2.2 2.2 1.21 0 2.2-.98 2.2-2.2 0-.85-.49-1.58-1.2-1.95V15h3c1.11 0 2-.89 2-2v-2h1V7h-4z'/%3E%3C/svg%3E") center / contain no-repeat;
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15 7v4h1v2h-3V5h2l-3-4-3 4h2v8H8v-2.07c.7-.37 1.2-1.08 1.2-1.93 0-1.21-.99-2.2-2.2-2.2-1.21 0-2.2.99-2.2 2.2 0 .85.5 1.56 1.2 1.93V13c0 1.11.89 2 2 2h3v3.05c-.71.37-1.2 1.1-1.2 1.95 0 1.22.99 2.2 2.2 2.2 1.21 0 2.2-.98 2.2-2.2 0-.85-.49-1.58-1.2-1.95V15h3c1.11 0 2-.89 2-2v-2h1V7h-4z'/%3E%3C/svg%3E") center / contain no-repeat;
 }
+
+/* the "save" button next to the run button: programs are saved with "edit -> save" (Ctrl+S) */
+#saveProgram { display: none !important; }
+
+/* upload display: panel at the top with progress bar and check mark (blockcore.js) */
+#blockcoreUpload {
+    position: fixed; top: 12px; left: 50%; z-index: 4000; min-width: 300px; max-width: calc(100vw - 32px);
+    transform: translate(-50%, -140%); opacity: 0; pointer-events: none;
+    background: #fff; border-radius: 10px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); padding: 10px 16px 12px;
+    font-size: 15px; color: #333; transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity 0.25s;
+}
+#blockcoreUpload.bc-visible { transform: translate(-50%, 0); opacity: 1; }
+#blockcoreUpload .bc-text { color: #333; }
+#blockcoreUpload .bc-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; white-space: nowrap; }
+#blockcoreUpload .bc-icon { width: 20px; height: 20px; flex: none; border-radius: 50%; position: relative; }
+#blockcoreUpload.bc-busy .bc-icon { border: 3px solid #e3e8c8; border-top-color: #8ea60f; animation: bc-spin 0.8s linear infinite; box-sizing: border-box; }
+#blockcoreUpload.bc-done .bc-icon { background: #8ea60f; animation: bc-pop 0.35s ease-out; }
+#blockcoreUpload.bc-done .bc-icon::after {
+    content: ""; position: absolute; left: 7px; top: 3px; width: 5px; height: 10px;
+    border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg);
+}
+#blockcoreUpload.bc-error .bc-icon { background: #d9534f; animation: bc-pop 0.35s ease-out; }
+#blockcoreUpload.bc-error .bc-icon::before, #blockcoreUpload.bc-error .bc-icon::after {
+    content: ""; position: absolute; left: 9px; top: 4px; width: 2.5px; height: 12px; background: #fff; transform: rotate(45deg);
+}
+#blockcoreUpload.bc-error .bc-icon::after { transform: rotate(-45deg); }
+#blockcoreUpload .bc-bar { height: 6px; border-radius: 3px; background: #eef0e4; overflow: hidden; }
+#blockcoreUpload .bc-fill {
+    height: 100%; width: 0; border-radius: 3px; transition: width 0.1s linear, background 0.3s;
+    background: linear-gradient(90deg, #8ea60f 0%, #bacc1e 50%, #8ea60f 100%); background-size: 200% 100%;
+}
+#blockcoreUpload.bc-busy .bc-fill { animation: bc-shine 1.2s linear infinite; }
+#blockcoreUpload.bc-done .bc-fill { background: #8ea60f; }
+#blockcoreUpload.bc-error .bc-fill { background: #d9534f; }
+
+/* run button: spinning ring while compiling and uploading, green after the upload */
+#runOnBrick .bc-ring {
+    fill: none; stroke: #fff; stroke-width: 3.5; stroke-linecap: round; stroke-dasharray: 36 84;
+    transform-origin: 24px 24px; animation: bc-spin 0.9s linear infinite;
+}
+#runOnBrick.bc-busy .blocklyButtonBack { fill: #8ea60f !important; }
+#runOnBrick.bc-busy path { animation: bc-pulse 1s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+#runOnBrick.bc-done .blocklyButtonBack { fill: #8ea60f !important; }
+#runOnBrick.bc-done path { fill: #fff !important; }
+
+@keyframes bc-spin { to { transform: rotate(360deg); } }
+@keyframes bc-pulse { 50% { opacity: 0.45; } }
+@keyframes bc-shine { from { background-position: 200% 0; } to { background-position: 0 0; } }
+@keyframes bc-pop { 0% { transform: scale(0.3); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
