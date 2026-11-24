@@ -1,232 +1,265 @@
-Open Roberta Lab
-================
+# Open Roberta Lab – lokal für Windows
 
-[![Unit Test](https://github.com/OpenRoberta/openroberta-lab/actions/workflows/unit_test_triggered_by_develop_push.yml/badge.svg?branch=develop)](https://github.com/OpenRoberta/openroberta-lab/actions/workflows/unit_test.yml)
-[![Integration Test (Nightly)](https://github.com/OpenRoberta/openroberta-lab/actions/workflows/integration_test_triggered_by_cron.yml/badge.svg?branch=develop&event=schedule)](https://github.com/OpenRoberta/openroberta-lab/actions/workflows/integration_test_triggered_by_cron.yml)
+[![Windows-Installer](https://github.com/marvinramm/openroberta-lab-local/actions/workflows/windows_installer.yml/badge.svg)](https://github.com/marvinramm/openroberta-lab-local/actions/workflows/windows_installer.yml)
 
-### Introduction
+Das [Open Roberta Lab](https://lab.open-roberta.org) als **ein Programm für Windows**: Doppelklick, Browser geht auf, Arduino per USB anstecken,
+COM-Port wählen, Programm mit Blöcken bauen, ▶ drücken – fertig.
 
-The steps below explain how to get started with the _sources_ of the OpenRoberta lab. If you just want to run the server locally only, please have a look into
-the [Wiki - Docker Installation](https://github.com/OpenRoberta/openroberta-lab/wiki/Instructions-to-run-a-openroberta-lab-server-using-DOCKER) or the
-(outdated, but working) description [Wiki - Installation](https://github.com/OpenRoberta/openroberta-lab/wiki/Installation).
+- **Kein Internet nötig.** Server, Compiler und Upload laufen auf dem eigenen PC.
+- **Kein externer Server, kein Connector-Programm, kein Token.**
+- **Keine Admin-Rechte** für die Installation.
+- Zusätzliche Bausteine für die **Arduino-Hardware im Unterricht**: Farbsensor **TCS34725** und **L293D-Motor-Shield**.
 
-If you want to contribute, please get in touch with us, see [Wiki - Community](https://github.com/OpenRoberta/openroberta-lab/wiki/Community), before you start.
-Please also check our wiki for development procedure, coding conventions and further reading. We use the Github issue tracking system. Please file issues in the
-main project **openroberta-lab**.
+Unterstützte Boards: **Arduino Uno**, **Arduino Nano** (neuer und alter Bootloader), **Arduino Mega 2560**.
 
-All of our production and test systems run on _Linux_ servers. Most of our developers use Linux laptops. The following instructions are valid for Linux
-machines. Nevertheless you can follow the steps on a Win* machine. Please leave out the installation of cross compilers, because not all exist/work on Win*.
-Without crosscompiler you can do almost everything (start the server, experiment with the frontend, create user, use the data base, change the lab by editing
-our sources, ...), except cross compilation of course.
+---
 
-#### Prerequisites
+## Inhalt
 
-You need Java JDK >= 1.8 and JAVA JDK <= 13.0.2 (e.g. `openjdk-11-jdk`), Maven, Git and Python3 together with pip3 and python3-serial. A typical install on
-ubuntu:22.04 as superuser with apt is (other systems are similar):
+- [Download und Installation](#download-und-installation)
+- [Erste Schritte](#erste-schritte)
+- [Der Farbsensor TCS34725](#der-farbsensor-tcs34725)
+- [Das L293D-Motor-Shield](#das-l293d-motor-shield)
+- [Pinbelegung auf einen Blick](#pinbelegung-auf-einen-blick)
+- [Probleme lösen](#probleme-lösen)
+- [Wie es funktioniert](#wie-es-funktioniert)
+- [Selbst bauen und weiterentwickeln](#selbst-bauen-und-weiterentwickeln)
+- [Herkunft und Lizenz](#herkunft-und-lizenz)
+
+---
+
+## Download und Installation
+
+1. Unter **[Releases → neueste Version](https://github.com/marvinramm/openroberta-lab-local/releases/latest)** die Datei
+   **`OpenRobertaLab-Setup.exe`** herunterladen (ca. 115 MB).
+2. Setup starten. Windows SmartScreen warnt bei unsignierten Programmen:
+   **„Weitere Informationen“ → „Trotzdem ausführen“**.
+3. Installieren. Das Programm landet in `%LOCALAPPDATA%\Programs\OpenRobertaLab`,
+   mit Verknüpfung auf dem Desktop und im Startmenü.
+
+**Ohne Installation:** `OpenRobertaLab-portable.zip` aus demselben Release entpacken (z. B. auf einen USB-Stick) und
+`OpenRobertaLab.exe` starten.
+
+**Deinstallieren:** Windows-Einstellungen → Apps → „Open Roberta Lab“. Deine Programme in
+`%LOCALAPPDATA%\OpenRobertaLab` bleiben dabei erhalten.
+
+> Jeder Push auf `main` baut automatisch einen neuen Installer
+> ([Actions → Windows-Installer](https://github.com/marvinramm/openroberta-lab-local/actions/workflows/windows_installer.yml)) und
+> veröffentlicht ihn als neues Release. Von Hand geht es über **Run workflow**.
+
+## Erste Schritte
+
+1. **Open Roberta Lab** starten. Ein schwarzes Fenster öffnet sich – das ist der Server.
+   Nach einigen Sekunden öffnet sich der Browser mit dem Lab (Arduino Uno ist schon ausgewählt).
+2. **Arduino per USB anschließen.**
+3. Im Lab **Roboter → Verbinden** und den COM-Port wählen, z. B. `USB-SERIAL CH340 (COM3)`.
+   Ist nur ein Arduino angeschlossen, wird er automatisch gewählt; das Roboter-Symbol oben wird dann grün.
+4. In **Roboterkonfiguration** die Bauteile eintragen (Sensoren, Motoren …).
+5. Im **Programm** die Blöcke zusammenstecken und auf **▶** klicken.
+   Das Programm wird kompiliert und hochgeladen. Oben erscheint „Das Programm wurde auf COM3 übertragen“.
+6. Zum Beenden das **schwarze Fenster schließen**.
+
+Andere Boards wählst du wie gewohnt über **Roboter → Roboter wechseln** (Uno, Nano, Mega).
+Zum dauerhaften Speichern von Programmen unter **Anmelden → Registrieren** ein Benutzerkonto anlegen. Es liegt nur in
+der lokalen Datenbank auf diesem PC; es wird nichts ins Internet übertragen.
+
+| Was                         | Wo                                                     |
+| --------------------------- | ------------------------------------------------------ |
+| Programmdateien             | `%LOCALAPPDATA%\Programs\OpenRobertaLab`               |
+| Datenbank (Programme, Nutzer) | `%LOCALAPPDATA%\OpenRobertaLab\db`                   |
+| Server-Log                  | `%LOCALAPPDATA%\OpenRobertaLab\logs\server.log`        |
+| Lab-Adresse                 | <http://127.0.0.1:1999> (nur vom eigenen PC erreichbar) |
+
+## Der Farbsensor TCS34725
+
+Neuer Sensor-Baustein für Uno, Nano und Mega. Er erkennt **Rot, Grün, Weiß und Schwarz** – ideal für Linienfolger,
+Farbsortierer und Ampel-Spiele.
+
+### Anschluss
+
+| TCS34725 | Arduino Uno / Nano | Arduino Mega |
+| -------- | ------------------ | ------------ |
+| VIN      | 5V                 | 5V           |
+| GND      | GND                | GND          |
+| SDA      | **A4**             | 20 (SDA)     |
+| SCL      | **A5**             | 21 (SCL)     |
+| LED      | frei lassen (LED leuchtet) | frei lassen |
+
+Der Konfigurationsblock zeigt immer SDA = A4 und SCL = A5 an; beim Mega gelten trotzdem die Pins 20 und 21.
+A4 und A5 sind beim Uno und Nano die einzigen I²C-Pins. Hängt dort schon etwas anderes, das **kein** I²C-Gerät ist
+(z. B. Trig/Echo eines Ultraschallsensors), meldet die Konfiguration einen Fehler. Den Ultraschallsensor dann einfach auf
+**A0/A1** umstecken. Ein I²C-Display (LCD 1602 I²C, OLED) darf sich A4/A5 mit dem Farbsensor teilen.
+
+### Konfiguration
+
+Unter **Roboterkonfiguration → Sensoren → Farbsensor TCS34725**:
+
+| Feld            | Standard | Bedeutung                                                           |
+| --------------- | -------- | ------------------------------------------------------------------- |
+| Name            | `F`      | Name, unter dem der Sensor im Programm erscheint                    |
+| Schwarz unter % | `2`      | Ist die Helligkeit kleiner, meldet der Sensor **Schwarz**           |
+| Weiß über %     | `12`     | Ist die Helligkeit größer (und keine Farbe dominiert), meldet er **Weiß** |
+
+Es ist nur **ein** TCS34725 möglich (feste I²C-Adresse `0x29`).
+
+### Programm
+
+Der Block **„gib Farbe Farbsensor F“** hat fünf Modi:
+
+| Modus   | Ergebnis                          | Typ   |
+| ------- | --------------------------------- | ----- |
+| Farbe   | Rot, Grün, Weiß, Schwarz oder Grau (= nicht erkannt) | Farbe |
+| Licht   | Helligkeit in %                   | Zahl  |
+| rot     | Anteil des Rot-Kanals am Licht in % | Zahl |
+| grün    | Anteil des Grün-Kanals in %       | Zahl  |
+| blau    | Anteil des Blau-Kanals in %       | Zahl  |
+
+Im Modus **Farbe** vergleichst du das Ergebnis mit den Farbblöcken aus der Kategorie **Farben**
+(Rot `#cc0000`, Grün `#33cc00`, Weiß `#ffffff`, Schwarz `#000000`):
+
+```
+wenn  [gib Farbe Farbsensor F]  =  [rot]
+    mache  …
+```
+
+### Kalibrieren
+
+Die Erkennung hängt von Abstand (ideal ca. 1 cm), Umgebungslicht und Oberfläche ab:
+
+1. Ein kleines Programm bauen, das **Licht**, **rot**, **grün** und **blau** mit „zeige auf Serial Monitor“ ausgibt.
+2. Den Sensor nacheinander über Schwarz, Weiß, Rot und Grün halten und die Werte notieren.
+3. **Schwarz unter %** knapp über den Schwarz-Wert setzen, **Weiß über %** knapp unter den Weiß-Wert.
+
+So entscheidet der Sensor im Modus Farbe:
+
+1. Helligkeit unter „Schwarz unter %“ → **Schwarz**
+2. Rot-Kanal mehr als 1,5-mal so stark wie Grün und Blau → **Rot**
+3. Grün-Kanal mehr als 1,2-mal so stark wie Rot und Blau → **Grün**
+4. Helligkeit über „Weiß über %“ → **Weiß**
+5. sonst → **Grau** (nicht erkannt)
+
+Der Treiber ist eine eigene, kleine Header-Datei
+([`TCS34725.h`](RobotArdu/src/main/resources/arduino/TCS34725/TCS34725.h)) und braucht keine Adafruit-Bibliothek
+(Integrationszeit 50 ms, Verstärkung 4×).
+
+## Das L293D-Motor-Shield
+
+Für das Adafruit Motor Shield der ersten Generation (L293D mit Schieberegister 74HC595) und Nachbauten.
+In der **Roboterkonfiguration** (Kategorie Aktoren) pro Motor einen Block **L293D motor** mit Port **M1–M4** anlegen.
+Im Programm (Kategorie Aktion) dreht **„run L293D motor … Geschwindigkeit … %“** den Motor:
+−100 bis 100, negativ = rückwärts, 0 = Motor frei. Die Blöcke sind noch nicht ins Deutsche übersetzt.
+
+## Pinbelegung auf einen Blick
+
+Arduino Uno mit L293D-Shield, Farbsensor und Ultraschallsensor:
+
+| Pin        | Belegt durch                                      |
+| ---------- | ------------------------------------------------- |
+| 0, 1       | USB / serielle Verbindung (nicht benutzen)        |
+| 3, 5, 6, 11 | L293D: PWM der Motoren M2, M4, M3, M1            |
+| 4, 7, 8, 12 | L293D: Schieberegister (Takt, Enable, Daten, Latch) |
+| 9, 10      | Servo-Anschlüsse des Shields (Servo 2, Servo 1)   |
+| A4, A5     | I²C: Farbsensor TCS34725 (SDA, SCL)               |
+| **2, 13, A0–A3** | **frei** – z. B. Ultraschall Trig A0, Echo A1 |
+
+## Probleme lösen
+
+| Problem | Lösung |
+| ------- | ------ |
+| Kein COM-Port in der Liste | USB-Kabel prüfen (manche Kabel laden nur). Viele Nachbauten brauchen den Treiber **CH340** („CH340 Treiber Windows“ suchen). Im Geräte-Manager unter „Anschlüsse (COM & LPT)“ nachsehen. |
+| „Übertragung fehlgeschlagen“ | Richtigen COM-Port gewählt? Serieller Monitor (z. B. der Arduino IDE) geschlossen? Andere Programme, die den Port benutzen, schließen und noch einmal ▶. |
+| Nano lädt nicht | Wird automatisch mit neuem (115200 Baud) und altem Bootloader (57600 Baud) probiert. Sonst wie oben. |
+| Fehler in der Roboterkonfiguration bei A4/A5 | Ein anderes Bauteil nutzt A4/A5 als normalen Pin. Auf A0–A3 umstecken. |
+| Farbsensor meldet immer Grau | Kalibrieren (siehe oben); Abstand ca. 1 cm; Sensor-LED muss leuchten. |
+| Browser öffnet sich nicht | Selbst <http://127.0.0.1:1999> aufrufen. |
+| Fenster schließt sich mit Fehler | `%LOCALAPPDATA%\OpenRobertaLab\logs\server.log` ansehen. |
+| „Das Lab läuft bereits“ | Es läuft schon ein schwarzes Fenster – dort weiterarbeiten oder es schließen. |
+
+## Wie es funktioniert
+
+```mermaid
+flowchart LR
+    subgraph PC["Windows-PC"]
+        L["OpenRobertaLab.exe<br/>(Starter)"] -->|startet| S["Open Roberta Server<br/>Java, 127.0.0.1:1999"]
+        B["Browser<br/>Blockly-Editor"] <-->|HTTP| S
+        S -->|C++ erzeugen,<br/>kompilieren| G["avr-gcc"]
+        S -->|hex hochladen| D["avrdude"]
+    end
+    D -->|USB / COM-Port| A["Arduino"]
+```
+
+- **`OpenRobertaLab.exe`** ([`launcher.c`](Resources/windowsStandalone/launcher.c)) legt beim ersten Start die
+  Datenbank an, startet den Server mit der mitgelieferten Java-Laufzeit und öffnet den Browser. Wird das Fenster
+  geschlossen, endet auch der Server.
+- Der Server läuft im **lokalen Modus** (`server.local.serial=true`):
+  - `GET /rest/local/ports` listet die COM-Ports des PCs,
+  - **▶** kompiliert das Programm ohne Roboter-Token,
+  - `POST /rest/local/upload` lädt die hex-Datei mit avrdude auf den gewählten Port.
+
+  Diese Schnittstellen nehmen nur Anfragen vom eigenen PC und von Seiten dieses Servers an.
+- Unter Windows wird ohne Bash kompiliert: `ArduinoAvrDirectBuild` ruft avr-g++, avr-gcc und avr-objcopy direkt auf.
+- Auf einem normalen, öffentlichen Lab-Server ist der lokale Modus aus; dort funktioniert alles wie im Original
+  (Token und Connector).
+
+## Selbst bauen und weiterentwickeln
+
+Voraussetzungen (Linux, z. B. Ubuntu): Java 11+, Maven, `gcc-mingw-w64-x86-64`, `nsis`, `zip`, `unzip`, `curl`.
 
 ```bash
-apt-get update
-apt-get install openjdk-11-jdk
-apt-get install maven
-apt-get install git
-apt-get install npm
-apt-get install python-is-python3
-apt-get install python3-pip
-apt-get install python3-serial
-# check the installation:
-java --version
-mvn --version
-git --version
-python --version
-pip --version
+mvn clean install -DskipTests
 ```
 
-### Cross Compiler (optional)
-
-#### Binaries
-
-If you would like your local server to compile code for the different systems, you need to install software (crosscompilers, libraries, ...). It is recommended
-to download them to a user-defined directory, such as `/opt/compilers/`, as this will save us the trouble of finding the correct path to the binaries later on!
-
-* Arduino based robots
-    * `sudo apt-get install libusb-0.1-4`
-    * `sudo apt-get install binutils-avr gdb-avr avrdude`
-    * download and unpack [avr-gcc](https://downloads.arduino.cc/tools/avr-gcc-7.3.0-atmel3.6.1-arduino5-x86_64-pc-linux-gnu.tar.bz2) to a directory of your
-      choice.
-* NXT
-    * `sudo apt-get install nbc`
-* Calliope
-    * `sudo apt-get install srecord libssl-dev`
-    * download and unpack the
-      latest [gcc-arm-none-eabi](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads) to a
-      directory of your choice.
-* EV3 c4ev3
-    * `sudo apt-get install g++-arm-linux-gnueabi`
-* Bionics4Education
-    * download and unpack [xtensa-esp32-elf](https://dl.espressif.com/dl/xtensa-esp32-elf-linux64-1.22.0-61-gab8375a-5.2.0.tar.gz) to a directory of your choice.
-* Spike Prime / Robot Inventor using the Pybricks firmware:
-    * `pip3 install mpy-cross-v6`     
-
-Next, in .profile (or in the file your shell consumes at login time) add all downloaded binaries to the `PATH`.
-The `<path-to-the-bin-folder>` should be replaced by one of the download directories (created earlier)
-followed by the path to the bin folder in each compiler folder, usually `/bin`:
-
-```shell
-export PATH="$PATH:<path-to-the-bin-folder>:<path-to-the-next-bin-folder>:..."
+```bash
+Resources/windowsStandalone/build-windows.sh target/windowsStandalone
 ```
 
-After `source ~/.profile` verify with `echo $PATH` that the `PATH` is updated correctly.
-Check whether the versions of the compiler installed are correct:
+Ergebnis: `target/windowsStandalone/OpenRobertaLab-Setup.exe` und `OpenRobertaLab-portable.zip`.
+Das Skript lädt Temurin-JRE 11, avr-gcc 7.3, avrdude 7.3 und die Arduino-Ressourcen von GitHub und packt nur die
+AVR-Boards ein.
 
-```shell
-xtensa-esp32-elf-g++ --version 
-#>> 5.2.0
-arm-none-eabi-g++ --version 
-#>> 10.3.1 
-avr-gcc --version 
-#>> 7.3.0
-dpkg -l | grep libusb-0.1-4 
-#>> 2:0.1.12-32build3
-dpkg -l | grep binutils-avr 
-#>> 2.26.20160125+Atmel3.6.2-4
-avr-gdb --version 
-#>> 10.1.90.20210103-git
-avrdude -v 
-#>> 6.3-20171130
-nbc --version 
-#>> 1.2
-dpkg -l | grep libssl-dev  
-#>> 3.0.2
-dpkg -l | grep srecord 
-#>> 1.64-3
-dpkg -l | grep g++-arm-linux-gnueabi 
-#>> 4:11.2.0
-mpy-cross-v6 --version
-#>> MicroPython a327cfc on 2023-02-16; mpy-cross emitting mpy v6
+### Wichtige Dateien
+
+| Datei | Inhalt |
+| ----- | ------ |
+| [`Resources/windowsStandalone/`](Resources/windowsStandalone) | Starter, Build-Skript, Installer (NSIS), LIESMICH |
+| [`.github/workflows/windows_installer.yml`](.github/workflows/windows_installer.yml) | baut und veröffentlicht den Installer |
+| `OpenRobertaServer/…/restServices/local/LocalSerialController.java` | COM-Ports auflisten, Upload mit avrdude |
+| `RobotArdu/…/worker/compile/ArduinoAvrDirectBuild.java` | Kompilieren ohne Bash (Windows) |
+| `RobotArdu/…/syntax/sensors/arduino/tcs34725/` | Farbsensor-Block (Java) |
+| `RobotArdu/src/main/resources/arduino/TCS34725/TCS34725.h` | Farbsensor-Treiber (C++) |
+| `OpenRobertaWeb/src/app/roberta/controller/connections/connections.ts` | `LocalSerialOrTokenConnection` im Browser |
+
+### Lab unter Linux im lokalen Modus starten
+
+Praktisch zum Testen ohne Windows (avr-gcc und avrdude aus dem Paketmanager, Arduino-Ressourcen aus
+[ora-cc-rsc](https://github.com/OpenRoberta/ora-cc-rsc) unter `<rsc>/RobotArdu/arduino-resources`):
+
+```bash
+java --add-opens java.base/java.lang=ALL-UNNAMED -Dora.arduino.directBuild=true -cp "OpenRobertaServer/target/resources/*" de.fhg.iais.roberta.main.ServerStarter -d database.mode=embedded -d database.parentdir=/tmp/ora-db -d database.name=openroberta-db -d server.staticresources.dir=OpenRobertaServer/staticResources -d robot.crosscompiler.resourcebase=<rsc> -d server.ip=127.0.0.1 -d server.local.serial=true
 ```
 
-#### Resources
+Die Datenbank vorher einmal anlegen:
 
-The cross-compiler need resources to work properly (header files, libraries, ...). These resources change little over time and are stored in
-the '[ora-cc-rsc](https://github.com/OpenRoberta/ora-cc-rsc)' repository.
-
-Please clone that directory and build it using `mvn clean install`. If the resources are not available, everything works fine, but running programs on real
-robots doesn't work, because the cross-compiler will fail.
-
-After successfully building the directory, make sure to add its path to `robot_crosscompiler_resourcebase` variable:
-
-```shell
-echo export robot_crosscompiler_resourcebase="<path-to-ora-cc-rsc-folder>" >> ~/.bashrc
+```bash
+java -cp "OpenRobertaServer/target/resources/*" de.fhg.iais.roberta.main.Administration create-empty-db jdbc:hsqldb:file:/tmp/ora-db/openroberta-db
 ```
 
-### Installation
+Das Frontend (TypeScript) wird mit `npm ci && npx gulp` in `OpenRobertaWeb/` gebaut; die erzeugten Dateien unter
+`OpenRobertaServer/staticResources/js` werden mit eingecheckt.
 
-#### Step 1: Clone the repository and compile
+### Stand der Tests
 
-The source of the OpenRoberta Lab is stored in the Github repository '[openroberta-lab](https://github.com/OpenRoberta/openroberta-lab)'. We use ``develop`` as
-the default branch of our repository. If you clone our repository, you'll get ``develop`` first. In general this is a stable version.
-If you want to run the currently deployed version, checkout ``master`` before building.
+- Unit-Tests für Farbsensor, Konfigurationsprüfung und lokalen Modus; Codegenerierungs-Test `uno/tcs34725_colour`.
+- Kompletter Ablauf im Browser (Port wählen, kompilieren, hochladen, Meldungen) für Uno, Nano und Mega unter Linux mit
+  den Dateien des Windows-Pakets geprüft.
+- Der Farbsensor-Treiber ist gegen den echten Arduino-AVR-Core kompiliert und mit simulierten Messwerten getestet.
+- **Noch offen:** Test des Installers auf einem echten Windows-PC und mit echtem Farbsensor.
 
-After a fresh git clone you get the **openroberta-lab** project folder. It includes almost everything you need to setup and extend your own openrobertalab
-server. License information is available in the **docs** folder. Btw: if you use many repositories, put all of them into a common directoy as ``~/git``.
+## Herkunft und Lizenz
 
-    git clone https://github.com/OpenRoberta/openroberta-lab.git # get the repository
-    cd openroberta-lab                                           # cd into repository
-    mvn clean install                                            # generate the server, at the end: build success
+Basiert auf dem [Open Roberta Lab](https://github.com/OpenRoberta/openroberta-lab) des Fraunhofer IAIS
+(über [rosslight/openroberta-lab](https://github.com/rosslight/openroberta-lab), Stand `40ef141`).
+Die ursprüngliche Dokumentation steht in [`README.openroberta.md`](README.openroberta.md).
 
-    cd OpenRobertaWeb
-    npm install && npm run build && npx gulp                     # build the frontend, check tsc and gulp, must succeed
-    cd ..
-
-Takes some time.
-
-#### Step 2: Make sure you have a database and start the server
-
-The two main shell scripts to work with are `./admin.sh` and `./ora.sh`. _They have a lot of commands and options._
-Call the scripts without parameter or with `-h` to get a help message.
-`./admin.sh` is used for data base administration and server start, `./ora.sh` for server export and start. If you have a fresh clone of the server, make sure
-that the OpenRobertaServer folder has a subfolder **db-embedded** with a database inside. If you don't have a database, you can create an empty database with
-
-    ./admin.sh -git-mode create-empty-db
-
-If you try to create a new database, but one exists, the old one is *not* changed and the command has no effect. The new database is found in the folder **
-OpenRobertaServer/db-embedded**. We needs a database to store user accounts, programs, etc. We use HyperSQL. Other database systems (MySql, Postgres, ...,
-oracle, db2, ...) would work, too. There are no special requirements on the database, that would exclude one. Only a Hibernate binding and a full transaction
-support is needed.
-
-Now use one of the following commands to start the server
-
-    ./admin.sh -git-mode  start-from-git     # writes logging to ./admin
-    ./ora.sh  start-from-git                 # writes logging to the console
-
-If you did not install the crosscompiler resources, everything works fine (programming, simulation, code generation, user management, ...), except of generation
-of binaries for robot systems.
-
-The URL for your browser is [http://localhost:1999](http://localhost:1999) That's it!
-
-### Creating an installation outside of the git repo
-
-Often you want to run an openroberta installation of a fixed version for some time. This is easy. Let's assume, that you want to use the (non-existing)
-directory /data/my-openroberta.
-
-    mvn clean install && npm run build         # generate the server in the git repo
-    ./ora.sh export /data/my-openroberta gzip  # export to the target directory. gzip compresses the static web resources fpr better performance.
-    cd /data/my-openroberta                    # the export command supplies an administration script admin.sh, which is different from the one in the git workspace
-    ./admin.sh create-empty-db                 # create an empty db at ./db-server - of course you may copy an old database to that location
-    ./admin.sh start-server                    # spawns two processes: a database server and the openroberta jetty server
-
-This kind of installation is useful for small installations. True productive systems need more support. We deploy our openroberta installation using docker. It
-is described in detail in the file `README.md` of the repository `openroberta-docker`. In the repository you will find everything needed to create images and
-start them. You can try it. If there are problems, you can contact us.
-
-### Development notes
-
-You should import the projects of the openroberta-lab repository locally into IDE's such as
-[Eclipse](https://github.com/OpenRoberta/openroberta-lab/wiki/Importing-into-Eclipse)
-or [IntelliJ](https://github.com/OpenRoberta/openroberta-lab/wiki/Importing-into-IntelliJ)!
-
-The project OpenRobertaServer contains the server logic, that accesses
-
-* a database with Hibernate-based DAO objects
-* plugins for various robots which are supported in OpenRoberta
-* services for browser-based clients
-* services for robots connected to the lab either by Wifi or USB
-
-The server is made of
-
-* an embedded jetty server exposing REST services
-* the services are based on jersey
-* JSON (sometimes XML or plain text) is used for data exchange between front end, robots and server
-
-Furthermore, the project OpenRobertaServer contains in directory staticResources for the browser client
-
-* HTML and CSS
-* _Generated_ Javascript under `/js` (**this should not be edited!**)
-    * Javascript libraries based on jquery and bootstrap for the frontend
-    * assertions (DBC), ajax-based server calls (COMM), logging (LOG) and
-    * javascript resources for [blockly](https://developers.google.com/blockly)
-    * controller and models written in Javascript, which implement the GUI
-
-**The TypeScript and Javascript _sources_ can be found in `OpenRobertaWeb/`**
-
-To work with the frontend (e.g. compiling the sources), please read the `README.md` of the
-directory `OpenRoertaWeb` and follow the instructions.
-
-#### Testing
-
-To run backend tests, use `mvn test`. Running `mvn clean install` will make a stable, reproducible build with all unit tests executed.
-
-To run the integration tests you have to supply an additional flag: `mvn clean install -PrunIT`. These tests expects, that all crosscompiler are installed
-and Python3 including the `pylint` module version 3.x.
-
-#### Some Frameworks used
-
-We use Blockly, it is located in a separate repository. The build of the blockly is only done in the OpenRoberta/Blockly project and then copied to the
-OpenRobertaServer/staticResources. You can not build Blockly in OpenRobertaServer project directly.
-
-We use BrowserStack for Cross-Browser Testing
-
-[<img src="https://github.com/OpenRoberta/openroberta-lab/blob/develop/Resources/images/blockly.png" width="100">](https://developers.google.com/blockly/)
-[<img src="https://github.com/OpenRoberta/openroberta-lab/blob/develop/Resources/images/browserstack-logo-600x315.png" width="150">](http://browserstack.com/)
-
-#### Have a look at the notes in LICENCE and NOTICE
+Lizenz: Apache License 2.0, siehe [`LICENSE`](LICENSE) und [`NOTICE`](NOTICE). Das Windows-Paket enthält außerdem
+Eclipse Temurin (GPLv2 mit Classpath Exception), avr-gcc/avr-libc (GPL/BSD) und avrdude (GPLv2).
