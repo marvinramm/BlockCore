@@ -93,7 +93,7 @@
             if (!link) {
                 return;
             }
-            link.textContent = entry[1];
+            // the name ("Deutsch", "English") is added by the lab's language style sheet (::after)
             link.parentElement.classList.add('blockcore-language');
             link.addEventListener('click', function () {
                 store('language', entry[0]);

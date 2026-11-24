@@ -86,11 +86,16 @@ uses them as normal pins (move e.g. an ultrasonic sensor to A0 / A1). I²C displ
 *red*, *green* and *blue* on the serial monitor, hold the sensor about 1 cm above each surface and set the thresholds between the values.
 The colour mode decides in this order:
 
-1. light below *black below %* → **black**
-2. red channel > 1.5 × green and > 1.5 × blue → **red**
-3. green channel > 1.2 × red and > 1.2 × blue → **green**
-4. light above *white above %* → **white**
-5. otherwise **grey**
+1. **white balance:** each channel is divided by its share on white paper (red 31 %, green 45 %, blue 38 % – the sensor sees much more
+   green than red even on white)
+2. balanced red > 1.12 × green and > 1.12 × blue → **red**
+3. balanced green > 1.05 × red and > 1.05 × blue → **green**
+4. light below *black below %* → **black**
+5. light above *white above %* → **white**
+6. otherwise **grey**
+
+Red and green are checked before black, because a coloured surface can be dark, too. With little light (*light* of only a few percent
+on white) set *white above %* just below the white value, e.g. 2.5.
 
 The driver is a small header ([`TCS34725.h`](RobotArdu/src/main/resources/arduino/TCS34725/TCS34725.h), 154 ms integration time,
 automatic gain 1× … 60×) and needs no Adafruit library. *light* keeps the scale of 4× gain and 50 ms, so the thresholds stay comparable.

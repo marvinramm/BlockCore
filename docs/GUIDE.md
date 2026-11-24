@@ -64,8 +64,9 @@ detected colour: red, green, white or black (grey = not recognised). Compare it 
 red and green and read the values in the serial monitor. Then set **black below %** in the configuration block just above the black
 value and **white above %** just below the white value.
 
-The sensor needs light: the LED on the sensor board must be on, and room light should be shaded. If *light* stays below about 2 %
-on every surface, the sensor reports black all the time.
+The sensor needs light: the LED on the sensor board must be on, and room light should be shaded. If even white gives only a few
+percent of *light*, set **white above %** just below that value (e.g. 2.5) and **black below %** below the darkest colour.
+Red and green are recognised before black, so they work with little light, too.
 
 A4 and A5 must not be used by other parts. Put an ultrasonic sensor on **A0 / A1**, for example.
 

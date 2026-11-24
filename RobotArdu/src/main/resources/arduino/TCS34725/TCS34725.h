@@ -10,6 +10,10 @@
  * The sensor measures for 154 ms and adjusts its gain (1x, 4x, 16x, 60x) itself, so that dark and bright surfaces are both measured with
  * a good resolution. colour() classifies the reading as red, green, white or black; every other reading is reported as "none".
  *
+ * The colour channels are compared after a white balance: the sensor sees much more green than red even on white paper (about 31 % red,
+ * 45 % green, 38 % blue of the clear channel), so every channel is divided by its share on white first. A clear colour is recognised
+ * before black, because a red or green surface may be dark, too.
+ *
  * lightPercent() is independent of the gain: 100 % is the largest value the clear channel reaches with 4x gain and 50 ms integration time
  * (the scale of the first version of this driver), so the thresholds for black and white keep their meaning.
  */
@@ -38,14 +42,23 @@ class TCS34725 {
         if ( !this->found ) {
             return none;
         }
-        if ( this->c == 0 || light() < this->blackMaxPercent ) {
+        if ( this->c == 0 ) {
             return black;
         }
-        if ( this->r > RED_FACTOR * this->g && this->r > RED_FACTOR * this->b ) {
-            return red;
+        // white balanced channels: 1.0 means "as much as on white paper"
+        double red_ = this->r / (this->c * WHITE_RED);
+        double green_ = this->g / (this->c * WHITE_GREEN);
+        double blue_ = this->b / (this->c * WHITE_BLUE);
+        if ( light() >= MIN_COLOUR_LIGHT ) {
+            if ( red_ > RED_FACTOR * green_ && red_ > RED_FACTOR * blue_ ) {
+                return red;
+            }
+            if ( green_ > GREEN_FACTOR * red_ && green_ > GREEN_FACTOR * blue_ ) {
+                return green;
+            }
         }
-        if ( this->g > GREEN_FACTOR * this->r && this->g > GREEN_FACTOR * this->b ) {
-            return green;
+        if ( light() < this->blackMaxPercent ) {
+            return black;
         }
         if ( light() > this->whiteMinPercent ) {
             return white;
@@ -98,8 +111,15 @@ class TCS34725 {
     // the gain is changed when the clear channel leaves this range
     static constexpr double LOW_LIMIT = 0.08 * 65535.0;
     static constexpr double HIGH_LIMIT = 0.80 * 65535.0;
-    static constexpr double RED_FACTOR = 1.5;
-    static constexpr double GREEN_FACTOR = 1.2;
+    // share of the colour channels in the clear channel on white paper (measured with the sensor's LED)
+    static constexpr double WHITE_RED = 0.31;
+    static constexpr double WHITE_GREEN = 0.45;
+    static constexpr double WHITE_BLUE = 0.38;
+    // a colour is recognised, if its white balanced channel is this much stronger than both others
+    static constexpr double RED_FACTOR = 1.12;
+    static constexpr double GREEN_FACTOR = 1.05;
+    // below this brightness (in %) the channels are too noisy to tell colours
+    static constexpr double MIN_COLOUR_LIGHT = 0.3;
     static const uint8_t GAIN_SETTINGS[4];
     static const uint8_t GAIN_FACTORS[4];
 
