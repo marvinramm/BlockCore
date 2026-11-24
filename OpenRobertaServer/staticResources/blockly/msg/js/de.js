@@ -497,6 +497,10 @@ Blockly.Msg.KEY_TOOLTIP = "Block für die Taste.";
 Blockly.Msg.L293DMOTOR_RUN = "run";  // untranslated
 Blockly.Msg.L293DMOTOR_RUN_TOOLTIP = "Runs an L293D shield motor at a signed speed from -100 to 100 percent. Negative values reverse direction and zero releases the motor.";  // untranslated
 Blockly.Msg.L293DMOTOR_TOOLTIP = "Represents a DC motor connected to port M1, M2, M3 or M4 of an L293D Motor Shield.";  // untranslated
+Blockly.Msg.LOCAL_SERIAL_NO_PORT = "Kein Roboter gefunden. Schließe den Roboter mit einem USB-Kabel an. Wird er weiterhin nicht gefunden, installiere den USB-Treiber (z. B. CH340) für dein Board.";
+Blockly.Msg.LOCAL_SERIAL_UPLOADING = "Das Programm wird auf $ übertragen ...";
+Blockly.Msg.LOCAL_SERIAL_UPLOAD_SUCCESS = "Das Programm wurde auf $ übertragen.";
+Blockly.Msg.LOCAL_SERIAL_UPLOAD_ERROR = "Die Übertragung auf $ ist fehlgeschlagen. Ist der richtige Port gewählt und der serielle Monitor geschlossen? Versuche es noch einmal.";
 Blockly.Msg.SENSOR_TCS34725 = "Farbsensor TCS34725";
 Blockly.Msg.TCS34725_TOOLTIP = "Block für den Farbsensor TCS34725 am I²C-Bus (SDA = A4, SCL = A5 beim Uno). Die Schwellwerte für Schwarz und Weiß sind in Prozent der maximalen Helligkeit angegeben.";
 Blockly.Msg.SENSOR_TCS34725_GETSAMPLE_TOOLTIP = "Gibt den aktuellen Wert des Farbsensors TCS34725 zurück. Im Modus Farbe liefert der Sensor Rot, Grün, Weiß oder Schwarz, jede andere Farbe wird als Grau (#999999) zurückgegeben.";

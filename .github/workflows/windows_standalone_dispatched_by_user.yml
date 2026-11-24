@@ -1,0 +1,42 @@
+name: Windows-Standalone-Dispatched-By-User
+
+# Builds the standalone Open Roberta Lab for Windows (installer and portable zip) and attaches both as workflow artifacts.
+# See Resources/windowsStandalone/build-windows.sh
+
+on:
+  workflow_dispatch:
+
+jobs:
+  windows-standalone:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout the branch
+        uses: actions/checkout@v4
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+      - name: Cache local maven repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Install cross compiler and installer builder
+        run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64 nsis zip unzip
+      - name: Build with maven
+        run: mvn --batch-mode clean install -DskipTests
+      - name: Build the Windows standalone lab
+        run: Resources/windowsStandalone/build-windows.sh target/windowsStandalone
+      - name: Upload the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenRobertaLab-Setup
+          path: target/windowsStandalone/OpenRobertaLab-Setup.exe
+      - name: Upload the portable zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenRobertaLab-portable
+          path: target/windowsStandalone/OpenRobertaLab-portable.zip

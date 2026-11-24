@@ -123,7 +123,7 @@ public class CompilerWorkflowRobotSpecificIT {
 
     @Before
     public void setup() throws Exception {
-        this.restWorkflow = new ProjectWorkflowRestController(robotCommunicator);
+        this.restWorkflow = new ProjectWorkflowRestController(robotCommunicator, serverProperties);
         this.restAdmin = new ClientAdmin(robotCommunicator, serverProperties);
         Mockito.when(this.sessionFactoryWrapper.getSession()).thenReturn(this.dbSession);
         Mockito.doNothing().when(this.dbSession).commit();

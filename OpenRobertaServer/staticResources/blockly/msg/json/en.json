@@ -2211,5 +2211,9 @@
 	"SENSOR_TCS34725_GETSAMPLE_TOOLTIP": "Gets the current reading from the TCS34725 colour sensor. In colour mode the sensor returns red, green, white or black; any other colour is returned as grey (#999999).",
 	"TCS34725_BLACK": "black below %",
 	"TCS34725_WHITE": "white above %",
-	"CONFIGURATION_ERROR_TCS34725_THRESHOLD": "The thresholds for black and white must be numbers between 0 and 100!"
+	"CONFIGURATION_ERROR_TCS34725_THRESHOLD": "The thresholds for black and white must be numbers between 0 and 100!",
+	"LOCAL_SERIAL_NO_PORT": "No robot found. Connect the robot with a USB cable. If it is still missing, install the USB driver (e.g. CH340) for your board.",
+	"LOCAL_SERIAL_UPLOADING": "The program is uploaded to $ ...",
+	"LOCAL_SERIAL_UPLOAD_SUCCESS": "The program was uploaded to $.",
+	"LOCAL_SERIAL_UPLOAD_ERROR": "The upload to $ failed. Is the right port selected and the serial monitor closed? Try to upload again."
 }

@@ -1,5 +1,7 @@
 package de.fhg.iais.roberta.javaServer.restServices.all.controller;
 
+import de.fhg.iais.roberta.javaServer.restServices.local.LocalSerialController;
+import de.fhg.iais.roberta.util.ServerProperties;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -40,10 +42,20 @@ public class ProjectWorkflowRestController {
     private static final Logger LOG = LoggerFactory.getLogger(ProjectWorkflowRestController.class);
 
     private final RobotCommunicator robotCommunicator;
+    private final ServerProperties serverProperties;
 
     @Inject
-    public ProjectWorkflowRestController(RobotCommunicator robotCommunicator) {
+    public ProjectWorkflowRestController(RobotCommunicator robotCommunicator, ServerProperties serverProperties) {
         this.robotCommunicator = robotCommunicator;
+        this.serverProperties = serverProperties;
+    }
+
+    /**
+     * in the local (standalone) mode the browser uploads the compiled program itself (see {@link LocalSerialController}). Thus the run workflows
+     * stop after compilation and no robot token is needed.
+     */
+    private String runWorkflow(String robot, String runWorkflow, String compileWorkflow) {
+        return LocalSerialController.isUploadedLocally(this.serverProperties, robot) ? compileWorkflow : runWorkflow;
     }
 
     @POST
@@ -123,7 +135,7 @@ public class ProjectWorkflowRestController {
             ProjectNepoResponse response = ProjectNepoResponse.make();
             response.setProgXML(wfRequest.getProgXML()); // always return the program, even if the workflow fails
             Project project = request2project(wfRequest, dbSession, httpSessionState, this.robotCommunicator, true, false);
-            ProjectService.executeWorkflow("run", project);
+            ProjectService.executeWorkflow(runWorkflow(project.getRobot(), "run", "compile"), project);
             response.setCmd("runPBack");
             response.setProgXML(project.getProgramAsBlocklyXML());
             response.setConfAnnos(new JSONObject(project.getConfAnnotationList()));
@@ -232,7 +244,7 @@ public class ProjectWorkflowRestController {
             ProjectWorkflowRequest wfRequest = ProjectWorkflowRequest.make(fullRequest.getData());
             ProjectNativeResponse response = ProjectNativeResponse.make();
             Project project = request2project(wfRequest, dbSession, httpSessionState, this.robotCommunicator, false, false);
-            ProjectService.executeWorkflow("runnative", project);
+            ProjectService.executeWorkflow(runWorkflow(project.getRobot(), "runnative", "compilenative"), project);
             response.setCmd("runNative");
             response.setCompiledCode(project.getCompiledHex());
             response.setSourceCode(project.getSourceCodeBuilder().toString());

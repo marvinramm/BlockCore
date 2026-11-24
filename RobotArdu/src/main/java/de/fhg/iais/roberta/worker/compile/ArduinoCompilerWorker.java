@@ -132,8 +132,8 @@ public class ArduinoCompilerWorker implements ICompilerWorker {
         ArrayList<String> parameters = new ArrayList<String>();
 
         if ( SystemUtils.IS_OS_WINDOWS ) {
-            cmd = "cmd.exe ";
-            cmdopt1 = "/c ";
+            cmd = "cmd.exe";
+            cmdopt1 = "/c";
             parameters.add(cmd);
             parameters.add(cmdopt1);
         }
@@ -150,7 +150,25 @@ public class ArduinoCompilerWorker implements ICompilerWorker {
         String[] executableWithParameters = parameters.stream().toArray(String[]::new);
         Pair<Boolean, String> result;
 
-        result = Util.runCrossCompiler(executableWithParameters, crosscompilerSource, project.isNativeEditorCode());
+        if ( useDirectBuild(project.getRobot(), arduinoArch) ) {
+            // no bash on Windows: run the AVR toolchain directly (see ArduinoAvrDirectBuild)
+            result =
+                ArduinoAvrDirectBuild
+                    .build(
+                        compilerResourcesDir,
+                        project.getRobot(),
+                        boardVariant,
+                        mmcu,
+                        arduinoVariant,
+                        arduinoArch,
+                        sourceDir,
+                        targetDir,
+                        programName,
+                        crosscompilerSource,
+                        project.isNativeEditorCode());
+        } else {
+            result = Util.runCrossCompiler(executableWithParameters, crosscompilerSource, project.isNativeEditorCode());
+        }
 
         Key resultKey = result.getFirst() ? Key.COMPILERWORKFLOW_SUCCESS : Key.COMPILERWORKFLOW_ERROR_PROGRAM_COMPILE_FAILED;
         if ( result.getFirst() ) {
@@ -207,6 +225,14 @@ public class ArduinoCompilerWorker implements ICompilerWorker {
         } else {
             LOG.error("compile {} program {} failed with {}", robot, programName, result.getSecond());
         }
+    }
+
+    /**
+     * The AVR boards are built without bash on Windows. Setting the system property <code>ora.arduino.directBuild=true</code> enables this on other
+     * systems, too (used for tests).
+     */
+    static boolean useDirectBuild(String robot, String arduinoArch) {
+        return ArduinoAvrDirectBuild.isSupported(robot, arduinoArch) && (SystemUtils.IS_OS_WINDOWS || Boolean.getBoolean("ora.arduino.directBuild"));
     }
 
     static void storeBundledHeader(Path sourceDir, String resourcePath, String targetPath) {

@@ -1,0 +1,31 @@
+Open Roberta Lab - lokale Version fuer Windows
+==============================================
+
+Das Lab laeuft komplett auf diesem Computer. Es braucht kein Internet, keinen
+externen Server und kein Connector-Programm.
+
+Unterstuetzte Roboter: Arduino Uno, Arduino Nano, Arduino Mega
+(mit Farbsensor TCS34725 und L293D-Motor-Shield).
+
+So geht's
+---------
+1. "Open Roberta Lab" starten (Desktop oder Startmenue).
+   Ein schwarzes Fenster oeffnet sich, danach der Browser.
+2. Den Arduino per USB anschliessen.
+3. Im Lab: "Roboter -> Verbinden" und den COM-Port waehlen.
+   Ist nur ein Arduino angeschlossen, wird er automatisch gewaehlt.
+4. Programm bauen und auf "Ausfuehren" (Play-Knopf) klicken.
+   Das Programm wird kompiliert und auf den Arduino geladen.
+5. Zum Beenden das schwarze Fenster schliessen.
+
+Probleme?
+---------
+- Kein COM-Port zu sehen: Viele guenstige Arduino-Nachbauten brauchen den
+  USB-Treiber "CH340" (Suche: "CH340 Treiber Windows").
+- Upload schlaegt fehl: Ist der richtige COM-Port gewaehlt? Ist der serielle
+  Monitor (z. B. der Arduino IDE) geschlossen? Beim Nano mit altem Bootloader
+  wird automatisch auch die langsamere Uebertragung probiert.
+- Die Programme und Einstellungen liegen in %LOCALAPPDATA%\OpenRobertaLab,
+  das Server-Log in %LOCALAPPDATA%\OpenRobertaLab\logs\server.log.
+
+Das Lab ist nur auf diesem Computer erreichbar (http://127.0.0.1:1999).
