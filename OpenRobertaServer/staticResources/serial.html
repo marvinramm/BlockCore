@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<!-- Serial monitor of the local (standalone) mode. Talks to /rest/local/monitor/* (LocalSerialController). Opened from the robot menu of the lab. -->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serial Monitor</title>
+<style>
+  @font-face { font-family: Roboto; src: url(/css/fonts/Roboto-Regular.ttf) format("truetype"); }
+  @font-face { font-family: Roboto; font-weight: 700; src: url(/css/fonts/Roboto-Bold.ttf) format("truetype"); }
+  :root {
+    --bg: #ffffff; --panel: #f3f5ea; --fg: #1f2a12; --muted: #5d6a4b; --line: #d6ddc0;
+    --accent: #bacc1e; --accent-strong: #8ea60f; --out-bg: #fbfcf7; --ok: #2f7d32; --err: #b3261e; --marker: #8a6d00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #15180f; --panel: #1e2318; --fg: #e8eedb; --muted: #a5b18f; --line: #343d2a; --accent: #bacc1e;
+            --accent-strong: #bacc1e; --out-bg: #0f120b; --ok: #7cc47f; --err: #f2948c; --marker: #e0c060; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { display: flex; flex-direction: column; background: var(--bg); color: var(--fg); font: 14px Roboto, "Segoe UI", sans-serif; }
+  header, footer { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; background: var(--panel); border-color: var(--line); border-style: solid; border-width: 0; }
+  header { border-bottom-width: 1px; }
+  footer { border-top-width: 1px; }
+  h1 { font-size: 15px; font-weight: 700; margin: 0 8px 0 0; letter-spacing: 0.02em; }
+  select, input[type=text], button { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; }
+  input[type=text] { flex: 1 1 200px; min-width: 0; font-family: Consolas, "Cascadia Mono", ui-monospace, monospace; }
+  button { cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #1a1f0f; font-weight: 700; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 1px; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  label.check { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); user-select: none; }
+  .spacer { flex: 1 1 auto; }
+  .state { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+  .state::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+  .state.open { color: var(--ok); } .state.open::before { background: var(--ok); }
+  .state.error { color: var(--err); } .state.error::before { background: var(--err); }
+  #output { flex: 1 1 auto; margin: 0; padding: 10px 12px; overflow: auto; background: var(--out-bg); white-space: pre-wrap; overflow-wrap: anywhere;
+            font: 13px/1.45 Consolas, "Cascadia Mono", ui-monospace, monospace; }
+  #output .ts { color: var(--muted); }
+  #output .marker { color: var(--marker); }
+  #message { color: var(--err); width: 100%; }
+  #message:empty { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Serial Monitor</h1>
+  <select id="port" aria-label="Port"></select>
+  <select id="baud" aria-label="Baud rate"></select>
+  <button id="connect" class="primary" type="button">Connect</button>
+  <span id="state" class="state">closed</span>
+  <span class="spacer"></span>
+  <label class="check"><input type="checkbox" id="autoscroll" checked> <span id="autoscrollLabel">Autoscroll</span></label>
+  <label class="check"><input type="checkbox" id="timestamps"> <span id="timestampsLabel">Timestamps</span></label>
+  <button id="clear" type="button">Clear</button>
+  <div id="message" role="alert"></div>
+</header>
+<pre id="output" aria-live="polite"></pre>
+<footer>
+  <input type="text" id="send" autocomplete="off" placeholder="Message">
+  <select id="ending" aria-label="Line ending"></select>
+  <button id="sendButton" type="button">Send</button>
+</footer>
+<script>
+(function () {
+  var TEXT = {
+    en: { title: 'Serial Monitor', connect: 'Connect', disconnect: 'Disconnect', clear: 'Clear', send: 'Send', message: 'Message (Enter to send)',
+          autoscroll: 'Autoscroll', timestamps: 'Timestamps', open: 'connected', closed: 'not connected', error: 'error', noPort: 'no port found',
+          endings: ['No line ending', 'Newline', 'Carriage return', 'Both NL & CR'], server: 'The lab is not running. Start BlockCore again.' },
+    de: { title: 'Serieller Monitor', connect: 'Verbinden', disconnect: 'Trennen', clear: 'Löschen', send: 'Senden', message: 'Nachricht (Enter zum Senden)',
+          autoscroll: 'Autoscroll', timestamps: 'Zeitstempel', open: 'verbunden', closed: 'nicht verbunden', error: 'Fehler', noPort: 'kein Port gefunden',
+          endings: ['Kein Zeilenende', 'Neue Zeile', 'Zeilenumbruch (CR)', 'Sowohl NL als auch CR'], server: 'Das Lab läuft nicht. Starte BlockCore neu.' }
+  };
+  var params = new URLSearchParams(location.search);
+  var lang = (params.get('lang') || navigator.language || 'en').slice(0, 2).toLowerCase();
+  var t = TEXT[lang] || TEXT.en;
+  var BAUDRATES = [300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 74880, 115200, 230400, 250000, 500000, 1000000, 2000000];
+  var ENDINGS = ['', '\n', '\r', '\r\n'];
+  var MAX_CHARS = 200000;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var out = $('output'), portSel = $('port'), baudSel = $('baud'), stateEl = $('state'), connectBtn = $('connect'), msg = $('message');
+  var next = 0, state = 'closed', atLineStart = true, chars = 0, failures = 0;
+
+  document.title = t.title;
+  $('title').textContent = t.title;
+  $('clear').textContent = t.clear;
+  $('sendButton').textContent = t.send;
+  $('send').placeholder = t.message;
+  $('autoscrollLabel').textContent = t.autoscroll;
+  $('timestampsLabel').textContent = t.timestamps;
+  BAUDRATES.forEach(function (b) { var o = document.createElement('option'); o.value = b; o.textContent = b + ' baud'; baudSel.appendChild(o); });
+  t.endings.forEach(function (e, i) { var o = document.createElement('option'); o.value = i; o.textContent = e; $('ending').appendChild(o); });
+  $('ending').value = '1';
+  baudSel.value = params.get('baud') || load('baud') || '9600';
+  $('timestamps').checked = load('timestamps') === '1';
+
+  function load(key) { try { return localStorage.getItem('serial.' + key); } catch (e) { return null; } }
+  function save(key, value) { try { localStorage.setItem('serial.' + key, value); } catch (e) { /* not available */ } }
+
+  function request(method, url, body) {
+    var options = { method: method, headers: {} };
+    if (body !== undefined) { options.headers['Content-Type'] = 'application/json'; options.body = JSON.stringify(body); }
+    return fetch(url, options).then(function (r) { return r.json(); });
+  }
+
+  function showMessage(text) { msg.textContent = text || ''; }
+
+  function setState(newState) {
+    state = newState;
+    stateEl.className = 'state ' + newState;
+    stateEl.textContent = t[newState] || newState;
+    connectBtn.textContent = newState === 'open' ? t.disconnect : t.connect;
+    $('sendButton').disabled = newState !== 'open';
+    portSel.disabled = baudSel.disabled = newState === 'open';
+  }
+
+  function timestamp() {
+    var d = new Date(), p = function (n, l) { return String(n).padStart(l || 2, '0'); };
+    return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + '.' + p(d.getMilliseconds(), 3) + ' -> ';
+  }
+
+  function appendText(text) {
+    if (!text) { return; }
+    var stick = out.scrollTop + out.clientHeight >= out.scrollHeight - 4;
+    var withTime = $('timestamps').checked;
+    var fragment = document.createDocumentFragment();
+    text.split(/(\n)/).forEach(function (part) {
+      if (part === '') { return; }
+      if (part === '\n') { fragment.appendChild(document.createTextNode('\n')); atLineStart = true; return; }
+      if (atLineStart && withTime) { var ts = document.createElement('span'); ts.className = 'ts'; ts.textContent = timestamp(); fragment.appendChild(ts); }
+      if (/^--- .* ---$/.test(part)) { var m = document.createElement('span'); m.className = 'marker'; m.textContent = part; fragment.appendChild(m); }
+      else { fragment.appendChild(document.createTextNode(part.replace(/\r/g, ''))); }
+      atLineStart = false;
+    });
+    out.appendChild(fragment);
+    chars += text.length;
+    while (chars > MAX_CHARS && out.firstChild) { chars -= (out.firstChild.textContent || '').length; out.removeChild(out.firstChild); }
+    if ($('autoscroll').checked && stick) { out.scrollTop = out.scrollHeight; }
+  }
+
+  function loadPorts() {
+    return request('GET', '/rest/local/ports').then(function (r) {
+      var selected = portSel.value || params.get('port') || load('port');
+      portSel.innerHTML = '';
+      (r.ports || []).forEach(function (p) {
+        var o = document.createElement('option');
+        var description = (p.description || '').replace(' (' + p.name + ')', '');
+        o.value = p.name;
+        o.textContent = description && description !== p.name ? p.name + ' – ' + description : p.name;
+        portSel.appendChild(o);
+      });
+      if (!portSel.options.length) { var o = document.createElement('option'); o.value = ''; o.textContent = t.noPort; portSel.appendChild(o); }
+      if (selected && Array.prototype.some.call(portSel.options, function (o) { return o.value === selected; })) { portSel.value = selected; }
+    });
+  }
+
+  function poll() {
+    request('GET', '/rest/local/monitor/read?since=' + next).then(function (r) {
+      failures = 0;
+      if (r.rc === 'error') { showMessage(r.message); return; }
+      appendText(r.data);
+      next = r.next;
+      if (r.state !== state) { setState(r.state); }
+      if (r.state === 'open' && r.port && portSel.value !== r.port) { portSel.value = r.port; baudSel.value = String(r.baudrate); }
+    }).catch(function () {
+      failures++;
+      if (failures === 5) { setState('error'); showMessage(t.server); }
+    }).then(function () { setTimeout(poll, document.hidden ? 1000 : 150); });
+  }
+
+  connectBtn.addEventListener('click', function () {
+    showMessage('');
+    if (state === 'open') { request('POST', '/rest/local/monitor/close').then(function () { setState('closed'); }); return; }
+    if (!portSel.value) { showMessage(t.noPort); return; }
+    save('port', portSel.value); save('baud', baudSel.value);
+    request('POST', '/rest/local/monitor/open', { port: portSel.value, baudrate: Number(baudSel.value) }).then(function (r) {
+      if (r.rc === 'ok') { setState('open'); } else { setState('error'); showMessage(r.message); }
+    });
+  });
+
+  $('clear').addEventListener('click', function () {
+    out.textContent = ''; chars = 0; atLineStart = true;
+    request('POST', '/rest/local/monitor/clear');
+  });
+
+  $('timestamps').addEventListener('change', function () { save('timestamps', this.checked ? '1' : '0'); });
+
+  function send() {
+    var input = $('send');
+    if (state !== 'open') { return; }
+    request('POST', '/rest/local/monitor/write', { text: input.value + ENDINGS[Number($('ending').value)] }).then(function (r) {
+      if (r.rc === 'ok') { input.value = ''; } else { showMessage(r.message); }
+    });
+  }
+  $('sendButton').addEventListener('click', send);
+  $('send').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); send(); } });
+
+  setState('closed');
+  // show only what arrives from now on, then connect automatically when the lab passed a port
+  request('GET', '/rest/local/monitor/read?since=' + Number.MAX_SAFE_INTEGER).then(function (r) { next = r.next || 0; setState(r.state || 'closed'); })
+    .catch(function () { /* handled by poll */ })
+    .then(loadPorts)
+    .then(function () {
+      poll();
+      setInterval(function () { if (state !== 'open') { loadPorts(); } }, 3000);
+      if (params.get('port') && state !== 'open' && portSel.value === params.get('port')) { connectBtn.click(); }
+    })
+    .catch(function () { showMessage(t.server); poll(); });
+})();
+</script>
+</body>
+</html>

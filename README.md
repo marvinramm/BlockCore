@@ -1,209 +1,147 @@
-# Open Roberta Lab – lokal für Windows
+# BlockCore
 
-[![Windows-Installer](https://github.com/marvinramm/openroberta-lab-local/actions/workflows/windows_installer.yml/badge.svg)](https://github.com/marvinramm/openroberta-lab-local/actions/workflows/windows_installer.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/code-Apache%202.0-blue.svg)](LICENSE)
+[![License: CC BY 4.0](https://img.shields.io/badge/docs-CC%20BY%204.0-lightgrey.svg)](docs/LICENSE)
+[![Windows installer](https://github.com/marvinramm/openroberta-lab-local/actions/workflows/windows_installer.yml/badge.svg)](../../actions/workflows/windows_installer.yml)
 
-Das [Open Roberta Lab](https://lab.open-roberta.org) als **ein Programm für Windows**: Doppelklick, Browser geht auf, Arduino per USB anstecken,
-COM-Port wählen, Programm mit Blöcken bauen, ▶ drücken – fertig.
+**Offline block programming for Arduino on Windows: install it, plug in an Arduino, pick its COM port, snap blocks together and press ▶. Compiler, upload and serial monitor run on your own PC – no internet, no server, no connector app.**
 
-- **Kein Internet nötig.** Server, Compiler und Upload laufen auf dem eigenen PC.
-- **Kein externer Server, kein Connector-Programm, kein Token.**
-- **Keine Admin-Rechte** für die Installation.
-- Zusätzliche Bausteine für die **Arduino-Hardware im Unterricht**: Farbsensor **TCS34725** und **L293D-Motor-Shield**.
+![BlockCore with a colour sorter program](docs/images/hero.jpg)
 
-Unterstützte Boards: **Arduino Uno**, **Arduino Nano** (neuer und alter Bootloader), **Arduino Mega 2560**.
+BlockCore is a standalone edition of the [Open Roberta Lab](https://lab.open-roberta.org) by Fraunhofer IAIS. The online lab needs a server
+and a separate connector program to reach the robot; BlockCore packs the whole lab, the AVR compiler and the uploader into one Windows
+program that opens in its own window. On top it adds blocks for the hardware we use in class: the **TCS34725 colour sensor** and the
+**L293D motor shield**.
 
----
+| | |
+|---|---|
+| **Boards** | Arduino Uno, Arduino Nano (new and old bootloader), Arduino Mega 2560 |
+| **Runs on** | Windows 10 / 11 (64 bit), no admin rights needed |
+| **Upload** | over the USB COM port with avrdude, port selected in the lab |
+| **Serial monitor** | own window: baud rate, timestamps, autoscroll, send line; pauses itself during an upload |
+| **Extra blocks** | TCS34725 colour sensor (red / green / white / black, light, RGB channels), L293D motor shield (M1–M4) |
+| **Inside** | Open Roberta server (Java 11, bundled), avr-gcc 7.3, avrdude 7.3, Arduino AVR core |
+| **Network** | none – the lab listens on `127.0.0.1` only |
 
-## Inhalt
+## Download
 
-- [Download und Installation](#download-und-installation)
-- [Erste Schritte](#erste-schritte)
-- [Der Farbsensor TCS34725](#der-farbsensor-tcs34725)
-- [Das L293D-Motor-Shield](#das-l293d-motor-shield)
-- [Pinbelegung auf einen Blick](#pinbelegung-auf-einen-blick)
-- [Probleme lösen](#probleme-lösen)
-- [Wie es funktioniert](#wie-es-funktioniert)
-- [Selbst bauen und weiterentwickeln](#selbst-bauen-und-weiterentwickeln)
-- [Herkunft und Lizenz](#herkunft-und-lizenz)
+**[⬇ BlockCore-Setup.exe – latest release](../../releases/latest)** (≈ 115 MB)
 
----
+1. Run the installer. Windows SmartScreen warns about unsigned programs: **More info → Run anyway**.
+2. It installs to `%LOCALAPPDATA%\Programs\BlockCore` and adds shortcuts to the desktop and the start menu.
 
-## Download und Installation
+No installation wanted? Unzip **`BlockCore-portable.zip`** from the same release (e.g. onto a USB stick) and start `BlockCore.exe`.
 
-1. Unter **[Releases → neueste Version](https://github.com/marvinramm/openroberta-lab-local/releases/latest)** die Datei
-   **`OpenRobertaLab-Setup.exe`** herunterladen (ca. 115 MB).
-2. Setup starten. Windows SmartScreen warnt bei unsignierten Programmen:
-   **„Weitere Informationen“ → „Trotzdem ausführen“**.
-3. Installieren. Das Programm landet in `%LOCALAPPDATA%\Programs\OpenRobertaLab`,
-   mit Verknüpfung auf dem Desktop und im Startmenü.
+Every push to `main` builds a new installer and publishes it as a release
+([Actions → Windows-Installer](../../actions/workflows/windows_installer.yml)).
 
-**Ohne Installation:** `OpenRobertaLab-portable.zip` aus demselben Release entpacken (z. B. auf einen USB-Stick) und
-`OpenRobertaLab.exe` starten.
+## Getting started
 
-**Deinstallieren:** Windows-Einstellungen → Apps → „Open Roberta Lab“. Deine Programme in
-`%LOCALAPPDATA%\OpenRobertaLab` bleiben dabei erhalten.
+1. Start **BlockCore**. A black console window opens (that is the server), then the BlockCore window.
+2. Plug in the Arduino.
+3. **robot → connect** and pick the COM port. With a single Arduino attached it is selected automatically.
 
-> Jeder Push auf `main` baut automatisch einen neuen Installer
-> ([Actions → Windows-Installer](https://github.com/marvinramm/openroberta-lab-local/actions/workflows/windows_installer.yml)) und
-> veröffentlicht ihn als neues Release. Von Hand geht es über **Run workflow**.
+   ![Choosing the COM port](docs/images/connect.jpg)
 
-## Erste Schritte
+4. Describe the hardware in **ROBOT CONFIGURATION** (sensors, motors …), build the program in **PROGRAM** and press **▶**.
+   The program is compiled on your PC and uploaded; a message confirms the upload.
+5. **robot → Serial Monitor** shows what the Arduino prints with *show on Serial Monitor*.
+6. Close the black window to quit.
 
-1. **Open Roberta Lab** starten. Ein schwarzes Fenster öffnet sich – das ist der Server.
-   Nach einigen Sekunden öffnet sich der Browser mit dem Lab (Arduino Uno ist schon ausgewählt).
-2. **Arduino per USB anschließen.**
-3. Im Lab **Roboter → Verbinden** und den COM-Port wählen, z. B. `USB-SERIAL CH340 (COM3)`.
-   Ist nur ein Arduino angeschlossen, wird er automatisch gewählt; das Roboter-Symbol oben wird dann grün.
-4. In **Roboterkonfiguration** die Bauteile eintragen (Sensoren, Motoren …).
-5. Im **Programm** die Blöcke zusammenstecken und auf **▶** klicken.
-   Das Programm wird kompiliert und hochgeladen. Oben erscheint „Das Programm wurde auf COM3 übertragen“.
-6. Zum Beenden das **schwarze Fenster schließen**.
+A German step-by-step guide for students is in **[docs/ANLEITUNG.md](docs/ANLEITUNG.md)**.
 
-Andere Boards wählst du wie gewohnt über **Roboter → Roboter wechseln** (Uno, Nano, Mega).
-Zum dauerhaften Speichern von Programmen unter **Anmelden → Registrieren** ein Benutzerkonto anlegen. Es liegt nur in
-der lokalen Datenbank auf diesem PC; es wird nichts ins Internet übertragen.
+### Serial monitor
 
-| Was                         | Wo                                                     |
-| --------------------------- | ------------------------------------------------------ |
-| Programmdateien             | `%LOCALAPPDATA%\Programs\OpenRobertaLab`               |
-| Datenbank (Programme, Nutzer) | `%LOCALAPPDATA%\OpenRobertaLab\db`                   |
-| Server-Log                  | `%LOCALAPPDATA%\OpenRobertaLab\logs\server.log`        |
-| Lab-Adresse                 | <http://127.0.0.1:1999> (nur vom eigenen PC erreichbar) |
+![Serial monitor](docs/images/serial-monitor.jpg)
 
-## Der Farbsensor TCS34725
+Works like the one in the Arduino IDE: choose port and baud rate (9600 by default), read the output with or without timestamps, send a
+line with the chosen line ending. You do not have to close it before uploading: BlockCore pauses the monitor, uploads, and connects again.
 
-Neuer Sensor-Baustein für Uno, Nano und Mega. Er erkennt **Rot, Grün, Weiß und Schwarz** – ideal für Linienfolger,
-Farbsortierer und Ampel-Spiele.
+## TCS34725 colour sensor
 
-### Anschluss
+![Colour sorter program](docs/images/colour-sorter.png)
 
-| TCS34725 | Arduino Uno / Nano | Arduino Mega |
-| -------- | ------------------ | ------------ |
-| VIN      | 5V                 | 5V           |
-| GND      | GND                | GND          |
-| SDA      | **A4**             | 20 (SDA)     |
-| SCL      | **A5**             | 21 (SCL)     |
-| LED      | frei lassen (LED leuchtet) | frei lassen |
+The block **get colour colour sensor TCS34725** returns **red, green, white or black** – compare it with the colour blocks. Anything it
+cannot classify is returned as grey.
 
-Der Konfigurationsblock zeigt immer SDA = A4 und SCL = A5 an; beim Mega gelten trotzdem die Pins 20 und 21.
-A4 und A5 sind beim Uno und Nano die einzigen I²C-Pins. Hängt dort schon etwas anderes, das **kein** I²C-Gerät ist
-(z. B. Trig/Echo eines Ultraschallsensors), meldet die Konfiguration einen Fehler. Den Ultraschallsensor dann einfach auf
-**A0/A1** umstecken. Ein I²C-Display (LCD 1602 I²C, OLED) darf sich A4/A5 mit dem Farbsensor teilen.
+| Mode | Result |
+|---|---|
+| colour | red `#cc0000`, green `#33cc00`, white `#ffffff`, black `#000000`, grey = unknown |
+| light | brightness (clear channel) in % |
+| red / green / blue | share of the channel in the measured light, in % |
 
-### Konfiguration
+**Wiring (Uno / Nano):** VIN → 5V, GND → GND, SDA → **A4**, SCL → **A5**. On the Mega the I²C pins are 20 (SDA) and 21 (SCL), even though
+the configuration block shows A4 / A5. A4 and A5 are the only I²C pins of the Uno, so the configuration reports an error if another part
+uses them as normal pins (move e.g. an ultrasonic sensor to A0 / A1). I²C displays may share the bus.
 
-Unter **Roboterkonfiguration → Sensoren → Farbsensor TCS34725**:
+**Calibration:** the configuration block has two thresholds, *black below %* (default 2) and *white above %* (default 12). Print *light*,
+*red*, *green* and *blue* on the serial monitor, hold the sensor about 1 cm above each surface and set the thresholds between the values.
+The colour mode decides in this order:
 
-| Feld            | Standard | Bedeutung                                                           |
-| --------------- | -------- | ------------------------------------------------------------------- |
-| Name            | `F`      | Name, unter dem der Sensor im Programm erscheint                    |
-| Schwarz unter % | `2`      | Ist die Helligkeit kleiner, meldet der Sensor **Schwarz**           |
-| Weiß über %     | `12`     | Ist die Helligkeit größer (und keine Farbe dominiert), meldet er **Weiß** |
+1. light below *black below %* → **black**
+2. red channel > 1.5 × green and > 1.5 × blue → **red**
+3. green channel > 1.2 × red and > 1.2 × blue → **green**
+4. light above *white above %* → **white**
+5. otherwise **grey**
 
-Es ist nur **ein** TCS34725 möglich (feste I²C-Adresse `0x29`).
+The driver is a small header ([`TCS34725.h`](RobotArdu/src/main/resources/arduino/TCS34725/TCS34725.h), 50 ms integration time, 4× gain)
+and needs no Adafruit library. Only one sensor is possible (fixed I²C address `0x29`).
 
-### Programm
+## L293D motor shield
 
-Der Block **„gib Farbe Farbsensor F“** hat fünf Modi:
+For the first-generation Adafruit motor shield (L293D + 74HC595 shift register) and its clones. Add one **L293D motor** block per motor
+(port M1–M4) to the configuration; **run L293D motor … speed %** takes −100 … 100 (negative = backwards, 0 = motor released).
 
-| Modus   | Ergebnis                          | Typ   |
-| ------- | --------------------------------- | ----- |
-| Farbe   | Rot, Grün, Weiß, Schwarz oder Grau (= nicht erkannt) | Farbe |
-| Licht   | Helligkeit in %                   | Zahl  |
-| rot     | Anteil des Rot-Kanals am Licht in % | Zahl |
-| grün    | Anteil des Grün-Kanals in %       | Zahl  |
-| blau    | Anteil des Blau-Kanals in %       | Zahl  |
+### Pin map (Uno with shield, colour sensor and ultrasonic sensor)
 
-Im Modus **Farbe** vergleichst du das Ergebnis mit den Farbblöcken aus der Kategorie **Farben**
-(Rot `#cc0000`, Grün `#33cc00`, Weiß `#ffffff`, Schwarz `#000000`):
+| Pins | Used by |
+|---|---|
+| 0, 1 | USB serial (keep free) |
+| 3, 5, 6, 11 | L293D PWM for M2, M4, M3, M1 |
+| 4, 7, 8, 12 | L293D shift register (clock, enable, data, latch) |
+| 9, 10 | servo connectors of the shield (servo 2, servo 1) |
+| A4, A5 | I²C: TCS34725 (SDA, SCL) |
+| **2, 13, A0–A3** | **free** – e.g. ultrasonic trig A0, echo A1 |
 
-```
-wenn  [gib Farbe Farbsensor F]  =  [rot]
-    mache  …
-```
-
-### Kalibrieren
-
-Die Erkennung hängt von Abstand (ideal ca. 1 cm), Umgebungslicht und Oberfläche ab:
-
-1. Ein kleines Programm bauen, das **Licht**, **rot**, **grün** und **blau** mit „zeige auf Serial Monitor“ ausgibt.
-2. Den Sensor nacheinander über Schwarz, Weiß, Rot und Grün halten und die Werte notieren.
-3. **Schwarz unter %** knapp über den Schwarz-Wert setzen, **Weiß über %** knapp unter den Weiß-Wert.
-
-So entscheidet der Sensor im Modus Farbe:
-
-1. Helligkeit unter „Schwarz unter %“ → **Schwarz**
-2. Rot-Kanal mehr als 1,5-mal so stark wie Grün und Blau → **Rot**
-3. Grün-Kanal mehr als 1,2-mal so stark wie Rot und Blau → **Grün**
-4. Helligkeit über „Weiß über %“ → **Weiß**
-5. sonst → **Grau** (nicht erkannt)
-
-Der Treiber ist eine eigene, kleine Header-Datei
-([`TCS34725.h`](RobotArdu/src/main/resources/arduino/TCS34725/TCS34725.h)) und braucht keine Adafruit-Bibliothek
-(Integrationszeit 50 ms, Verstärkung 4×).
-
-## Das L293D-Motor-Shield
-
-Für das Adafruit Motor Shield der ersten Generation (L293D mit Schieberegister 74HC595) und Nachbauten.
-In der **Roboterkonfiguration** (Kategorie Aktoren) pro Motor einen Block **L293D motor** mit Port **M1–M4** anlegen.
-Im Programm (Kategorie Aktion) dreht **„run L293D motor … Geschwindigkeit … %“** den Motor:
-−100 bis 100, negativ = rückwärts, 0 = Motor frei. Die Blöcke sind noch nicht ins Deutsche übersetzt.
-
-## Pinbelegung auf einen Blick
-
-Arduino Uno mit L293D-Shield, Farbsensor und Ultraschallsensor:
-
-| Pin        | Belegt durch                                      |
-| ---------- | ------------------------------------------------- |
-| 0, 1       | USB / serielle Verbindung (nicht benutzen)        |
-| 3, 5, 6, 11 | L293D: PWM der Motoren M2, M4, M3, M1            |
-| 4, 7, 8, 12 | L293D: Schieberegister (Takt, Enable, Daten, Latch) |
-| 9, 10      | Servo-Anschlüsse des Shields (Servo 2, Servo 1)   |
-| A4, A5     | I²C: Farbsensor TCS34725 (SDA, SCL)               |
-| **2, 13, A0–A3** | **frei** – z. B. Ultraschall Trig A0, Echo A1 |
-
-## Probleme lösen
-
-| Problem | Lösung |
-| ------- | ------ |
-| Kein COM-Port in der Liste | USB-Kabel prüfen (manche Kabel laden nur). Viele Nachbauten brauchen den Treiber **CH340** („CH340 Treiber Windows“ suchen). Im Geräte-Manager unter „Anschlüsse (COM & LPT)“ nachsehen. |
-| „Übertragung fehlgeschlagen“ | Richtigen COM-Port gewählt? Serieller Monitor (z. B. der Arduino IDE) geschlossen? Andere Programme, die den Port benutzen, schließen und noch einmal ▶. |
-| Nano lädt nicht | Wird automatisch mit neuem (115200 Baud) und altem Bootloader (57600 Baud) probiert. Sonst wie oben. |
-| Fehler in der Roboterkonfiguration bei A4/A5 | Ein anderes Bauteil nutzt A4/A5 als normalen Pin. Auf A0–A3 umstecken. |
-| Farbsensor meldet immer Grau | Kalibrieren (siehe oben); Abstand ca. 1 cm; Sensor-LED muss leuchten. |
-| Browser öffnet sich nicht | Selbst <http://127.0.0.1:1999> aufrufen. |
-| Fenster schließt sich mit Fehler | `%LOCALAPPDATA%\OpenRobertaLab\logs\server.log` ansehen. |
-| „Das Lab läuft bereits“ | Es läuft schon ein schwarzes Fenster – dort weiterarbeiten oder es schließen. |
-
-## Wie es funktioniert
+## How it works
 
 ```mermaid
 flowchart LR
-    subgraph PC["Windows-PC"]
-        L["OpenRobertaLab.exe<br/>(Starter)"] -->|startet| S["Open Roberta Server<br/>Java, 127.0.0.1:1999"]
-        B["Browser<br/>Blockly-Editor"] <-->|HTTP| S
-        S -->|C++ erzeugen,<br/>kompilieren| G["avr-gcc"]
-        S -->|hex hochladen| D["avrdude"]
+    subgraph PC["Windows PC"]
+        L["BlockCore.exe<br/>(launcher)"] -->|starts| S["lab server<br/>Java, 127.0.0.1:1999"]
+        W["BlockCore window<br/>Edge app mode"] <-->|HTTP| S
+        M["serial monitor<br/>window"] <-->|HTTP| S
+        S -->|generate C++, compile| G["avr-gcc"]
+        S -->|upload hex| D["avrdude"]
     end
-    D -->|USB / COM-Port| A["Arduino"]
+    D -->|USB COM port| A["Arduino"]
+    S <-->|serial monitor| A
 ```
 
-- **`OpenRobertaLab.exe`** ([`launcher.c`](Resources/windowsStandalone/launcher.c)) legt beim ersten Start die
-  Datenbank an, startet den Server mit der mitgelieferten Java-Laufzeit und öffnet den Browser. Wird das Fenster
-  geschlossen, endet auch der Server.
-- Der Server läuft im **lokalen Modus** (`server.local.serial=true`):
-  - `GET /rest/local/ports` listet die COM-Ports des PCs,
-  - **▶** kompiliert das Programm ohne Roboter-Token,
-  - `POST /rest/local/upload` lädt die hex-Datei mit avrdude auf den gewählten Port.
+- **`BlockCore.exe`** ([`launcher.c`](Resources/windowsStandalone/launcher.c)) creates the database on the first start, starts the server
+  with the bundled Java runtime and opens the lab as an app window (Microsoft Edge or Chrome in app mode, otherwise the default browser).
+  Closing the console window stops the server.
+- The server runs in **local mode** (`server.local.serial=true`): it lists the COM ports (`/rest/local/ports`), compiles without a robot
+  token, uploads with avrdude (`/rest/local/upload`) and runs the serial monitor (`/rest/local/monitor/*`). These services only answer
+  requests from the same PC and from pages of this server.
+- On Windows the AVR boards are compiled without bash: `ArduinoAvrDirectBuild` calls avr-g++, avr-gcc and avr-objcopy directly.
+- On a normal, public lab server the local mode is off and everything works as in the original (token and connector).
 
-  Diese Schnittstellen nehmen nur Anfragen vom eigenen PC und von Seiten dieses Servers an.
-- Unter Windows wird ohne Bash kompiliert: `ArduinoAvrDirectBuild` ruft avr-g++, avr-gcc und avr-objcopy direkt auf.
-- Auf einem normalen, öffentlichen Lab-Server ist der lokale Modus aus; dort funktioniert alles wie im Original
-  (Token und Connector).
+## Repository layout
 
-## Selbst bauen und weiterentwickeln
+```
+Resources/windowsStandalone/      Launcher (C), build script, NSIS installer, branding, LIESMICH
+.github/workflows/                windows_installer.yml builds and releases the installer
+OpenRobertaServer/                Lab server; local mode in javaServer/restServices/local/, serial monitor page staticResources/serial.html
+OpenRobertaWeb/                   Frontend (TypeScript); LocalSerialOrTokenConnection in .../controller/connections/connections.ts
+RobotArdu/                        Arduino plugin: TCS34725 blocks, L293D shield, direct AVR build, TCS34725.h / L293DMotor.h drivers
+docs/                             German guide, images, CC BY 4.0 license of the documentation
+README.openroberta.md             Original documentation of the Open Roberta Lab
+```
 
-Voraussetzungen (Linux, z. B. Ubuntu): Java 11+, Maven, `gcc-mingw-w64-x86-64`, `nsis`, `zip`, `unzip`, `curl`.
+## Building
+
+On Linux (e.g. Ubuntu) with Java 11+, Maven, `gcc-mingw-w64-x86-64`, `nsis`, `zip`, `unzip` and `curl`:
 
 ```bash
 mvn clean install -DskipTests
@@ -213,53 +151,49 @@ mvn clean install -DskipTests
 Resources/windowsStandalone/build-windows.sh target/windowsStandalone
 ```
 
-Ergebnis: `target/windowsStandalone/OpenRobertaLab-Setup.exe` und `OpenRobertaLab-portable.zip`.
-Das Skript lädt Temurin-JRE 11, avr-gcc 7.3, avrdude 7.3 und die Arduino-Ressourcen von GitHub und packt nur die
-AVR-Boards ein.
+The result is `target/windowsStandalone/BlockCore-Setup.exe` and `BlockCore-portable.zip`. The script downloads Temurin JRE 11,
+avr-gcc 7.3, avrdude 7.3 and the Arduino resources from GitHub and only packs the AVR boards. The frontend is built with
+`npm ci && npx gulp` in `OpenRobertaWeb/`; the generated files in `OpenRobertaServer/staticResources/js` are checked in.
 
-### Wichtige Dateien
-
-| Datei | Inhalt |
-| ----- | ------ |
-| [`Resources/windowsStandalone/`](Resources/windowsStandalone) | Starter, Build-Skript, Installer (NSIS), LIESMICH |
-| [`.github/workflows/windows_installer.yml`](.github/workflows/windows_installer.yml) | baut und veröffentlicht den Installer |
-| `OpenRobertaServer/…/restServices/local/LocalSerialController.java` | COM-Ports auflisten, Upload mit avrdude |
-| `RobotArdu/…/worker/compile/ArduinoAvrDirectBuild.java` | Kompilieren ohne Bash (Windows) |
-| `RobotArdu/…/syntax/sensors/arduino/tcs34725/` | Farbsensor-Block (Java) |
-| `RobotArdu/src/main/resources/arduino/TCS34725/TCS34725.h` | Farbsensor-Treiber (C++) |
-| `OpenRobertaWeb/src/app/roberta/controller/connections/connections.ts` | `LocalSerialOrTokenConnection` im Browser |
-
-### Lab unter Linux im lokalen Modus starten
-
-Praktisch zum Testen ohne Windows (avr-gcc und avrdude aus dem Paketmanager, Arduino-Ressourcen aus
-[ora-cc-rsc](https://github.com/OpenRoberta/ora-cc-rsc) unter `<rsc>/RobotArdu/arduino-resources`):
-
-```bash
-java --add-opens java.base/java.lang=ALL-UNNAMED -Dora.arduino.directBuild=true -cp "OpenRobertaServer/target/resources/*" de.fhg.iais.roberta.main.ServerStarter -d database.mode=embedded -d database.parentdir=/tmp/ora-db -d database.name=openroberta-db -d server.staticresources.dir=OpenRobertaServer/staticResources -d robot.crosscompiler.resourcebase=<rsc> -d server.ip=127.0.0.1 -d server.local.serial=true
-```
-
-Die Datenbank vorher einmal anlegen:
+To run the local mode on Linux (avr-gcc and avrdude from the package manager, Arduino resources from
+[ora-cc-rsc](https://github.com/OpenRoberta/ora-cc-rsc) under `<rsc>/RobotArdu/arduino-resources`), create the database once and start
+the server:
 
 ```bash
 java -cp "OpenRobertaServer/target/resources/*" de.fhg.iais.roberta.main.Administration create-empty-db jdbc:hsqldb:file:/tmp/ora-db/openroberta-db
 ```
 
-Das Frontend (TypeScript) wird mit `npm ci && npx gulp` in `OpenRobertaWeb/` gebaut; die erzeugten Dateien unter
-`OpenRobertaServer/staticResources/js` werden mit eingecheckt.
+```bash
+java --add-opens java.base/java.lang=ALL-UNNAMED -Dora.arduino.directBuild=true -cp "OpenRobertaServer/target/resources/*" de.fhg.iais.roberta.main.ServerStarter -d database.mode=embedded -d database.parentdir=/tmp/ora-db -d database.name=openroberta-db -d server.staticresources.dir=OpenRobertaServer/staticResources -d robot.crosscompiler.resourcebase=<rsc> -d server.ip=127.0.0.1 -d server.local.serial=true
+```
 
-### Stand der Tests
+### Test status
 
-- Unit-Tests für Farbsensor, Konfigurationsprüfung und lokalen Modus; Codegenerierungs-Test `uno/tcs34725_colour`.
-- Kompletter Ablauf im Browser (Port wählen, kompilieren, hochladen, Meldungen) für Uno, Nano und Mega unter Linux mit
-  den Dateien des Windows-Pakets geprüft.
-- Der Farbsensor-Treiber ist gegen den echten Arduino-AVR-Core kompiliert und mit simulierten Messwerten getestet.
-- **Noch offen:** Test des Installers auf einem echten Windows-PC und mit echtem Farbsensor.
+- Unit tests for the colour sensor, the configuration checks, the local mode and the serial monitor; code generation test
+  `uno/tcs34725_colour`.
+- Complete flow in the browser (port selection, compile, upload, messages) for Uno, Nano and Mega on Linux with the files of the Windows
+  package; serial monitor tested with a virtual serial port (receive incl. UTF-8, send, pause and resume around an upload).
+- The colour sensor driver compiles against the Arduino AVR core and was tested with simulated readings.
+- **Still open:** a test on a real Windows PC and with a real TCS34725.
 
-## Herkunft und Lizenz
+## Changelog
 
-Basiert auf dem [Open Roberta Lab](https://github.com/OpenRoberta/openroberta-lab) des Fraunhofer IAIS
-(über [rosslight/openroberta-lab](https://github.com/rosslight/openroberta-lab), Stand `40ef141`).
-Die ursprüngliche Dokumentation steht in [`README.openroberta.md`](README.openroberta.md).
+| Version | Changes |
+|---|---|
+| Build 3+ | BlockCore name and logo, own app window, serial monitor |
+| Build 2 | First Windows installer: local COM port upload, direct AVR build, TCS34725 and L293D blocks |
 
-Lizenz: Apache License 2.0, siehe [`LICENSE`](LICENSE) und [`NOTICE`](NOTICE). Das Windows-Paket enthält außerdem
-Eclipse Temurin (GPLv2 mit Classpath Exception), avr-gcc/avr-libc (GPL/BSD) und avrdude (GPLv2).
+## License
+
+© 2026 Marvin Ramm. Open source with attribution:
+
+- Code: [Apache License 2.0](LICENSE), like the Open Roberta Lab it is based on
+- Documentation, images and the BlockCore logo: [CC BY 4.0](docs/LICENSE)
+
+Credit "BlockCore by Marvin Ramm" with a link to this repository. Details are in [LICENSING.md](LICENSING.md).
+
+BlockCore is based on the [Open Roberta Lab](https://github.com/OpenRoberta/openroberta-lab) © Fraunhofer IAIS (via
+[rosslight/openroberta-lab](https://github.com/rosslight/openroberta-lab), develop @ `40ef141`). "Roberta", "Open Roberta" and
+"Open Roberta Lab" are trademarks of the Fraunhofer Society; BlockCore is not an official Fraunhofer product and uses its own name and
+logo, as the [NOTICE](NOTICE) requires for modified versions. The Windows package also contains Eclipse Temurin (GPLv2 with Classpath
+Exception), avr-gcc / avr-libc (GPL / modified BSD) and avrdude (GPLv2).

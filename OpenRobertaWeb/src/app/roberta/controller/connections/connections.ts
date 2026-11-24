@@ -895,6 +895,7 @@ class LocalSerialOrTokenConnection extends TokenConnection {
                     return;
                 }
                 this.local = true;
+                this.addSerialMonitorMenu();
                 this.updatePorts(response);
                 this.timerId = window.setInterval(() => this.refreshPorts(), 3000);
             })
@@ -910,7 +911,28 @@ class LocalSerialOrTokenConnection extends TokenConnection {
             this.timerId = undefined;
         }
         this.local = false;
+        $('#robotSerialMonitor').remove();
         super.terminate();
+    }
+
+    /**
+     * adds "Serial Monitor" to the robot menu. It opens serial.html in its own window, with the selected port.
+     */
+    private addSerialMonitorMenu(): void {
+        if ($('#robotSerialMonitor').length > 0) {
+            return;
+        }
+        const item = $('<li id="robotSerialMonitor"><a class="dropdown-item" href="#" id="menuSerialMonitor"><span class="typcn typcn-messages"></span></a></li>');
+        item.find('span').text(' ' + (Blockly.Msg['LOCAL_SERIAL_MONITOR'] || 'Serial Monitor'));
+        item.find('a').on('click', (event) => {
+            event.preventDefault();
+            const query = '?port=' + encodeURIComponent(GUISTATE_C.getRobotPort() || '') + '&lang=' + String(GUISTATE_C.getLanguage() || 'en').toLowerCase();
+            const monitor = window.open('/serial.html' + query, 'serialMonitor', 'popup,width=820,height=580');
+            if (monitor) {
+                monitor.focus();
+            }
+        });
+        $('#robotConnect').after(item);
     }
 
     private refreshPorts(): void {
@@ -968,7 +990,9 @@ class LocalSerialOrTokenConnection extends TokenConnection {
         }
         $('#singleModalListInput').empty();
         this.ports.forEach((port) => {
-            const label = !port.description || port.description.indexOf(port.name) >= 0 ? port.description || port.name : port.description + ' (' + port.name + ')';
+            // port first, it may be cut off in the narrow dialog: "COM3 – USB-SERIAL CH340"
+            const description = (port.description || '').replace(' (' + port.name + ')', '').trim();
+            const label = description && description !== port.name ? port.name + ' – ' + description : port.name;
             const option = $('<option></option>').attr('value', port.name).text(label);
             if (port.name === GUISTATE_C.getRobotPort()) {
                 option.attr('selected', 'selected');

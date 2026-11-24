@@ -500,7 +500,8 @@ Blockly.Msg.L293DMOTOR_TOOLTIP = "Represents a DC motor connected to port M1, M2
 Blockly.Msg.LOCAL_SERIAL_NO_PORT = "Kein Roboter gefunden. Schließe den Roboter mit einem USB-Kabel an. Wird er weiterhin nicht gefunden, installiere den USB-Treiber (z. B. CH340) für dein Board.";
 Blockly.Msg.LOCAL_SERIAL_UPLOADING = "Das Programm wird auf $ übertragen ...";
 Blockly.Msg.LOCAL_SERIAL_UPLOAD_SUCCESS = "Das Programm wurde auf $ übertragen.";
-Blockly.Msg.LOCAL_SERIAL_UPLOAD_ERROR = "Die Übertragung auf $ ist fehlgeschlagen. Ist der richtige Port gewählt und der serielle Monitor geschlossen? Versuche es noch einmal.";
+Blockly.Msg.LOCAL_SERIAL_MONITOR = "Serieller Monitor";
+Blockly.Msg.LOCAL_SERIAL_UPLOAD_ERROR = "Die Übertragung auf $ ist fehlgeschlagen. Ist der richtige Port gewählt und benutzt kein anderes Programm (z. B. die Arduino IDE) den Port? Versuche es noch einmal.";
 Blockly.Msg.SENSOR_TCS34725 = "Farbsensor TCS34725";
 Blockly.Msg.TCS34725_TOOLTIP = "Block für den Farbsensor TCS34725 am I²C-Bus (SDA = A4, SCL = A5 beim Uno). Die Schwellwerte für Schwarz und Weiß sind in Prozent der maximalen Helligkeit angegeben.";
 Blockly.Msg.SENSOR_TCS34725_GETSAMPLE_TOOLTIP = "Gibt den aktuellen Wert des Farbsensors TCS34725 zurück. Im Modus Farbe liefert der Sensor Rot, Grün, Weiß oder Schwarz, jede andere Farbe wird als Grau (#999999) zurückgegeben.";

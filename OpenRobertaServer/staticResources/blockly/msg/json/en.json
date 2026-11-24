@@ -2215,5 +2215,6 @@
 	"LOCAL_SERIAL_NO_PORT": "No robot found. Connect the robot with a USB cable. If it is still missing, install the USB driver (e.g. CH340) for your board.",
 	"LOCAL_SERIAL_UPLOADING": "The program is uploaded to $ ...",
 	"LOCAL_SERIAL_UPLOAD_SUCCESS": "The program was uploaded to $.",
-	"LOCAL_SERIAL_UPLOAD_ERROR": "The upload to $ failed. Is the right port selected and the serial monitor closed? Try to upload again."
+	"LOCAL_SERIAL_UPLOAD_ERROR": "The upload to $ failed. Is the right port selected and no other program (e.g. the Arduino IDE) using it? Try to upload again.",
+	"LOCAL_SERIAL_MONITOR": "Serial Monitor"
 }

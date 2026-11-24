@@ -370,5 +370,6 @@
 	"LOCAL_SERIAL_NO_PORT": "Kein Roboter gefunden. Schließe den Roboter mit einem USB-Kabel an. Wird er weiterhin nicht gefunden, installiere den USB-Treiber (z. B. CH340) für dein Board.",
 	"LOCAL_SERIAL_UPLOADING": "Das Programm wird auf $ übertragen ...",
 	"LOCAL_SERIAL_UPLOAD_SUCCESS": "Das Programm wurde auf $ übertragen.",
-	"LOCAL_SERIAL_UPLOAD_ERROR": "Die Übertragung auf $ ist fehlgeschlagen. Ist der richtige Port gewählt und der serielle Monitor geschlossen? Versuche es noch einmal."
+	"LOCAL_SERIAL_UPLOAD_ERROR": "Die Übertragung auf $ ist fehlgeschlagen. Ist der richtige Port gewählt und benutzt kein anderes Programm (z. B. die Arduino IDE) den Port? Versuche es noch einmal.",
+	"LOCAL_SERIAL_MONITOR": "Serieller Monitor"
 }

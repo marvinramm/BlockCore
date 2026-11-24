@@ -1,5 +1,6 @@
 /*
- * Launcher for the standalone Open Roberta Lab on Windows (OpenRobertaLab.exe).
+ * Launcher of BlockCore, the standalone block programming lab for Arduino on Windows (BlockCore.exe).
+ * BlockCore is based on the Open Roberta Lab of Fraunhofer IAIS.
  *
  * Layout next to the exe:
  *   jre\            Java runtime
@@ -7,13 +8,13 @@
  *   staticResources\ the web frontend
  *   ora-cc-rsc\     cross compiler resources (AVR toolchain, avrdude, Arduino cores and libraries)
  *
- * User data (database, logs) goes to %LOCALAPPDATA%\OpenRobertaLab, because the program directory may not be writable.
+ * User data (database, logs) goes to %LOCALAPPDATA%\BlockCore, because the program directory may not be writable.
  *
  * What it does:
  *   1. if the lab is already running (port in use), only the browser is opened
  *   2. on first start an empty database is created
  *   3. the server is started (output -> logs\server.log); it is killed when this window is closed (job object)
- *   4. as soon as the server answers, the browser is opened
+ *   4. as soon as the server answers, the lab opens in its own window (Edge or Chrome in app mode, else the default browser)
  *
  * Build (on Linux): see build-windows.sh
  */
@@ -47,7 +48,7 @@ static void say(const wchar_t *text) {
 static void fail(const wchar_t *text) {
     say(L"\r\nFEHLER: ");
     say(text);
-    say(L"\r\n\r\nDetails stehen in %LOCALAPPDATA%\\OpenRobertaLab\\logs\\server.log\r\nTaste druecken zum Beenden ...");
+    say(L"\r\n\r\nDetails stehen in %LOCALAPPDATA%\\BlockCore\\logs\\server.log\r\nTaste druecken zum Beenden ...");
     getchar();
     ExitProcess(1);
 }
@@ -68,10 +69,36 @@ static BOOL portInUse(void) {
     return connected;
 }
 
+/* starts a Chromium based browser in app mode: its own window without address bar and tabs */
+static BOOL openAppWindow(const wchar_t *programFilesVariable, const wchar_t *relativePath, const wchar_t *url) {
+    wchar_t base[MAX_PATH];
+    wchar_t exe[MAX_PATH];
+    wchar_t args[512];
+    if ( GetEnvironmentVariableW(programFilesVariable, base, MAX_PATH) == 0 ) {
+        return FALSE;
+    }
+    swprintf(exe, MAX_PATH, L"%ls\\%ls", base, relativePath);
+    if ( GetFileAttributesW(exe) == INVALID_FILE_ATTRIBUTES ) {
+        return FALSE;
+    }
+    swprintf(args, 512, L"--app=%ls --window-size=1400,900 --no-first-run --no-default-browser-check", url);
+    return (INT_PTR) ShellExecuteW(NULL, L"open", exe, args, NULL, SW_SHOWNORMAL) > 32;
+}
+
 static void openBrowser(void) {
     wchar_t url[128];
+    static const wchar_t *programFiles[] = {L"ProgramFiles(x86)", L"ProgramFiles", L"LOCALAPPDATA"};
+    static const wchar_t *browsers[] = {L"Microsoft\\Edge\\Application\\msedge.exe", L"Google\\Chrome\\Application\\chrome.exe"};
+    int b, p;
     swprintf(url, 128, L"http://127.0.0.1:%d/#loadSystem&&uno", PORT);
-    ShellExecuteW(NULL, L"open", url, NULL, NULL, SW_SHOWNORMAL);
+    for ( b = 0; b < 2; b++ ) {
+        for ( p = 0; p < 3; p++ ) {
+            if ( openAppWindow(programFiles[p], browsers[b], url) ) {
+                return;
+            }
+        }
+    }
+    ShellExecuteW(NULL, L"open", url, NULL, NULL, SW_SHOWNORMAL); /* no Edge or Chrome: default browser */
 }
 
 /* appends one argument in double quotes (no argument contains a double quote) */
@@ -145,13 +172,13 @@ int wmain(void) {
     WSADATA wsa;
     int seconds;
 
-    SetConsoleTitleW(L"Open Roberta Lab");
+    SetConsoleTitleW(L"BlockCore");
     SetConsoleOutputCP(CP_UTF8);
-    say(L"Open Roberta Lab\r\n================\r\n\r\n");
+    say(L"BlockCore - Blockprogrammierung fuer Arduino\r\n=============================================\r\n\r\n");
 
     WSAStartup(MAKEWORD(2, 2), &wsa);
     if ( portInUse() ) {
-        say(L"Das Lab laeuft bereits. Der Browser wird geoeffnet.\r\n");
+        say(L"BlockCore laeuft bereits. Das Fenster wird geoeffnet.\r\n");
         openBrowser();
         Sleep(2000);
         return 0;
@@ -165,7 +192,7 @@ int wmain(void) {
     if ( SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, 0, localAppData) != S_OK ) {
         fail(L"Der Ordner %LOCALAPPDATA% wurde nicht gefunden.");
     }
-    swprintf(dataDir, MAX_PATH, L"%ls\\OpenRobertaLab", localAppData);
+    swprintf(dataDir, MAX_PATH, L"%ls\\BlockCore", localAppData);
     CreateDirectoryW(dataDir, NULL);
     swprintf(path, MAX_PATH, L"%ls\\db", dataDir);
     CreateDirectoryW(path, NULL);
@@ -242,9 +269,10 @@ int wmain(void) {
         fail(L"Der Server hat nicht rechtzeitig geantwortet.");
     }
 
-    say(L"\r\nDas Lab laeuft: http://127.0.0.1:1999\r\n");
-    say(L"Der Browser wird geoeffnet. Roboter per USB anschliessen und im Lab unter\r\n");
-    say(L"\"Roboter -> Verbinden\" den COM-Port waehlen.\r\n\r\n");
+    say(L"\r\nBlockCore laeuft: http://127.0.0.1:1999\r\n");
+    say(L"Das Fenster wird geoeffnet. Roboter per USB anschliessen und unter\r\n");
+    say(L"\"Roboter -> Verbinden\" den COM-Port waehlen. Den seriellen Monitor gibt es\r\n");
+    say(L"unter \"Roboter -> Serieller Monitor\".\r\n\r\n");
     say(L">>> Zum Beenden dieses Fenster schliessen. <<<\r\n");
     openBrowser();
 

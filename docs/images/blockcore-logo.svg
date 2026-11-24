@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 792.91 325.99">
+  <g transform="translate(0,35) scale(1.0)"><path d="M34,40 H46 l6,8 h20 l6,-8 H222 q6,0 6,6 V82 q0,6 -6,6 H78 l-6,8 h-20 l-6,-8 H34 q-6,0 -6,-6 V46 q0,-6 6,-6 Z" fill="#bacc1e"/><path d="M58,104 H70 l6,8 h20 l6,-8 H222 q6,0 6,6 V146 q0,6 -6,6 H102 l-6,8 h-20 l-6,-8 H58 q-6,0 -6,-6 V110 q0,-6 6,-6 Z" fill="#f29400"/><path d="M34,168 H46 l6,8 h20 l6,-8 H222 q6,0 6,6 V210 q0,6 -6,6 H78 l-6,8 h-20 l-6,-8 H34 q-6,0 -6,-6 V174 q0,-6 6,-6 Z" fill="#2f8fbf"/></g>
+  <text x="290" y="168" font-family="Roboto, Arial, sans-serif" font-size="128" font-weight="700" fill="#39404a">Block</text>
+  <text x="292" y="290" font-family="Roboto, Arial, sans-serif" font-size="128" font-weight="300" fill="#39404a">Core</text>
+</svg>

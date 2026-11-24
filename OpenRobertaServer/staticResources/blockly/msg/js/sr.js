@@ -500,7 +500,8 @@ Blockly.Msg.L293DMOTOR_TOOLTIP = "Represents a DC motor connected to port M1, M2
 Blockly.Msg.LOCAL_SERIAL_NO_PORT = "No robot found. Connect the robot with a USB cable. If it is still missing, install the USB driver (e.g. CH340) for your board.";  // untranslated
 Blockly.Msg.LOCAL_SERIAL_UPLOADING = "The program is uploaded to $ ...";  // untranslated
 Blockly.Msg.LOCAL_SERIAL_UPLOAD_SUCCESS = "The program was uploaded to $.";  // untranslated
-Blockly.Msg.LOCAL_SERIAL_UPLOAD_ERROR = "The upload to $ failed. Is the right port selected and the serial monitor closed? Try to upload again.";  // untranslated
+Blockly.Msg.LOCAL_SERIAL_MONITOR = "Serial Monitor";  // untranslated
+Blockly.Msg.LOCAL_SERIAL_UPLOAD_ERROR = "The upload to $ failed. Is the right port selected and no other program (e.g. the Arduino IDE) using it? Try to upload again.";  // untranslated
 Blockly.Msg.SENSOR_TCS34725 = "colour sensor TCS34725";  // untranslated
 Blockly.Msg.TCS34725_TOOLTIP = "Represents a TCS34725 colour sensor connected via I²C (SDA = A4, SCL = A5 on the Uno). The thresholds for black and white are given in percent of the maximal brightness.";  // untranslated
 Blockly.Msg.SENSOR_TCS34725_GETSAMPLE_TOOLTIP = "Gets the current reading from the TCS34725 colour sensor. In colour mode the sensor returns red, green, white or black; any other colour is returned as grey (#999999).";  // untranslated

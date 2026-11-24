@@ -1,31 +1,39 @@
-Open Roberta Lab - lokale Version fuer Windows
-==============================================
+BlockCore - Blockprogrammierung fuer Arduino, lokal unter Windows
+=================================================================
 
-Das Lab laeuft komplett auf diesem Computer. Es braucht kein Internet, keinen
-externen Server und kein Connector-Programm.
+BlockCore laeuft komplett auf diesem Computer. Es braucht kein Internet,
+keinen externen Server und kein Connector-Programm.
 
-Unterstuetzte Roboter: Arduino Uno, Arduino Nano, Arduino Mega
+Unterstuetzte Boards: Arduino Uno, Arduino Nano, Arduino Mega
 (mit Farbsensor TCS34725 und L293D-Motor-Shield).
 
 So geht's
 ---------
-1. "Open Roberta Lab" starten (Desktop oder Startmenue).
-   Ein schwarzes Fenster oeffnet sich, danach der Browser.
+1. "BlockCore" starten (Desktop oder Startmenue).
+   Ein schwarzes Fenster oeffnet sich (der Server), danach das BlockCore-Fenster.
 2. Den Arduino per USB anschliessen.
-3. Im Lab: "Roboter -> Verbinden" und den COM-Port waehlen.
+3. In BlockCore: "Roboter -> Verbinden" und den COM-Port waehlen.
    Ist nur ein Arduino angeschlossen, wird er automatisch gewaehlt.
 4. Programm bauen und auf "Ausfuehren" (Play-Knopf) klicken.
    Das Programm wird kompiliert und auf den Arduino geladen.
-5. Zum Beenden das schwarze Fenster schliessen.
+5. Ausgaben des Arduino ("zeige auf Serial Monitor") siehst du unter
+   "Roboter -> Serieller Monitor". Beim Hochladen pausiert der Monitor
+   automatisch und verbindet sich danach wieder.
+6. Zum Beenden das schwarze Fenster schliessen.
 
 Probleme?
 ---------
 - Kein COM-Port zu sehen: Viele guenstige Arduino-Nachbauten brauchen den
   USB-Treiber "CH340" (Suche: "CH340 Treiber Windows").
-- Upload schlaegt fehl: Ist der richtige COM-Port gewaehlt? Ist der serielle
-  Monitor (z. B. der Arduino IDE) geschlossen? Beim Nano mit altem Bootloader
+- Upload schlaegt fehl: Ist der richtige COM-Port gewaehlt? Benutzt ein anderes
+  Programm (z. B. die Arduino IDE) den Port? Beim Nano mit altem Bootloader
   wird automatisch auch die langsamere Uebertragung probiert.
-- Die Programme und Einstellungen liegen in %LOCALAPPDATA%\OpenRobertaLab,
-  das Server-Log in %LOCALAPPDATA%\OpenRobertaLab\logs\server.log.
+- Die Programme liegen in %LOCALAPPDATA%\BlockCore,
+  das Server-Log in %LOCALAPPDATA%\BlockCore\logs\server.log.
 
-Das Lab ist nur auf diesem Computer erreichbar (http://127.0.0.1:1999).
+BlockCore ist nur auf diesem Computer erreichbar (http://127.0.0.1:1999).
+
+BlockCore von Marvin Ramm - https://github.com/marvinramm/openroberta-lab-local
+Basiert auf dem Open Roberta Lab des Fraunhofer IAIS (Apache License 2.0).
+"Open Roberta" ist eine Marke der Fraunhofer-Gesellschaft; BlockCore ist kein
+offizielles Produkt des Fraunhofer IAIS.

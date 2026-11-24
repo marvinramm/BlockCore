@@ -1,6 +1,6 @@
 name: Windows-Installer
 
-# Builds the standalone Open Roberta Lab for Windows (installer and portable zip) on every push to main
+# Builds BlockCore for Windows (installer and portable zip) on every push to main
 # (or by hand: Actions -> Windows-Installer -> Run workflow) and publishes both as a GitHub release.
 # See Resources/windowsStandalone/build-windows.sh
 
@@ -50,15 +50,15 @@ jobs:
         with:
           tag_name: windows-${{ github.run_number }}
           target_commitish: ${{ github.sha }}
-          name: Open Roberta Lab für Windows (Build ${{ github.run_number }})
+          name: BlockCore für Windows (Build ${{ github.run_number }})
           make_latest: true
           body: |
-            **OpenRobertaLab-Setup.exe** herunterladen und installieren (keine Admin-Rechte nötig).
-            Alternativ **OpenRobertaLab-portable.zip** entpacken und `OpenRobertaLab.exe` starten.
+            **BlockCore-Setup.exe** herunterladen und installieren (keine Admin-Rechte nötig).
+            Alternativ **BlockCore-portable.zip** entpacken und `BlockCore.exe` starten.
 
             Anleitung und Hilfe: siehe [README](https://github.com/${{ github.repository }}#readme).
 
             Commit: ${{ github.sha }}
           files: |
-            target/windowsStandalone/OpenRobertaLab-Setup.exe
-            target/windowsStandalone/OpenRobertaLab-portable.zip
+            target/windowsStandalone/BlockCore-Setup.exe
+            target/windowsStandalone/BlockCore-portable.zip

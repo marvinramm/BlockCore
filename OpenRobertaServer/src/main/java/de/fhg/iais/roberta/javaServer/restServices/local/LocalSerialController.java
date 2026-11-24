@@ -17,6 +17,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -110,6 +111,8 @@ public class LocalSerialController {
         }
         synchronized ( UPLOAD_LOCK ) {
             Path hexFile = null;
+            // avrdude needs the port: a serial monitor on it is paused and continued after the upload
+            SerialMonitor.Paused pausedMonitor = SerialMonitor.get().pause(port);
             try {
                 hexFile = Files.createTempFile("ora-upload-", ".hex");
                 Files.write(hexFile, hex.getBytes(StandardCharsets.US_ASCII));
@@ -126,7 +129,7 @@ public class LocalSerialController {
                     return answer(Response.Status.OK, true, "Program uploaded to " + port);
                 }
                 LOG.warn("upload to " + port + " failed:\n" + log);
-                return answer(Response.Status.OK, false, "Upload to " + port + " failed. Is the right port selected and the serial monitor closed?\n" + tail(log.toString(), 1500));
+                return answer(Response.Status.OK, false, "Upload to " + port + " failed. Is the right port selected and no other program (e.g. the Arduino IDE) using it?\n" + tail(log.toString(), 1500));
             } catch ( IOException | InterruptedException e ) {
                 LOG.error("upload to " + port + " failed", e);
                 return answer(Response.Status.INTERNAL_SERVER_ERROR, false, "upload failed: " + e.getMessage());
@@ -134,8 +137,138 @@ public class LocalSerialController {
                 if ( hexFile != null ) {
                     hexFile.toFile().delete();
                 }
+                SerialMonitor.get().resume(pausedMonitor, findPort(port));
             }
         }
+    }
+
+    @POST
+    @javax.ws.rs.Path("/monitor/open")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response openMonitor(@Context HttpServletRequest request, String body) {
+        Response rejection = checkAccess(request);
+        if ( rejection != null ) {
+            return rejection;
+        }
+        String port;
+        int baudrate;
+        try {
+            JSONObject json = new JSONObject(body);
+            port = json.getString("port");
+            baudrate = json.optInt("baudrate", 9600);
+        } catch ( Exception e ) {
+            return answer(Response.Status.BAD_REQUEST, false, "invalid request: " + e.getMessage());
+        }
+        if ( !isValidBaudrate(baudrate) ) {
+            return answer(Response.Status.BAD_REQUEST, false, "unsupported baud rate: " + baudrate);
+        }
+        SerialPort serialPort = findPort(port);
+        if ( serialPort == null ) {
+            return answer(Response.Status.BAD_REQUEST, false, "unknown serial port: " + port);
+        }
+        synchronized ( UPLOAD_LOCK ) {
+            try {
+                SerialMonitor.get().open(serialPort, port, baudrate);
+                return answer(Response.Status.OK, true, "monitor opened on " + port);
+            } catch ( IllegalStateException e ) {
+                return answer(Response.Status.OK, false, e.getMessage());
+            }
+        }
+    }
+
+    @POST
+    @javax.ws.rs.Path("/monitor/close")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response closeMonitor(@Context HttpServletRequest request) {
+        Response rejection = checkAccess(request);
+        if ( rejection != null ) {
+            return rejection;
+        }
+        SerialMonitor.get().close();
+        return answer(Response.Status.OK, true, "monitor closed");
+    }
+
+    @POST
+    @javax.ws.rs.Path("/monitor/clear")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response clearMonitor(@Context HttpServletRequest request) {
+        Response rejection = checkAccess(request);
+        if ( rejection != null ) {
+            return rejection;
+        }
+        SerialMonitor.get().clear();
+        return answer(Response.Status.OK, true, "monitor cleared");
+    }
+
+    @POST
+    @javax.ws.rs.Path("/monitor/write")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response writeMonitor(@Context HttpServletRequest request, String body) {
+        Response rejection = checkAccess(request);
+        if ( rejection != null ) {
+            return rejection;
+        }
+        try {
+            SerialMonitor.get().write(new JSONObject(body).getString("text"));
+            return answer(Response.Status.OK, true, "sent");
+        } catch ( IllegalStateException e ) {
+            return answer(Response.Status.OK, false, e.getMessage());
+        } catch ( Exception e ) {
+            return answer(Response.Status.BAD_REQUEST, false, "invalid request: " + e.getMessage());
+        }
+    }
+
+    @GET
+    @javax.ws.rs.Path("/monitor/read")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response readMonitor(@Context HttpServletRequest request, @QueryParam("since") long since) {
+        Response rejection = checkAccess(request);
+        if ( rejection != null ) {
+            return rejection;
+        }
+        SerialMonitor.Snapshot snapshot = SerialMonitor.get().read(since);
+        JSONObject json = new JSONObject();
+        json.put("data", snapshot.data);
+        json.put("next", snapshot.next);
+        json.put("state", snapshot.state);
+        json.put("port", snapshot.port == null ? JSONObject.NULL : snapshot.port);
+        json.put("baudrate", snapshot.baudrate);
+        json.put("truncated", snapshot.truncated);
+        return Response.ok(json.toString()).build();
+    }
+
+    static boolean isValidBaudrate(int baudrate) {
+        switch ( baudrate ) {
+            case 300:
+            case 1200:
+            case 2400:
+            case 4800:
+            case 9600:
+            case 19200:
+            case 38400:
+            case 57600:
+            case 74880:
+            case 115200:
+            case 230400:
+            case 250000:
+            case 500000:
+            case 1000000:
+            case 2000000:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static SerialPort findPort(String name) {
+        for ( SerialPort port : SerialPort.getCommPorts() ) {
+            if ( port.getSystemPortName().equals(name) || portPath(port).equals(name) ) {
+                return port;
+            }
+        }
+        return null;
     }
 
     private boolean runAvrdude(AvrdudeTarget target, int baudrate, String port, Path hexFile, StringBuilder log) throws IOException, InterruptedException {
@@ -216,12 +349,7 @@ public class LocalSerialController {
     }
 
     private static boolean isKnownPort(String name) {
-        for ( SerialPort port : SerialPort.getCommPorts() ) {
-            if ( port.getSystemPortName().equals(name) || portPath(port).equals(name) ) {
-                return true;
-            }
-        }
-        return false;
+        return findPort(name) != null;
     }
 
     private static String portPath(SerialPort port) {

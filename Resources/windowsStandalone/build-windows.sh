@@ -1,10 +1,13 @@
 #!/bin/bash
-# Builds the standalone Open Roberta Lab for Windows on Linux:
-#   OpenRobertaLab-Setup.exe   installer (no admin rights needed)
-#   OpenRobertaLab-portable.zip  the same files, unzip and start OpenRobertaLab.exe
+# Builds BlockCore, the standalone block programming lab for Arduino on Windows, on Linux:
+#   BlockCore-Setup.exe     installer (no admin rights needed)
+#   BlockCore-portable.zip  the same files, unzip and start BlockCore.exe
 #
 # The lab runs completely on the Windows computer: server, Arduino compiler (avr-gcc) and upload (avrdude). The robot is selected by its COM port
 # in the lab ("Roboter -> Verbinden"). Supported: Arduino Uno, Nano and Mega (incl. the TCS34725 colour sensor and the L293D motor shield).
+#
+# BlockCore is based on the Open Roberta Lab of Fraunhofer IAIS. "Open Roberta" and its logos are trademarks of the Fraunhofer Society and must not
+# be used for modified versions (see NOTICE). Therefore the package is branded as BlockCore (branding/).
 #
 # Prerequisites (Debian/Ubuntu): maven, java, curl, unzip, zip, gcc-mingw-w64-x86-64, nsis
 #   mvn clean install -DskipTests     (in the repository root, before calling this script)
@@ -23,7 +26,7 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 REPO_DIR=$(cd "$SCRIPT_DIR/../.." && pwd)
 OUT_DIR=$(mkdir -p "${1:-$REPO_DIR/target/windowsStandalone}" && cd "${1:-$REPO_DIR/target/windowsStandalone}" && pwd)
 DOWNLOAD_DIR="$OUT_DIR/downloads"
-STAGE="$OUT_DIR/OpenRobertaLab"
+STAGE="$OUT_DIR/BlockCore"
 RSC="$STAGE/ora-cc-rsc/RobotArdu/arduino-resources"
 
 for tool in curl unzip zip x86_64-w64-mingw32-gcc x86_64-w64-mingw32-windres makensis; do
@@ -55,6 +58,14 @@ mkdir -p "$STAGE/lib"
 cp "$SERVER_JARS"/*.jar "$STAGE/lib/"
 cp -r "$REPO_DIR/OpenRobertaServer/staticResources" "$STAGE/staticResources"
 
+echo '== branding (BlockCore instead of the Open Roberta name and logo)'
+WEB="$STAGE/staticResources"
+cp "$SCRIPT_DIR/branding/logo-word.svg" "$WEB/css/svg/logo-word.svg"
+cp "$SCRIPT_DIR/branding/icon-144.png" "$WEB/css/img/Nepo_N.png"
+sed -i -e 's|<title>Open Roberta Lab</title>|<title>BlockCore</title>|' \
+       -e "s|alt='Open Roberta Lab logo'|alt='BlockCore logo'|" "$WEB/index.html"
+grep -q '<title>BlockCore</title>' "$WEB/index.html" || { echo "branding of index.html failed"; exit 12; }
+
 echo '== Arduino resources (only the AVR boards)'
 unzip -q "$(download "$ARDUINO_RESOURCES_URL")" -d "$OUT_DIR/tmp/ardu"
 ARDU="$OUT_DIR/tmp/ardu/arduino-resources"
@@ -78,19 +89,19 @@ cp "$OUT_DIR/tmp/avrdude/avrdude.exe" "$RSC/avrdude/bin/"
 cp "$OUT_DIR/tmp/avrdude/avrdude.conf" "$RSC/avrdude/etc/"
 
 echo '== launcher'
-cp "$REPO_DIR/OpenRobertaServer/staticResources/css/img/NEPO.ico" "$OUT_DIR/tmp/NEPO.ico"
-printf '1 ICON "NEPO.ico"\n' > "$OUT_DIR/tmp/launcher.rc"
+cp "$SCRIPT_DIR/branding/blockcore.ico" "$OUT_DIR/tmp/BlockCore.ico"
+printf '1 ICON "BlockCore.ico"\n' > "$OUT_DIR/tmp/launcher.rc"
 (cd "$OUT_DIR/tmp" && x86_64-w64-mingw32-windres launcher.rc -O coff -o launcher.res)
-x86_64-w64-mingw32-gcc -O2 -Wall -municode -static -o "$STAGE/OpenRobertaLab.exe" "$SCRIPT_DIR/launcher.c" "$OUT_DIR/tmp/launcher.res" -lws2_32 -lshell32
+x86_64-w64-mingw32-gcc -O2 -Wall -municode -static -o "$STAGE/BlockCore.exe" "$SCRIPT_DIR/launcher.c" "$OUT_DIR/tmp/launcher.res" -lws2_32 -lshell32
 cp "$SCRIPT_DIR/LIESMICH.txt" "$STAGE/LIESMICH.txt"
 
 echo '== installer'
-cp "$OUT_DIR/tmp/NEPO.ico" "$STAGE/NEPO.ico"
-makensis -V2 -DSTAGE="$STAGE" -DOUTFILE="$OUT_DIR/OpenRobertaLab-Setup.exe" "$SCRIPT_DIR/installer.nsi"
+cp "$OUT_DIR/tmp/BlockCore.ico" "$STAGE/BlockCore.ico"
+makensis -V2 -DSTAGE="$STAGE" -DOUTFILE="$OUT_DIR/BlockCore-Setup.exe" "$SCRIPT_DIR/installer.nsi"
 
 echo '== portable zip'
-rm -f "$OUT_DIR/OpenRobertaLab-portable.zip"
-(cd "$OUT_DIR" && zip -qr -9 OpenRobertaLab-portable.zip OpenRobertaLab)
+rm -f "$OUT_DIR/BlockCore-portable.zip"
+(cd "$OUT_DIR" && zip -qr -9 BlockCore-portable.zip BlockCore)
 
 rm -rf "$OUT_DIR/tmp"
-ls -la "$OUT_DIR"/OpenRobertaLab-Setup.exe "$OUT_DIR"/OpenRobertaLab-portable.zip
+ls -la "$OUT_DIR"/BlockCore-Setup.exe "$OUT_DIR"/BlockCore-portable.zip

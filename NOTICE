@@ -29,6 +29,13 @@ will publish its own software version under the name "Roberta Open Lab".
 The name “Open Roberta Lab” is reserved for each source code that is originally
 from Fraunhofer IAIS.
 
+BlockCore:
+This distribution is BlockCore, a modified version of the Open Roberta Lab:
+a standalone Windows edition with local COM port upload, serial monitor and blocks for the
+TCS34725 colour sensor and the L293D motor shield.
+Copyright 2026 Marvin Ramm (https://github.com/marvinramm/openroberta-lab-local)
+BlockCore is not an official product of Fraunhofer IAIS and does not use the Open Roberta name or logo.
+
 Acknowledgement:
 Portions of Open Roberta are copyrighted by other parties, including the parties listed below. Thank you very much!
 Please refer to the links below for complete copyright and licensing information.

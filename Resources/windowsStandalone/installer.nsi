@@ -1,14 +1,14 @@
-; Installer for the standalone Open Roberta Lab on Windows. Built by build-windows.sh:
-;   makensis -DSTAGE=<dir with OpenRobertaLab.exe, jre, lib, ...> -DOUTFILE=<setup exe> installer.nsi
-; Installs for the current user only (no admin rights needed). User data (%LOCALAPPDATA%\OpenRobertaLab) is kept on uninstall.
+; Installer of BlockCore (standalone block programming lab for Arduino, based on the Open Roberta Lab). Built by build-windows.sh:
+;   makensis -DSTAGE=<dir with BlockCore.exe, jre, lib, ...> -DOUTFILE=<setup exe> installer.nsi
+; Installs for the current user only (no admin rights needed). User data (%LOCALAPPDATA%\BlockCore) is kept on uninstall.
 
 Unicode true
 SetCompressor /SOLID lzma
 
 !include "MUI2.nsh"
 
-!define APPNAME "Open Roberta Lab"
-!define APPKEY "OpenRobertaLab"
+!define APPNAME "BlockCore"
+!define APPKEY "BlockCore"
 !define UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPKEY}"
 
 Name "${APPNAME}"
@@ -17,10 +17,10 @@ InstallDir "$LOCALAPPDATA\Programs\${APPKEY}"
 InstallDirRegKey HKCU "Software\${APPKEY}" "InstallDir"
 RequestExecutionLevel user
 
-!define MUI_ICON "${STAGE}\NEPO.ico"
-!define MUI_UNICON "${STAGE}\NEPO.ico"
-!define MUI_FINISHPAGE_RUN "$INSTDIR\OpenRobertaLab.exe"
-!define MUI_FINISHPAGE_RUN_TEXT "Open Roberta Lab jetzt starten"
+!define MUI_ICON "${STAGE}\BlockCore.ico"
+!define MUI_UNICON "${STAGE}\BlockCore.ico"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\BlockCore.exe"
+!define MUI_FINISHPAGE_RUN_TEXT "BlockCore jetzt starten"
 !define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\LIESMICH.txt"
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "LIESMICH anzeigen"
 !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
@@ -46,16 +46,16 @@ Section "Install"
     WriteUninstaller "$INSTDIR\Uninstall.exe"
     WriteRegStr HKCU "Software\${APPKEY}" "InstallDir" "$INSTDIR"
     WriteRegStr HKCU "${UNINSTKEY}" "DisplayName" "${APPNAME}"
-    WriteRegStr HKCU "${UNINSTKEY}" "DisplayIcon" "$INSTDIR\OpenRobertaLab.exe"
-    WriteRegStr HKCU "${UNINSTKEY}" "Publisher" "Open Roberta (local edition)"
+    WriteRegStr HKCU "${UNINSTKEY}" "DisplayIcon" "$INSTDIR\BlockCore.exe"
+    WriteRegStr HKCU "${UNINSTKEY}" "Publisher" "Marvin Ramm"
     WriteRegStr HKCU "${UNINSTKEY}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
     WriteRegDWORD HKCU "${UNINSTKEY}" "NoModify" 1
     WriteRegDWORD HKCU "${UNINSTKEY}" "NoRepair" 1
 
     CreateDirectory "$SMPROGRAMS\${APPNAME}"
-    CreateShortcut "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk" "$INSTDIR\OpenRobertaLab.exe" "" "$INSTDIR\OpenRobertaLab.exe"
+    CreateShortcut "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk" "$INSTDIR\BlockCore.exe" "" "$INSTDIR\BlockCore.exe"
     CreateShortcut "$SMPROGRAMS\${APPNAME}\${APPNAME} deinstallieren.lnk" "$INSTDIR\Uninstall.exe"
-    CreateShortcut "$DESKTOP\${APPNAME}.lnk" "$INSTDIR\OpenRobertaLab.exe" "" "$INSTDIR\OpenRobertaLab.exe"
+    CreateShortcut "$DESKTOP\${APPNAME}.lnk" "$INSTDIR\BlockCore.exe" "" "$INSTDIR\BlockCore.exe"
 SectionEnd
 
 Section "Uninstall"
