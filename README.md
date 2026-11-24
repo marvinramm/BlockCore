@@ -2,7 +2,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/code-Apache%202.0-blue.svg)](LICENSE)
 [![License: CC BY 4.0](https://img.shields.io/badge/docs-CC%20BY%204.0-lightgrey.svg)](docs/LICENSE)
-[![Windows installer](https://github.com/marvinramm/openroberta-lab-local/actions/workflows/windows_installer.yml/badge.svg)](../../actions/workflows/windows_installer.yml)
+[![Windows installer](https://github.com/marvinramm/BlockCore/actions/workflows/windows_installer.yml/badge.svg)](../../actions/workflows/windows_installer.yml)
 
 **Offline block programming for Arduino on Windows: install it, plug in an Arduino, pick its COM port, snap blocks together and press ▶. Compiler, upload and serial monitor run on your own PC – no internet, no server, no connector app.**
 

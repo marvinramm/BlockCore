@@ -37,7 +37,7 @@ Problems?
 
 BlockCore is only reachable from this computer (http://127.0.0.1:1999).
 
-BlockCore by Marvin Ramm - https://github.com/marvinramm/openroberta-lab-local
+BlockCore by Marvin Ramm - https://github.com/marvinramm/BlockCore
 Based on the Open Roberta Lab of Fraunhofer IAIS (Apache License 2.0).
 "Open Roberta" is a trademark of the Fraunhofer Society; BlockCore is not an
 official product of Fraunhofer IAIS.

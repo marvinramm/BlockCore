@@ -1,6 +1,6 @@
 # Licensing
 
-**© 2026 Marvin Ramm** – https://github.com/marvinramm/openroberta-lab-local
+**© 2026 Marvin Ramm** – https://github.com/marvinramm/BlockCore
 
 BlockCore is open source. You may use, modify, share and sell it, including commercially, **as long as you credit the author** and keep
 the notices of the Open Roberta Lab it is based on.
@@ -20,7 +20,7 @@ that software.
   copies and modified versions of the code, and state your changes.
 - **CC BY 4.0:** credit the author wherever you use or share the documentation, the images or the logo. Please use this text:
 
-  > Based on "BlockCore" by Marvin Ramm – https://github.com/marvinramm/openroberta-lab-local – licensed under Apache 2.0 / CC BY 4.0.
+  > Based on "BlockCore" by Marvin Ramm – https://github.com/marvinramm/BlockCore – licensed under Apache 2.0 / CC BY 4.0.
 
   Also state whether you made changes.
 

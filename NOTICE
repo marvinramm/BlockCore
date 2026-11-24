@@ -33,7 +33,7 @@ BlockCore:
 This distribution is BlockCore, a modified version of the Open Roberta Lab:
 a standalone Windows edition with local COM port upload, serial monitor and blocks for the
 TCS34725 colour sensor and the L293D motor shield.
-Copyright 2026 Marvin Ramm (https://github.com/marvinramm/openroberta-lab-local)
+Copyright 2026 Marvin Ramm (https://github.com/marvinramm/BlockCore)
 BlockCore is not an official product of Fraunhofer IAIS and does not use the Open Roberta name or logo.
 
 Acknowledgement:
