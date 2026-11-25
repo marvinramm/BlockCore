@@ -33,7 +33,7 @@ DOWNLOAD_DIR="$OUT_DIR/downloads"
 STAGE="$OUT_DIR/BlockCore"
 RSC="$STAGE/ora-cc-rsc/RobotArdu/arduino-resources"
 
-for tool in curl tar unzip zip x86_64-w64-mingw32-gcc x86_64-w64-mingw32-windres makensis; do
+for tool in curl tar unzip zip python3 x86_64-w64-mingw32-gcc x86_64-w64-mingw32-windres makensis; do
     command -v "$tool" > /dev/null || { echo "missing tool: $tool"; exit 12; }
 done
 SERVER_JARS="$REPO_DIR/OpenRobertaServer/target/resources"
@@ -79,6 +79,7 @@ cp "$SCRIPT_DIR/branding/blockcore.ico" "$WEB/css/img/NEPO.ico"
 mkdir -p "$WEB/blockcore"
 cp "$SCRIPT_DIR"/branding/web/*.js "$SCRIPT_DIR"/branding/web/blockcore.css "$SCRIPT_DIR"/branding/web/icon-*.png "$SCRIPT_DIR"/branding/web/*.svg "$WEB/blockcore/"
 cp "$SCRIPT_DIR/branding/web/manifest.webapp.json" "$WEB/manifest.webapp.json"
+python3 "$SCRIPT_DIR/branding/modules/generate.py" "$WEB/blockcore/modules"
 printf '{"version":"%s"}\n' "$VERSION" > "$WEB/blockcore/version.json"
 sed -i -e 's|<title>Open Roberta Lab</title>|<title>BlockCore</title>|' \
        -e "s|alt='Open Roberta Lab logo'|alt='BlockCore logo'|" \

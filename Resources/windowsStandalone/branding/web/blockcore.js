@@ -40,7 +40,8 @@
         serialBaud: '9600',
         serialTimestamps: false,
         checkUpdates: true,
-        updateChannel: 'stable' // stable, beta (pre-releases)
+        updateChannel: 'stable', // stable, beta (pre-releases)
+        modulePictures: true
     };
     function loadSettings() {
         var settings = {};
@@ -677,6 +678,74 @@
         }, true);
     }
 
+    /* ------------------------------------------------------------------ pictures of the modules */
+
+    /*
+     * every configuration block of a module gets a flat picture of the part below its title (modules/<name>.svg). The picture is an
+     * unnamed image field: it is not stored in the program and does not change the pins of the block.
+     */
+    var MODULE_PICTURES = ['ultrasonic', 'tcs34725', 'mpu6050', 'analogjoystick', 'ds18b20', 'led', 'rgbled', 'buzzer', 'relay', 'servo',
+        'stepmotor', 'lcd', 'lcdi2c', 'oledssd1306i2c', 'l293dmotor', 'key', 'light', 'potentiometer', 'temperature', 'humidity', 'infrared',
+        'motion', 'rfid', 'moisture', 'pulse', 'drop', 'digitalout', 'digitalin', 'analogout', 'analogin'];
+
+    function patchModuleBlocks() {
+        var B = window.Blockly;
+        if (!B || !B.Blocks || !B.Blocks.robConf_led || !B.FieldImage) {
+            return false;
+        }
+        MODULE_PICTURES.forEach(function (name) {
+            var definition = B.Blocks['robConf_' + name];
+            if (!definition || definition.blockcorePicture) {
+                return;
+            }
+            var init = definition.init;
+            definition.init = function () {
+                init.apply(this, arguments);
+                if (!settings.modulePictures) {
+                    return;
+                }
+                var input = this.appendDummyInput('BLOCKCORE_PICTURE');
+                // the lab reads the second field of every row (name check of the configuration): an empty label first
+                input.appendField(new B.FieldLabel(''));
+                input.appendField(new B.FieldImage('/blockcore/modules/' + name + '.svg', 96, 51, ''));
+                if (B.ALIGN_CENTRE !== undefined) {
+                    input.setAlign(B.ALIGN_CENTRE);
+                }
+                // second row, right below the title
+                this.inputList.splice(this.inputList.indexOf(input), 1);
+                this.inputList.splice(1, 0, input);
+            };
+            definition.blockcorePicture = true;
+        });
+        return true;
+    }
+
+    /* draws the configuration again (e.g. after the pictures were switched on or off) */
+    function redrawConfiguration() {
+        try {
+            var ws = window.require('guiState.controller').getBricklyWorkspace();
+            if (!ws || !ws.getAllBlocks().length) {
+                return;
+            }
+            var xml = window.Blockly.Xml.workspaceToDom(ws);
+            window.Blockly.Events.disable();
+            try {
+                ws.clear();
+                window.Blockly.Xml.domToWorkspace(xml, ws);
+            } finally {
+                window.Blockly.Events.enable();
+            }
+        } catch (e) {
+            // the lab is still starting
+        }
+    }
+
+    (function waitForBlockly() {
+        if (!patchModuleBlocks()) {
+            setTimeout(waitForBlockly, 15);
+        }
+    })();
+
     /* ------------------------------------------------------------------ settings */
 
     var SETTINGS_TEXT = {
@@ -684,7 +753,7 @@
             menu: 'Einstellungen', title: 'Einstellungen', close: 'Schließen', reset: 'Zurücksetzen',
             appearance: 'Darstellung', theme: 'Farbschema', dark: 'Dunkel', light: 'Hell', system: 'Wie Windows',
             language: 'Sprache', workspace: 'Programmierfläche', blockScale: 'Blockgröße', grid: 'Raster anzeigen',
-            watermark: 'Logo im Hintergrund', sounds: 'Klicktöne der Blöcke', start: 'Start', startBoard: 'Board beim Start',
+            watermark: 'Logo im Hintergrund', sounds: 'Klicktöne der Blöcke', modulePictures: 'Bilder der Bauteile in der Roboterkonfiguration', start: 'Start', startBoard: 'Board beim Start',
             last: 'Zuletzt benutztes', upload: 'Hochladen', rememberPort: 'Letzten COM-Port wieder wählen',
             uploadPanel: 'Fortschritt beim Hochladen anzeigen', serial: 'Serieller Monitor', serialBaud: 'Baudrate',
             serialTimestamps: 'Zeitstempel', updates: 'Updates', checkUpdates: 'Beim Start nach neuer Version suchen',
@@ -696,7 +765,7 @@
             menu: 'Settings', title: 'Settings', close: 'Close', reset: 'Reset',
             appearance: 'Appearance', theme: 'Theme', dark: 'Dark', light: 'Light', system: 'Like Windows',
             language: 'Language', workspace: 'Workspace', blockScale: 'Block size', grid: 'Show grid',
-            watermark: 'Logo in the background', sounds: 'Block click sounds', start: 'Start', startBoard: 'Board at start',
+            watermark: 'Logo in the background', sounds: 'Block click sounds', modulePictures: 'Pictures of the parts in the robot configuration', start: 'Start', startBoard: 'Board at start',
             last: 'Last used', upload: 'Upload', rememberPort: 'Select the last COM port again',
             uploadPanel: 'Show the upload progress', serial: 'Serial monitor', serialBaud: 'Baud rate',
             serialTimestamps: 'Timestamps', updates: 'Updates', checkUpdates: 'Look for a new version at start',
@@ -723,6 +792,9 @@
         root.classList.toggle('bc-no-upload-panel', !settings.uploadPanel);
         if (!changed || changed === 'blockScale') {
             applyBlockScale(true);
+        }
+        if (changed === 'modulePictures') {
+            redrawConfiguration();
         }
         var Blockly = window.Blockly;
         if (Blockly && Blockly.WorkspaceSvg && Blockly.WorkspaceSvg.prototype.playAudio) {
@@ -823,6 +895,7 @@
             '<label class="bc-row bc-switch"><span>' + t.grid + '</span><input type="checkbox" data-setting="grid"><i></i></label>' +
             '<label class="bc-row bc-switch"><span>' + t.watermark + '</span><input type="checkbox" data-setting="watermark"><i></i></label>' +
             '<label class="bc-row bc-switch"><span>' + t.sounds + '</span><input type="checkbox" data-setting="sounds"><i></i></label>' +
+            '<label class="bc-row bc-switch"><span>' + t.modulePictures + '</span><input type="checkbox" data-setting="modulePictures"><i></i></label>' +
             '</section>' +
             '<section><h3>' + t.start + ' &amp; ' + t.upload + '</h3>' +
             '<div class="bc-row"><span>' + t.startBoard + '</span><select data-setting="startBoard"><option value="last">' + t.last + '</option>' + boards + '</select></div>' +
@@ -982,6 +1055,19 @@
             setupUploadDisplay(G);
             setupVersion(G);
             setupSettings(G);
+            setTimeout(function () {
+                try {
+                    var ws = G.getBricklyWorkspace();
+                    var drawnWithout = ws && ws.getAllBlocks().some(function (block) {
+                        return MODULE_PICTURES.indexOf(String(block.type).replace('robConf_', '')) >= 0 && !block.getInput('BLOCKCORE_PICTURE');
+                    });
+                    if (drawnWithout && settings.modulePictures) {
+                        redrawConfiguration();
+                    }
+                } catch (e) {
+                    // ignore
+                }
+            }, 500);
             setupResizeFix();
             setupUndoRedo();
             autoLogin(G, U);

@@ -53,6 +53,32 @@ jobs:
       - name: Build the Windows standalone lab
         run: Resources/windowsStandalone/build-windows.sh target/windowsStandalone
       - name: Publish the release
+        id: publish
+        continue-on-error: true
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.BLOCKCORE_VERSION }}
+          target_commitish: ${{ github.sha }}
+          name: BlockCore ${{ env.BLOCKCORE_VERSION }}
+          prerelease: ${{ env.PRERELEASE == 'true' }}
+          make_latest: ${{ env.PRERELEASE == 'true' && 'false' || 'true' }}
+          body: |
+            **BlockCore ${{ env.BLOCKCORE_VERSION }}** for Windows${{ env.PRERELEASE == 'true' && ' – pre-release for testing (beta channel)' || '' }}
+
+            Download **BlockCore-Setup.exe** and install it (no admin rights needed).
+            Or unzip **BlockCore-portable.zip** and start `BlockCore.exe`.
+
+            Guide and help: see the [README](https://github.com/${{ github.repository }}#readme).
+
+            Commit: ${{ github.sha }}
+          files: |
+            target/windowsStandalone/BlockCore-Setup.exe
+            target/windowsStandalone/BlockCore-portable.zip
+      - name: Wait before the second attempt (GitHub answers 500 now and then)
+        if: steps.publish.outcome == 'failure'
+        run: sleep 60
+      - name: Publish the release (second attempt)
+        if: steps.publish.outcome == 'failure'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.BLOCKCORE_VERSION }}
