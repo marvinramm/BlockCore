@@ -20,7 +20,10 @@ import de.fhg.iais.roberta.util.ast.BlocklyProperties;
 import de.fhg.iais.roberta.util.syntax.SC;
 
 public class ArduinoConfigurationValidator {
-    private static final Set<String> OVERLAPPING_PINS = Stream.of("INPUT", "OUTPUT", "+", "S", "PULSE", "TRIG", "ECHO", "RED", "GREEN", "BLUE", "RST", "IN", "SDA", "RS", "E", "D4", "D5", "D6", "D7", "PIN1", "IN1", "IN2", "IN3", "IN4", "OUT").collect(Collectors.toCollection(HashSet::new));
+    private static final Set<String> OVERLAPPING_PINS = Stream.of("INPUT", "OUTPUT", "+", "S", "PULSE", "TRIG", "ECHO", "RED", "GREEN", "BLUE", "RST", "IN", "SDA", "RS", "E", "D4", "D5", "D6", "D7", "PIN1", "IN1", "IN2", "IN3", "IN4", "OUT", "VRX", "VRY", "SW").collect(Collectors.toCollection(HashSet::new));
+
+    /** sensors on the I2C bus (SDA / SCL): they share the bus, each has a fixed address, so each type can be configured once */
+    private static final Set<String> I2C_SENSORS = Stream.of(SC.TCS34725, SC.MPU6050).collect(Collectors.toCollection(HashSet::new));
 
     private final Project project;
 
@@ -31,10 +34,11 @@ public class ArduinoConfigurationValidator {
     public void validateConfiguration(List<String> freePins) {
         List<String> currentFreePins = new ArrayList<>(freePins);
         Collection<ConfigurationComponent> configurationComponents = project.getConfigurationAst().getConfigurationComponents().values();
-        configurationComponents.stream().filter(component -> !component.componentType.equals(SC.L293D_MOTOR) && !component.componentType.equals(SC.TCS34725))
+        configurationComponents.stream().filter(component -> !component.componentType.equals(SC.L293D_MOTOR) && !I2C_SENSORS.contains(component.componentType))
             .forEach(component -> checkPinOverlap(component, currentFreePins, freePins));
         checkL293DMotorShield(configurationComponents, currentFreePins, freePins);
-        checkTcs34725ColorSensor(configurationComponents, currentFreePins);
+        checkTcs34725Thresholds(configurationComponents);
+        checkI2cSensors(configurationComponents, currentFreePins);
         project.getConfigurationAst().getConfigurationComponents().forEach((k, v) -> checkRgbInternalUse(v));
         if ( project.getRobot().equals("nano") || project.getRobot().equals("uno") ) {
             checkTimerOverlap(project.getConfigurationAst().getConfigurationComponents().values());
@@ -71,31 +75,34 @@ public class ArduinoConfigurationValidator {
         currentFreePins.removeAll(shieldPins);
     }
 
-    /**
-     * The TCS34725 uses the I2C pins (A4/A5 on Uno and Nano). Other components must not use these pins as normal pins. The sensor has a fixed
-     * I2C address, so only one sensor can be configured.
-     */
-    private void checkTcs34725ColorSensor(Collection<ConfigurationComponent> configurationComponents, List<String> currentFreePins) {
-        List<ConfigurationComponent> sensors = configurationComponents.stream()
-            .filter(component -> component.componentType.equals(SC.TCS34725))
-            .collect(Collectors.toList());
-        if ( sensors.isEmpty() ) {
-            return;
-        }
-        if ( sensors.size() > 1 ) {
-            sensors.forEach(component -> addConfigurationError(component, "CONFIGURATION_ERROR_OVERLAPPING_PORTS"));
-        }
-        for ( ConfigurationComponent sensor : sensors ) {
+    private void checkTcs34725Thresholds(Collection<ConfigurationComponent> configurationComponents) {
+        configurationComponents.stream().filter(component -> component.componentType.equals(SC.TCS34725)).forEach(sensor -> {
             String black = sensor.getOptProperty(Tcs34725ColorSensorHardware.BLACK_PROPERTY);
             String white = sensor.getOptProperty(Tcs34725ColorSensorHardware.WHITE_PROPERTY);
             if ( (black != null && !Tcs34725ColorSensorHardware.isValidThreshold(black))
                 || (white != null && !Tcs34725ColorSensorHardware.isValidThreshold(white)) ) {
                 addConfigurationError(sensor, "CONFIGURATION_ERROR_TCS34725_THRESHOLD");
             }
+        });
+    }
+
+    /**
+     * I2C sensors (TCS34725, MPU6050) use the I2C pins (A4/A5 on Uno and Nano). Other components must not use these pins as normal pins.
+     * Each sensor type has a fixed I2C address, so it can be configured only once; different types share the bus.
+     */
+    private void checkI2cSensors(Collection<ConfigurationComponent> configurationComponents, List<String> currentFreePins) {
+        List<ConfigurationComponent> sensors = configurationComponents.stream()
+            .filter(component -> I2C_SENSORS.contains(component.componentType))
+            .collect(Collectors.toList());
+        if ( sensors.isEmpty() ) {
+            return;
         }
+        sensors.stream().collect(Collectors.groupingBy(component -> component.componentType)).values().stream()
+            .filter(sameType -> sameType.size() > 1).flatMap(Collection::stream)
+            .forEach(component -> addConfigurationError(component, "CONFIGURATION_ERROR_OVERLAPPING_PORTS"));
         Set<String> i2cPins = Tcs34725ColorSensorHardware.getI2cPins();
         boolean overlappingPin = configurationComponents.stream()
-            .filter(component -> !component.componentType.equals(SC.TCS34725))
+            .filter(component -> !I2C_SENSORS.contains(component.componentType))
             .anyMatch(component -> usesPinsAsNormalPins(component, i2cPins));
         if ( overlappingPin ) {
             sensors.forEach(component -> addConfigurationError(component, "CONFIGURATION_ERROR_OVERLAPPING_PORTS"));

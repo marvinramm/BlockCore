@@ -54,6 +54,9 @@ import de.fhg.iais.roberta.syntax.sensor.generic.TimerSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.UltrasonicSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.VoltageSensor;
 import de.fhg.iais.roberta.syntax.sensors.arduino.tcs34725.Tcs34725ColorSensor;
+import de.fhg.iais.roberta.syntax.sensors.arduino.mpu6050.Mpu6050ImuSensor;
+import de.fhg.iais.roberta.syntax.sensors.arduino.analogjoystick.AnalogJoystick;
+import de.fhg.iais.roberta.syntax.sensors.arduino.ds18b20.Ds18b20TemperatureSensor;
 import de.fhg.iais.roberta.util.syntax.SC;
 import de.fhg.iais.roberta.visitor.hardware.IArduinoVisitor;
 
@@ -71,6 +74,9 @@ public class ArduinoValidatorAndCollectorVisitor extends CommonNepoAndMotorValid
         put("VOLTAGE_SENSING", SC.POTENTIOMETER);
         put("ENCODER_SENSING", SC.ENCODER);
         put("TCS34725_SENSING", SC.TCS34725);
+        put("MPU6050_SENSING", SC.MPU6050);
+        put("ANALOGJOYSTICK_SENSING", SC.ANALOGJOYSTICK);
+        put("DS18B20_SENSING", SC.DS18B20);
     }});
 
     public ArduinoValidatorAndCollectorVisitor(ConfigurationAst brickConfiguration, ClassToInstanceMap<IProjectBean.IBuilder> beanBuilders) {
@@ -372,6 +378,27 @@ public class ArduinoValidatorAndCollectorVisitor extends CommonNepoAndMotorValid
     public Void visitTcs34725ColorSensor(Tcs34725ColorSensor tcs34725ColorSensor) {
         checkSensorPort(tcs34725ColorSensor);
         usedHardwareBuilder.addUsedSensor(new UsedSensor(tcs34725ColorSensor.getUserDefinedPort(), SC.TCS34725, tcs34725ColorSensor.getMode()));
+        return null;
+    }
+
+    @Override
+    public Void visitMpu6050ImuSensor(Mpu6050ImuSensor mpu6050ImuSensor) {
+        checkSensorPort(mpu6050ImuSensor);
+        usedHardwareBuilder.addUsedSensor(new UsedSensor(mpu6050ImuSensor.getUserDefinedPort(), SC.MPU6050, mpu6050ImuSensor.getMode()));
+        return null;
+    }
+
+    @Override
+    public Void visitAnalogJoystick(AnalogJoystick analogJoystick) {
+        checkSensorPort(analogJoystick);
+        usedHardwareBuilder.addUsedSensor(new UsedSensor(analogJoystick.getUserDefinedPort(), SC.ANALOGJOYSTICK, analogJoystick.getMode()));
+        return null;
+    }
+
+    @Override
+    public Void visitDs18b20TemperatureSensor(Ds18b20TemperatureSensor ds18b20TemperatureSensor) {
+        checkSensorPort(ds18b20TemperatureSensor);
+        usedHardwareBuilder.addUsedSensor(new UsedSensor(ds18b20TemperatureSensor.getUserDefinedPort(), SC.DS18B20, ds18b20TemperatureSensor.getMode()));
         return null;
     }
 

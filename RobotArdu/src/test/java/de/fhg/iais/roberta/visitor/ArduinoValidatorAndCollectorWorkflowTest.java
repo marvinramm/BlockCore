@@ -39,6 +39,11 @@ import de.fhg.iais.roberta.syntax.sensor.generic.PulseSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.RfidSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.VoltageSensor;
 import de.fhg.iais.roberta.syntax.sensors.arduino.tcs34725.Tcs34725ColorSensor;
+import de.fhg.iais.roberta.syntax.sensors.arduino.mpu6050.Mpu6050ImuSensor;
+import de.fhg.iais.roberta.syntax.sensors.arduino.analogjoystick.AnalogJoystick;
+import de.fhg.iais.roberta.syntax.sensors.arduino.ds18b20.Ds18b20TemperatureSensor;
+import de.fhg.iais.roberta.components.Project;
+import java.util.Map;
 import de.fhg.iais.roberta.typecheck.NepoInfo;
 import de.fhg.iais.roberta.util.ast.ExternalSensorBean;
 import de.fhg.iais.roberta.util.syntax.FunctionNames;
@@ -110,6 +115,109 @@ public class ArduinoValidatorAndCollectorWorkflowTest extends WorkflowTestHelper
         executeWorkflow();
 
         assertHasNepoInfo(sensor, NepoInfo.Severity.ERROR, "CONFIGURATION_ERROR_SENSOR_WRONG");
+    }
+
+    @Test
+    public void visitMpu6050ImuSensor_withPort() {
+        configurationComponents.add(new ConfigurationComponent(SC.MPU6050, "CONFIGURATION_SENSOR", "G", "G", new HashMap<>()));
+        Mpu6050ImuSensor sensor = new Mpu6050ImuSensor(bp, new ExternalSensorBean("G", "ROLL", "", null));
+        phrases.add(sensor);
+
+        Project project = executeWorkflow();
+
+        assertHasNoNepoInfo(sensor);
+        assertHasUsedSensor(project, "G", SC.MPU6050, "ROLL");
+    }
+
+    @Test
+    public void visitMpu6050ImuSensor_withoutPort() {
+        Mpu6050ImuSensor sensor = new Mpu6050ImuSensor(bp, new ExternalSensorBean("G", "PITCH", "", null));
+        phrases.add(sensor);
+
+        executeWorkflow();
+
+        assertHasNepoInfo(sensor, NepoInfo.Severity.ERROR, "CONFIGURATION_ERROR_SENSOR_MISSING");
+    }
+
+    @Test
+    public void visitAnalogJoystick_withPort() {
+        configurationComponents.add(new ConfigurationComponent(SC.ANALOGJOYSTICK, "CONFIGURATION_SENSOR", "J", "J", joystickPins("A0", "A1", "2")));
+        AnalogJoystick sensor = new AnalogJoystick(bp, new ExternalSensorBean("J", "PRESSED", "", null));
+        phrases.add(sensor);
+
+        Project project = executeWorkflow();
+
+        assertHasNoNepoInfo(sensor);
+        assertHasUsedSensor(project, "J", SC.ANALOGJOYSTICK, "PRESSED");
+        assertEquals(0, project.getConfAnnotationList().size());
+    }
+
+    @Test
+    public void visitDs18b20TemperatureSensor_withPort() {
+        configurationComponents.add(new ConfigurationComponent(SC.DS18B20, "CONFIGURATION_SENSOR", "T", "T", pins("INPUT", "3")));
+        Ds18b20TemperatureSensor sensor = new Ds18b20TemperatureSensor(bp, new ExternalSensorBean("T", SC.TEMPERATURE, "", null));
+        phrases.add(sensor);
+
+        Project project = executeWorkflow();
+
+        assertHasNoNepoInfo(sensor);
+        assertHasUsedSensor(project, "T", SC.DS18B20, SC.TEMPERATURE);
+    }
+
+    @Test
+    public void configuration_joystickButtonAndDs18b20OnTheSamePin_isAnError() {
+        configurationComponents.add(new ConfigurationComponent(SC.ANALOGJOYSTICK, "CONFIGURATION_SENSOR", "J", "J", joystickPins("A0", "A1", "2")));
+        configurationComponents.add(new ConfigurationComponent(SC.DS18B20, "CONFIGURATION_SENSOR", "T", "T", pins("INPUT", "2")));
+
+        Project project = executeWorkflow();
+
+        assertEquals(1, project.getConfAnnotationList().size());
+    }
+
+    @Test
+    public void configuration_mpu6050AndTcs34725ShareTheI2cBus() {
+        configurationComponents.add(new ConfigurationComponent(SC.MPU6050, "CONFIGURATION_SENSOR", "G", "G", i2cPins()));
+        configurationComponents.add(new ConfigurationComponent(SC.TCS34725, "CONFIGURATION_SENSOR", "F", "F", i2cPins()));
+
+        Project project = executeWorkflow();
+
+        assertEquals(0, project.getConfAnnotationList().size());
+    }
+
+    @Test
+    public void configuration_twoMpu6050_isAnError() {
+        configurationComponents.add(new ConfigurationComponent(SC.MPU6050, "CONFIGURATION_SENSOR", "G", "G", i2cPins()));
+        configurationComponents.add(new ConfigurationComponent(SC.MPU6050, "CONFIGURATION_SENSOR", "H", "H", i2cPins()));
+
+        Project project = executeWorkflow();
+
+        assertEquals(1, project.getConfAnnotationList().size());
+    }
+
+    @Test
+    public void configuration_mpu6050AndADigitalSensorOnA4_isAnError() {
+        configurationComponents.add(new ConfigurationComponent(SC.MPU6050, "CONFIGURATION_SENSOR", "G", "G", i2cPins()));
+        configurationComponents.add(new ConfigurationComponent(SC.DS18B20, "CONFIGURATION_SENSOR", "T", "T", pins("INPUT", "A4")));
+
+        Project project = executeWorkflow();
+
+        assertEquals(1, project.getConfAnnotationList().size());
+    }
+
+    private static Map<String, String> pins(String... keysAndValues) {
+        Map<String, String> pins = new HashMap<>();
+        for ( int i = 0; i < keysAndValues.length; i += 2 ) {
+            pins.put(keysAndValues[i], keysAndValues[i + 1]);
+        }
+        return pins;
+    }
+
+    private static Map<String, String> joystickPins(String x, String y, String button) {
+        return pins("VRX", x, "VRY", y, "SW", button);
+    }
+
+    private static Map<String, String> i2cPins() {
+        return pins("SDA", "A4", "SCL", "A5");
     }
 
     @Test

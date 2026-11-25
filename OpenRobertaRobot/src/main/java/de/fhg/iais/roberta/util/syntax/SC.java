@@ -5,6 +5,9 @@ public interface SC {
     String MOTOR = "MOTOR";
     String L293D_MOTOR = "L293D_MOTOR";
     String TCS34725 = "TCS34725";
+    String MPU6050 = "MPU6050";
+    String ANALOGJOYSTICK = "ANALOGJOYSTICK";
+    String DS18B20 = "DS18B20";
     String MOTOR_REGULATION = "MOTOR_REGULATION";
     String MOTOR_REVERSE = "MOTOR_REVERSE";
     String MOTOR_DRIVE = "MOTOR_DRIVE";

@@ -39,4 +39,17 @@ public class ArduinoCompilerWorkerTest {
         Assert.assertTrue(header.contains("class TCS34725"));
         Assert.assertTrue(header.contains("T colour(T red, T green, T white, T black, T none)"));
     }
+
+    @Test
+    public void storeBundledHeaders_copiesOnlyTheIncludedDrivers() throws Exception {
+        Path sourceDir = this.temporaryFolder.newFolder("source").toPath();
+        String program = "#include <Arduino.h>\n#include \"MPU6050/MPU6050.h\"\n#include \"DS18B20/DS18B20.h\"\n";
+
+        ArduinoCompilerWorker.storeBundledHeaders(sourceDir, program);
+
+        Assert.assertTrue(new String(Files.readAllBytes(sourceDir.resolve("MPU6050/MPU6050.h")), StandardCharsets.UTF_8).contains("class MPU6050"));
+        Assert.assertTrue(new String(Files.readAllBytes(sourceDir.resolve("DS18B20/DS18B20.h")), StandardCharsets.UTF_8).contains("class DS18B20"));
+        Assert.assertFalse(Files.exists(sourceDir.resolve("TCS34725/TCS34725.h")));
+        Assert.assertFalse(Files.exists(sourceDir.resolve("L293DMotor/L293DMotor.h")));
+    }
 }

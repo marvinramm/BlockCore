@@ -508,6 +508,23 @@ Blockly.Msg.SENSOR_TCS34725_GETSAMPLE_TOOLTIP = "Gets the current reading from t
 Blockly.Msg.TCS34725_BLACK = "black below %";  // untranslated
 Blockly.Msg.TCS34725_WHITE = "white above %";  // untranslated
 Blockly.Msg.CONFIGURATION_ERROR_TCS34725_THRESHOLD = "The thresholds for black and white must be numbers between 0 and 100!";  // untranslated
+Blockly.Msg.SENSOR_MPU6050 = "gyro sensor MPU6050";
+Blockly.Msg.MPU6050_TOOLTIP = "Represents an MPU6050 gyro and acceleration sensor connected via I²C (SDA = A4, SCL = A5 on the Uno). Keep it still for half a second after the start: the gyro is calibrated then.";
+Blockly.Msg.SENSOR_MPU6050_GETSAMPLE_TOOLTIP = "Gets a value of the MPU6050: the tilt sideways (roll) or forwards (pitch) in degrees, the rotation speed in degrees per second, the acceleration in g (1 g = gravity) or the temperature of the chip.";
+Blockly.Msg.MODE_ROLL = "tilt sideways";
+Blockly.Msg.MODE_PITCH = "tilt forwards";
+Blockly.Msg.MODE_GYRO_X = "rotation x";
+Blockly.Msg.MODE_GYRO_Y = "rotation y";
+Blockly.Msg.MODE_GYRO_Z = "rotation z";
+Blockly.Msg.MODE_ACCEL_X = "acceleration x";
+Blockly.Msg.MODE_ACCEL_Y = "acceleration y";
+Blockly.Msg.MODE_ACCEL_Z = "acceleration z";
+Blockly.Msg.SENSOR_ANALOGJOYSTICK = "joystick";
+Blockly.Msg.ANALOGJOYSTICK_TOOLTIP = "Represents an analog joystick module (e.g. KY-023): VRx and VRy at analog pins, the button SW at a digital pin.";
+Blockly.Msg.SENSOR_ANALOGJOYSTICK_GETSAMPLE_TOOLTIP = "Gets the position of the joystick in percent (-100 to 100, 0 in the middle) or whether its button is pressed.";
+Blockly.Msg.SENSOR_DS18B20 = "temperature sensor DS18B20";
+Blockly.Msg.DS18B20_TOOLTIP = "Represents a DS18B20 temperature sensor (1-Wire, e.g. the waterproof probe). A 4.7 kΩ resistor from data to VCC is needed; most modules have it.";
+Blockly.Msg.SENSOR_DS18B20_GETSAMPLE_TOOLTIP = "Gets the temperature in °C (-127 if no sensor is found). A new value comes every 0.75 s.";
 Blockly.Msg.LANGUAGE = "语言";
 Blockly.Msg.LANGUAGE_ARABIC = "阿拉伯语";
 Blockly.Msg.LANGUAGE_BRAZILIAN = "巴西";

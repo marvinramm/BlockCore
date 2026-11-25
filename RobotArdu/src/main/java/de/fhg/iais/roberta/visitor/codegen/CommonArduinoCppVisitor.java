@@ -51,6 +51,9 @@ import de.fhg.iais.roberta.syntax.sensor.generic.UltrasonicSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.VoltageSensor;
 import de.fhg.iais.roberta.hardware.Tcs34725ColorSensorHardware;
 import de.fhg.iais.roberta.syntax.sensors.arduino.tcs34725.Tcs34725ColorSensor;
+import de.fhg.iais.roberta.syntax.sensors.arduino.mpu6050.Mpu6050ImuSensor;
+import de.fhg.iais.roberta.syntax.sensors.arduino.analogjoystick.AnalogJoystick;
+import de.fhg.iais.roberta.syntax.sensors.arduino.ds18b20.Ds18b20TemperatureSensor;
 import de.fhg.iais.roberta.util.ast.BlocklyProperties;
 import de.fhg.iais.roberta.util.dbc.DbcException;
 import de.fhg.iais.roberta.util.syntax.SC;
@@ -62,6 +65,8 @@ import de.fhg.iais.roberta.visitor.hardware.IArduinoVisitor;
  * <b>The phrases covered are the sensors/actors common to ALL arduino variants.</b>
  */
 public abstract class CommonArduinoCppVisitor extends NepoArduinoCppVisitor implements IArduinoVisitor<Void> {
+    /** the helper function of the analog joystick is generated once, even with several joysticks */
+    private boolean joystickHelperGenerated = false;
 
     /**
      * Initialize the C++ code generator visitor.
@@ -294,6 +299,72 @@ public abstract class CommonArduinoCppVisitor extends NepoArduinoCppVisitor impl
             default:
                 throw new DbcException("Invalid mode for TCS34725 colour sensor: " + tcs34725ColorSensor.getMode());
         }
+        return null;
+    }
+
+    @Override
+    public final Void visitMpu6050ImuSensor(Mpu6050ImuSensor mpu6050ImuSensor) {
+        String method;
+        switch ( mpu6050ImuSensor.getMode() ) {
+            case "ROLL":
+                method = "roll";
+                break;
+            case "PITCH":
+                method = "pitch";
+                break;
+            case "GYRO_X":
+                method = "gyroX";
+                break;
+            case "GYRO_Y":
+                method = "gyroY";
+                break;
+            case "GYRO_Z":
+                method = "gyroZ";
+                break;
+            case "ACCEL_X":
+                method = "accelX";
+                break;
+            case "ACCEL_Y":
+                method = "accelY";
+                break;
+            case "ACCEL_Z":
+                method = "accelZ";
+                break;
+            case SC.TEMPERATURE:
+                method = "temperature";
+                break;
+            default:
+                throw new DbcException("Invalid mode for MPU6050: " + mpu6050ImuSensor.getMode());
+        }
+        this.src.add("_mpu6050_", mpu6050ImuSensor.getUserDefinedPort(), ".", method, "()");
+        return null;
+    }
+
+    /**
+     * the axes in percent: -100 (left / up) .. 100 (right / down), 0 in the middle; the button is pressed if its pin is LOW (pull-up)
+     */
+    @Override
+    public final Void visitAnalogJoystick(AnalogJoystick analogJoystick) {
+        String name = analogJoystick.getUserDefinedPort();
+        switch ( analogJoystick.getMode() ) {
+            case "X":
+                this.src.add("_joystickPercent(analogRead(_joystick_x_", name, "))");
+                break;
+            case "Y":
+                this.src.add("_joystickPercent(analogRead(_joystick_y_", name, "))");
+                break;
+            case "PRESSED":
+                this.src.add("(digitalRead(_joystick_sw_", name, ") == LOW)");
+                break;
+            default:
+                throw new DbcException("Invalid mode for the joystick: " + analogJoystick.getMode());
+        }
+        return null;
+    }
+
+    @Override
+    public final Void visitDs18b20TemperatureSensor(Ds18b20TemperatureSensor ds18b20TemperatureSensor) {
+        this.src.add("_ds18b20_", ds18b20TemperatureSensor.getUserDefinedPort(), ".temperature()");
         return null;
     }
 
@@ -668,6 +739,15 @@ public abstract class CommonArduinoCppVisitor extends NepoArduinoCppVisitor impl
                     headerFiles.add("#include <Wire.h>");
                     headerFiles.add("#include \"TCS34725/TCS34725.h\"");
                     break;
+                case SC.MPU6050:
+                    headerFiles.add("#include <Wire.h>");
+                    headerFiles.add("#include \"MPU6050/MPU6050.h\"");
+                    break;
+                case SC.DS18B20:
+                    headerFiles.add("#include \"DS18B20/DS18B20.h\"");
+                    break;
+                case SC.ANALOGJOYSTICK:
+                    break;
                 case SC.LSM9DS1:
                     headerFiles.add("#include <Arduino_LSM9DS1.h>");
                     break;
@@ -800,6 +880,18 @@ public abstract class CommonArduinoCppVisitor extends NepoArduinoCppVisitor impl
                     break;
                 case SC.TCS34725:
                     this.src.add("_tcs34725_", usedConfigurationBlock.userDefinedPortName, ".begin();");
+                    nlIndent();
+                    break;
+                case SC.MPU6050:
+                    this.src.add("_mpu6050_", usedConfigurationBlock.userDefinedPortName, ".begin();");
+                    nlIndent();
+                    break;
+                case SC.DS18B20:
+                    this.src.add("_ds18b20_", usedConfigurationBlock.userDefinedPortName, ".begin();");
+                    nlIndent();
+                    break;
+                case SC.ANALOGJOYSTICK:
+                    this.src.add("pinMode(_joystick_sw_", usedConfigurationBlock.userDefinedPortName, ", INPUT_PULLUP);");
                     nlIndent();
                     break;
                 case SC.SERVOMOTOR:
@@ -990,6 +1082,50 @@ public abstract class CommonArduinoCppVisitor extends NepoArduinoCppVisitor impl
                 case SC.TCS34725:
                     this.src.add("TCS34725 _tcs34725_", blockName, "(", Tcs34725ColorSensorHardware.getBlackThreshold(cc), ", ", Tcs34725ColorSensorHardware.getWhiteThreshold(cc), ");");
                     nlIndent();
+                    break;
+                case SC.MPU6050:
+                    this.src.add("MPU6050 _mpu6050_", blockName, ";");
+                    nlIndent();
+                    break;
+                case SC.DS18B20:
+                    this.src.add("DS18B20 _ds18b20_", blockName, "(", cc.getProperty("INPUT"), ");");
+                    nlIndent();
+                    break;
+                case SC.ANALOGJOYSTICK:
+                    this.src.add("int _joystick_x_", blockName, " = ", cc.getProperty("VRX"), ";");
+                    nlIndent();
+                    this.src.add("int _joystick_y_", blockName, " = ", cc.getProperty("VRY"), ";");
+                    nlIndent();
+                    this.src.add("int _joystick_sw_", blockName, " = ", cc.getProperty("SW"), ";");
+                    nlIndent();
+                    if ( !this.joystickHelperGenerated ) {
+                        this.joystickHelperGenerated = true;
+                        // full scale of analogRead: 10 bit on AVR boards, 12 bit on the ESP32
+                        this.src.add("#ifndef BLOCKCORE_ANALOG_MAX");
+                        nlIndent();
+                        this.src.add("#if defined(ARDUINO_ARCH_ESP32)");
+                        nlIndent();
+                        this.src.add("#define BLOCKCORE_ANALOG_MAX 4095.0");
+                        nlIndent();
+                        this.src.add("#else");
+                        nlIndent();
+                        this.src.add("#define BLOCKCORE_ANALOG_MAX 1023.0");
+                        nlIndent();
+                        this.src.add("#endif");
+                        nlIndent();
+                        this.src.add("#endif");
+                        nlIndent();
+                        this.src.add("double _joystickPercent(int raw) {");
+                        incrIndentation();
+                        nlIndent();
+                        this.src.add("double percent = (raw - BLOCKCORE_ANALOG_MAX / 2.0) * 200.0 / BLOCKCORE_ANALOG_MAX;");
+                        nlIndent();
+                        this.src.add("return abs(percent) < 4 ? 0 : constrain(percent, -100, 100);");
+                        decrIndentation();
+                        nlIndent();
+                        this.src.add("}");
+                        nlIndent();
+                    }
                     break;
                 case SC.L293D_MOTOR:
                     this.src.add("const L293DMotor _motor_", blockName, "(L293DMotor::", cc.getProperty("PORT"), ");");

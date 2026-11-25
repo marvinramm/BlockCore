@@ -60,7 +60,7 @@ public class AstFactory {
         "RCCODE", "RED", "REFLEXION", "RESET", "RGB", "RIGHT", "ROTATION", "SEEK", "SERIAL", "SHAKE", "SOUND", "SPEED", "START", "STOP", "STRENGTH", "TEMPERATURE",
         "TILTED", "TIME", "UNMODULATED", "UP", "UVLIGHT", "VALUE", "VOCEQUIVALENT", "WAIT_FOR_PRESS", "WAIT_FOR_PRESS_AND_RELEASE", "X", "Y", "Z", "REDCHANNEL",
         "GREENCHANNEL", "BLUECHANNEL", "FRONT", "BACK", "LEFT", "RIGHT", "TAPPED", "FORCE", "GYRO", "ACCELERATION", "MAGNETICFLUX", "PROXIMITY", "GESTURE",
-        "CALIBRATIONNEED", "ACCURACY", "RESISTANCE"
+        "CALIBRATIONNEED", "ACCURACY", "RESISTANCE", "ROLL", "PITCH", "GYRO_X", "GYRO_Y", "GYRO_Z", "ACCEL_X", "ACCEL_Y", "ACCEL_Z"
     };
     /**
      * the hash set of all legal modes used in the blockly frontend

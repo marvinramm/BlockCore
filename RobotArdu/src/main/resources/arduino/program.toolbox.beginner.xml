@@ -1,5 +1,12 @@
 <toolbox_set id="toolbox" style="display: none">
     <category name="TOOLBOX_ACTION" svg="true">
+        <block type="robActions_l293dmotor_run">
+            <value name="POWER">
+                <block type="math_number">
+                    <field name="NUM">50</field>
+                </block>
+            </value>
+        </block>
         <block type="robActions_serial_print">
             <value name="OUT">
                 <block type="text">
@@ -53,6 +60,11 @@
         <block type="robSensors_key_getSample"/>
         <block type="robSensors_motion_getSample"/>
         <block type="robSensors_light_getSample"/>
+        <block type="robSensors_ultrasonic_getSample"/>
+        <block type="robSensors_tcs34725_getSample"/>
+        <block type="robSensors_mpu6050_getSample"/>
+        <block type="robSensors_analogjoystick_getSample"/>
+        <block type="robSensors_ds18b20_getSample"/>
     </category>
     <category name="TOOLBOX_CONTROL" svg="true">
         <block type="robControls_if"/>

@@ -148,6 +148,9 @@
         <block type="robSensors_moisture_getSample"/>
         <block type="robSensors_ultrasonic_getSample"/>
         <block type="robSensors_tcs34725_getSample"/>
+        <block type="robSensors_mpu6050_getSample"/>
+        <block type="robSensors_analogjoystick_getSample"/>
+        <block type="robSensors_ds18b20_getSample"/>
         <block type="robSensors_rfid_getSample"/>
     </category>
     <category name="TOOLBOX_CONTROL" svg="true">

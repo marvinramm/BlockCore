@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,12 +32,8 @@ import de.fhg.iais.roberta.worker.ICompilerWorker;
 public class ArduinoCompilerWorker implements ICompilerWorker {
 
     private static final Logger LOG = LoggerFactory.getLogger(ArduinoCompilerWorker.class);
-    private static final String L293D_MOTOR_HEADER_INCLUDE = "#include \"L293DMotor/L293DMotor.h\"";
-    private static final String L293D_MOTOR_HEADER_RESOURCE = "/arduino/L293DMotor/L293DMotor.h";
-    private static final String L293D_MOTOR_HEADER_PATH = "L293DMotor/L293DMotor.h";
-    private static final String TCS34725_HEADER_INCLUDE = "#include \"TCS34725/TCS34725.h\"";
-    private static final String TCS34725_HEADER_RESOURCE = "/arduino/TCS34725/TCS34725.h";
-    private static final String TCS34725_HEADER_PATH = "TCS34725/TCS34725.h";
+    /** drivers of BlockCore that are copied next to the generated program if it includes them: "L293DMotor/L293DMotor.h", ... */
+    static final List<String> BUNDLED_HEADERS = Arrays.asList("L293DMotor/L293DMotor.h", "TCS34725/TCS34725.h", "MPU6050/MPU6050.h", "DS18B20/DS18B20.h");
 
     @Override
     public void execute(Project project) {
@@ -138,12 +136,7 @@ public class ArduinoCompilerWorker implements ICompilerWorker {
 
         String sourceDir = tempDir + token + "/" + programName + "/source/";
         String targetDir = tempDir + token + "/" + programName + "/target/";
-        if ( crosscompilerSource.contains(L293D_MOTOR_HEADER_INCLUDE) ) {
-            storeBundledHeader(Paths.get(sourceDir), L293D_MOTOR_HEADER_RESOURCE, L293D_MOTOR_HEADER_PATH);
-        }
-        if ( crosscompilerSource.contains(TCS34725_HEADER_INCLUDE) ) {
-            storeBundledHeader(Paths.get(sourceDir), TCS34725_HEADER_RESOURCE, TCS34725_HEADER_PATH);
-        }
+        storeBundledHeaders(Paths.get(sourceDir), crosscompilerSource);
         ArrayList<String> parameters = new ArrayList<String>();
 
         if ( SystemUtils.IS_OS_WINDOWS ) {
@@ -248,6 +241,14 @@ public class ArduinoCompilerWorker implements ICompilerWorker {
      */
     static boolean useDirectBuild(String robot, String arduinoArch) {
         return ArduinoAvrDirectBuild.isSupported(robot, arduinoArch) && (SystemUtils.IS_OS_WINDOWS || Boolean.getBoolean("ora.arduino.directBuild"));
+    }
+
+    static void storeBundledHeaders(Path sourceDir, String crosscompilerSource) {
+        for ( String header : BUNDLED_HEADERS ) {
+            if ( crosscompilerSource.contains("#include \"" + header + "\"") ) {
+                storeBundledHeader(sourceDir, "/arduino/" + header, header);
+            }
+        }
     }
 
     static void storeBundledHeader(Path sourceDir, String resourcePath, String targetPath) {

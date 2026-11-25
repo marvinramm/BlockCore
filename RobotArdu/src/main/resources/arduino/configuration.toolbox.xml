@@ -28,6 +28,9 @@
         <block type="robConf_moisture" />
         <block type="robConf_ultrasonic" />
         <block type="robConf_tcs34725" />
+        <block type="robConf_mpu6050" />
+        <block type="robConf_analogjoystick" />
+        <block type="robConf_ds18b20" />
         <block type="robConf_rfid" />
     </category>
 </toolbox_set>
