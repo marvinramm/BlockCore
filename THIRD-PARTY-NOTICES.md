@@ -33,10 +33,11 @@ The drivers for the TCS34725 colour sensor, the L293D motor shield, the MPU-6050
 | Libraries of AVRDUDE on Linux: libftdi1, libusb-0.1, libusb-1.0, libhidapi, libelf (elfutils), libreadline, libtinfo (ncurses), zlib, zstd | Ubuntu 22.04 | LGPL 2.1 (libftdi, libusb), BSD-style (hidapi), LGPL 3.0 / GPL 2.0 (elfutils), GPL 3.0 (readline), MIT-style (ncurses), zlib, BSD (zstd) | https://launchpad.net/ubuntu/+source/ |
 | NSIS (installer stub of BlockCore-Setup.exe) | 3.x | zlib/libpng licence | https://nsis.sourceforge.io |
 
-**Source code of the GPL programs.** The GPL licences require that the source code of these programs is available to everybody who gets the
-binaries. The sources are published by their projects at the addresses above. On request, the BlockCore author provides the complete
-corresponding source code of the versions shipped with a BlockCore release, for at least three years after that release
-(GitHub issue: https://github.com/marvinramm/BlockCore/issues).
+**Source code.** The GPL and LGPL require that the source code of these programs and libraries is available to everybody who gets the
+binaries. Every BlockCore release therefore contains, next to the packages, **`BlockCore-third-party-sources.tar`**: the source code of
+GCC, Binutils, AVR Libc, GMP, MPFR, MPC and isl (as used by the avr-gcc build), the build script of that build, AVRDUDE, the Ubuntu
+source packages of the Linux AVRDUDE and its libraries, OpenJDK and the Java libraries (`-sources.jar`). Its `SOURCES.txt` lists where
+every file comes from. The source code of BlockCore itself is the repository (and the source code archives of every release).
 
 ## Arduino core and libraries (compiled into the programs uploaded to the board)
 

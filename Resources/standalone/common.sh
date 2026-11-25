@@ -99,7 +99,7 @@ trim_avr_gcc() {
     local exec="$gcc/libexec/gcc/avr/7.3.0"
     rm -rf "$exec"/lto1* "$exec"/lto-wrapper* "$exec/plugin" "$exec/install-tools" "$gcc/lib/gcc/avr/7.3.0/plugin" "$gcc/lib/gcc/avr/7.3.0/install-tools"
     rm -f "$gcc"/bin/avr-gcov* "$gcc"/bin/avr-gprof* "$gcc"/bin/avr-addr2line* "$gcc"/bin/avr-c++filt* "$gcc"/bin/avr-elfedit* "$gcc"/bin/avr-readelf* \
-        "$gcc"/bin/avr-strings* "$gcc"/bin/avr-man* "$gcc"/bin/avr-gcc-7.3.0* "$gcc"/bin/avr-ld.bfd*
+        "$gcc"/bin/avr-strings* "$gcc"/bin/avr-man* "$gcc"/bin/avr-gcc-7.3.0* "$gcc"/bin/avr-ld.bfd* "$gcc"/bin/libusb0.dll
     [ -n "$(ls "$exec"/cc1plus*)" ] || { echo "cc1plus missing"; exit 12; }
 }
 

@@ -41,9 +41,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: target/standalone/downloads
-          key: standalone-downloads-${{ hashFiles('Resources/standalone/common.sh', 'Resources/standalone/build-windows.sh', 'Resources/standalone/build-linux.sh') }}
+          key: standalone-downloads-${{ hashFiles('Resources/standalone/common.sh', 'Resources/standalone/build-windows.sh', 'Resources/standalone/build-linux.sh', 'Resources/standalone/collect-sources.sh') }}
       - name: Install cross compiler, installer builder and avrdude (for the Linux package)
-        run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64 nsis zip unzip avrdude
+        run: |
+          # deb-src: collect-sources.sh downloads the Ubuntu source packages of the avrdude in the Linux package
+          codename=$(lsb_release -cs)
+          printf 'deb-src http://archive.ubuntu.com/ubuntu %s main universe\ndeb-src http://archive.ubuntu.com/ubuntu %s-updates main universe\ndeb-src http://security.ubuntu.com/ubuntu %s-security main universe\n' "$codename" "$codename" "$codename" | sudo tee /etc/apt/sources.list.d/blockcore-sources.list
+          sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64 nsis zip unzip avrdude
       - name: Build with maven
         run: mvn --batch-mode clean install -DskipTests
       - name: Version (major.minor from the file VERSION, the build number as patch; -beta on the branch next)
@@ -55,6 +59,8 @@ jobs:
         run: Resources/standalone/build-windows.sh target/standalone
       - name: Build BlockCore for Linux
         run: Resources/standalone/build-linux.sh target/standalone
+      - name: Collect the source code of the third-party software (GPL, LGPL, ...)
+        run: Resources/standalone/collect-sources.sh target/standalone
       - name: Publish the release
         id: publish
         continue-on-error: true
@@ -76,11 +82,14 @@ jobs:
 
             Guide and help: see the [README](https://github.com/${{ github.repository }}#readme).
 
+            **BlockCore-third-party-sources.tar** is the source code of the GPL / LGPL software in the packages (compiler, avrdude, Java runtime, libraries), see THIRD-PARTY-NOTICES.md.
+
             Commit: ${{ github.sha }}
           files: |
             target/standalone/BlockCore-Setup.exe
             target/standalone/BlockCore-portable.zip
             target/standalone/BlockCore-linux-x64.tar.gz
+            target/standalone/BlockCore-third-party-sources.tar
       - name: Wait before the second attempt (GitHub answers 500 now and then)
         if: steps.publish.outcome == 'failure'
         run: sleep 60
@@ -104,8 +113,11 @@ jobs:
 
             Guide and help: see the [README](https://github.com/${{ github.repository }}#readme).
 
+            **BlockCore-third-party-sources.tar** is the source code of the GPL / LGPL software in the packages (compiler, avrdude, Java runtime, libraries), see THIRD-PARTY-NOTICES.md.
+
             Commit: ${{ github.sha }}
           files: |
             target/standalone/BlockCore-Setup.exe
             target/standalone/BlockCore-portable.zip
             target/standalone/BlockCore-linux-x64.tar.gz
+            target/standalone/BlockCore-third-party-sources.tar

@@ -236,7 +236,8 @@ Resources/standalone/build-linux.sh target/standalone
 The result is `target/standalone/BlockCore-Setup.exe`, `BlockCore-portable.zip` and `BlockCore-linux-x64.tar.gz`. The scripts download
 Temurin JDK 21 (for jlink), avr-gcc 7.3, avrdude 7.3 (Windows) and the Arduino resources from GitHub and only pack the AVR boards and the
 Arduino libraries the code generator uses. The Linux package takes avrdude from the build system (Ubuntu package) together with the
-libraries it needs. The frontend is built with
+libraries it needs. `Resources/standalone/collect-sources.sh` collects the source code of the GPL / LGPL software in the packages into
+`BlockCore-third-party-sources.tar`, which every release contains. The frontend is built with
 `npm ci && npx gulp` in `OpenRobertaWeb/`; the generated files in `OpenRobertaServer/staticResources/js` are checked in.
 
 To run the local mode on Linux (avr-gcc and avrdude from the package manager, Arduino resources from
