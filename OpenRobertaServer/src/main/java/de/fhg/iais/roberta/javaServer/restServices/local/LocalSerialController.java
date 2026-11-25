@@ -82,7 +82,7 @@ public class LocalSerialController {
     @POST
     @javax.ws.rs.Path("/update")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response startUpdate(@Context HttpServletRequest request) {
+    public Response startUpdate(@Context HttpServletRequest request, @QueryParam("channel") String channel) {
         Response rejection = checkAccess(request);
         if ( rejection != null ) {
             return rejection;
@@ -92,7 +92,7 @@ public class LocalSerialController {
         if ( updateDir == null || staticResources == null ) {
             return answer(Response.Status.CONFLICT, false, "this BlockCore cannot update itself");
         }
-        LocalUpdate.start(updateDir, staticResources);
+        LocalUpdate.start(updateDir, staticResources, "beta".equals(channel));
         JSONObject json = LocalUpdate.status(true);
         json.put("rc", "ok");
         return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();

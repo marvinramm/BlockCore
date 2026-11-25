@@ -1,13 +1,14 @@
 name: Windows-Installer
 
 # The version is <major.minor from the file VERSION>.<build number>, e.g. 1.0.15; the release tag is v1.0.15.
+# Branch main: stable releases ("latest"). Branch next: pre-releases (1.1.20-beta), offered only to users on the beta channel.
 # Builds BlockCore for Windows (installer and portable zip) on every push to main
 # (or by hand: Actions -> Windows-Installer -> Run workflow) and publishes both as a GitHub release.
 # See Resources/windowsStandalone/build-windows.sh
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, next ]
   workflow_dispatch:
 
 permissions:
@@ -44,8 +45,11 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64 nsis zip unzip
       - name: Build with maven
         run: mvn --batch-mode clean install -DskipTests
-      - name: Version (major.minor from the file VERSION, the build number as patch)
-        run: echo "BLOCKCORE_VERSION=$(tr -d '[:space:]' < VERSION).${{ github.run_number }}" >> "$GITHUB_ENV"
+      - name: Version (major.minor from the file VERSION, the build number as patch; -beta on the branch next)
+        run: |
+          if [ "${{ github.ref_name }}" = "next" ]; then suffix="-beta"; prerelease=true; else suffix=""; prerelease=false; fi
+          echo "BLOCKCORE_VERSION=$(tr -d '[:space:]' < VERSION).${{ github.run_number }}$suffix" >> "$GITHUB_ENV"
+          echo "PRERELEASE=$prerelease" >> "$GITHUB_ENV"
       - name: Build the Windows standalone lab
         run: Resources/windowsStandalone/build-windows.sh target/windowsStandalone
       - name: Publish the release
@@ -54,9 +58,10 @@ jobs:
           tag_name: v${{ env.BLOCKCORE_VERSION }}
           target_commitish: ${{ github.sha }}
           name: BlockCore ${{ env.BLOCKCORE_VERSION }}
-          make_latest: true
+          prerelease: ${{ env.PRERELEASE == 'true' }}
+          make_latest: ${{ env.PRERELEASE == 'true' && 'false' || 'true' }}
           body: |
-            **BlockCore ${{ env.BLOCKCORE_VERSION }}** for Windows
+            **BlockCore ${{ env.BLOCKCORE_VERSION }}** for Windows${{ env.PRERELEASE == 'true' && ' – pre-release for testing (beta channel)' || '' }}
 
             Download **BlockCore-Setup.exe** and install it (no admin rights needed).
             Or unzip **BlockCore-portable.zip** and start `BlockCore.exe`.

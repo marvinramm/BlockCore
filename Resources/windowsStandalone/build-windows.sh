@@ -77,12 +77,12 @@ cp "$SCRIPT_DIR/branding/logo-word.svg" "$WEB/css/svg/logo-word.svg"
 cp "$SCRIPT_DIR/branding/icon-144.png" "$WEB/css/img/Nepo_N.png"
 cp "$SCRIPT_DIR/branding/blockcore.ico" "$WEB/css/img/NEPO.ico"
 mkdir -p "$WEB/blockcore"
-cp "$SCRIPT_DIR"/branding/web/blockcore.js "$SCRIPT_DIR"/branding/web/blockcore.css "$SCRIPT_DIR"/branding/web/icon-*.png "$SCRIPT_DIR"/branding/web/*.svg "$WEB/blockcore/"
+cp "$SCRIPT_DIR"/branding/web/*.js "$SCRIPT_DIR"/branding/web/blockcore.css "$SCRIPT_DIR"/branding/web/icon-*.png "$SCRIPT_DIR"/branding/web/*.svg "$WEB/blockcore/"
 cp "$SCRIPT_DIR/branding/web/manifest.webapp.json" "$WEB/manifest.webapp.json"
 printf '{"version":"%s"}\n' "$VERSION" > "$WEB/blockcore/version.json"
 sed -i -e 's|<title>Open Roberta Lab</title>|<title>BlockCore</title>|' \
        -e "s|alt='Open Roberta Lab logo'|alt='BlockCore logo'|" \
-       -e "s|</head>|<link href='/blockcore/blockcore.css' rel='stylesheet' type='text/css'>\\n<script defer src='/blockcore/blockcore.js'></script>\\n</head>|" \
+       -e "s|</head>|<script src='/blockcore/blockcore-theme.js'></script>\\n<link href='/blockcore/blockcore.css' rel='stylesheet' type='text/css'>\\n<script defer src='/blockcore/blockcore.js'></script>\\n</head>|" \
        "$WEB/index.html"
 grep -q '<title>BlockCore</title>' "$WEB/index.html" || { echo "branding of index.html failed"; exit 12; }
 grep -q '/blockcore/blockcore.js' "$WEB/index.html" || { echo "injecting blockcore.js failed"; exit 12; }

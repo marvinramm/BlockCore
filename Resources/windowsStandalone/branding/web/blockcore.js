@@ -4,6 +4,8 @@
  * - only English (default) and German; the choice is remembered
  * - a local user is created and logged in automatically, so that "my programs" and "save" work without a login dialog
  * - the version is shown next to the logo; at start, a small note appears if a newer version was released on GitHub
+ * - "Settings" in the edit menu: colour theme (dark by default), language, block size, grid, sounds, start board, serial monitor,
+ *   updates and more; stored in localStorage "blockcore.settings" (blockcore-theme.js applies the theme before the page is drawn)
  */
 (function () {
     'use strict';
@@ -17,12 +19,53 @@
         ['en', 'English']
     ];
     var RELEASES_API = 'https://api.github.com/repos/marvinramm/BlockCore/releases/latest';
+    var ALL_RELEASES_API = 'https://api.github.com/repos/marvinramm/BlockCore/releases?per_page=20';
     var LOCAL_ACCOUNT = 'blockcore';
     var LOCAL_PASSWORD = 'blockcore-local';
     var TEXT = {
         de: { update: 'BlockCore {version} ist verfügbar', download: 'Herunterladen', install: 'Jetzt aktualisieren', downloading: 'Update wird geladen … {percent} %', installing: 'Update wird installiert – BlockCore startet neu …', updateFailed: 'Update fehlgeschlagen', board: 'Board', compiling: 'Programm wird übersetzt …', uploading: 'Wird auf {port} hochgeladen …', done: 'Auf {port} hochgeladen', failed: 'Hochladen fehlgeschlagen', compileFailed: 'Programm hat Fehler' },
         en: { update: 'BlockCore {version} is available', download: 'Download', install: 'Update now', downloading: 'Downloading update … {percent} %', installing: 'Installing update – BlockCore restarts …', updateFailed: 'Update failed', board: 'Board', compiling: 'Compiling program …', uploading: 'Uploading to {port} …', done: 'Uploaded to {port}', failed: 'Upload failed', compileFailed: 'Program has errors' }
     };
+
+    var SETTINGS_KEY = 'blockcore.settings';
+    var DEFAULTS = {
+        theme: 'dark', // dark, light, system
+        blockScale: 1.0,
+        grid: false,
+        watermark: true,
+        sounds: true,
+        startBoard: 'last',
+        rememberPort: true,
+        uploadPanel: true,
+        serialBaud: '9600',
+        serialTimestamps: false,
+        checkUpdates: true,
+        updateChannel: 'stable' // stable, beta (pre-releases)
+    };
+    function loadSettings() {
+        var settings = {};
+        try {
+            settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {};
+        } catch (e) {
+            settings = {};
+        }
+        Object.keys(DEFAULTS).forEach(function (key) {
+            if (settings[key] === undefined) {
+                settings[key] = DEFAULTS[key];
+            }
+        });
+        return settings;
+    }
+
+    function saveSettings(settings) {
+        try {
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        } catch (e) {
+            // not stored: the settings are used for this session only
+        }
+    }
+
+    var settings = loadSettings();
 
     function store(key, value) {
         try {
@@ -71,7 +114,8 @@
      * parameter from the address). Load the board used last instead, before the lab starts.
      */
     if (!/[?&]loadSystem=/.test(location.search)) {
-        location.replace('/?loadSystem=' + encodeURIComponent(store('board') || 'uno'));
+        var startBoard = settings.startBoard && settings.startBoard !== 'last' ? settings.startBoard : store('board');
+        location.replace('/?loadSystem=' + encodeURIComponent(startBoard || 'uno'));
         return;
     }
 
@@ -316,19 +360,24 @@
         });
     }
 
-    /** "1.0.15" -> [1, 0, 15]; null for anything else (e.g. "1.0-dev") */
+    /** "1.0.15" -> [1, 0, 15, ''], "1.1.20-beta" -> [1, 1, 20, 'beta']; null for anything else (e.g. "1.0-dev") */
     function parseVersion(text) {
-        var match = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(String(text || '').trim());
-        return match ? [+match[1], +match[2], +match[3]] : null;
+        var match = /^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.]+))?$/.exec(String(text || '').trim());
+        return match ? [+match[1], +match[2], +match[3], match[4] || ''] : null;
     }
 
+    function versionText(v) {
+        return v[0] + '.' + v[1] + '.' + v[2] + (v[3] ? '-' + v[3] : '');
+    }
+
+    /* the numbers decide; with equal numbers a stable version is newer than a pre-release */
     function isNewer(a, b) {
         for (var i = 0; i < 3; i++) {
             if (a[i] !== b[i]) {
                 return a[i] > b[i];
             }
         }
-        return false;
+        return !a[3] && !!b[3];
     }
 
     /* shows the version next to the logo and looks (once per start, silently) for a newer release */
@@ -347,6 +396,7 @@
                     logo.parentNode.insertBefore(label, logo.nextSibling);
                 }
                 document.title = 'BlockCore ' + version;
+                currentVersion = version;
                 checkForUpdate(G, version);
             })
             .catch(function () {
@@ -354,9 +404,11 @@
             });
     }
 
+    var currentVersion = '';
+
     function checkForUpdate(G, version) {
         var current = parseVersion(version);
-        if (!current || !window.fetch) {
+        if (!current || !window.fetch || !settings.checkUpdates) {
             return;
         }
         try {
@@ -374,15 +426,23 @@
                 controller.abort();
             }
         }, 8000);
-        fetch(RELEASES_API, { cache: 'no-store', signal: controller ? controller.signal : undefined, headers: { Accept: 'application/vnd.github+json' } })
+        var beta = settings.updateChannel === 'beta';
+        fetch(beta ? ALL_RELEASES_API : RELEASES_API, { cache: 'no-store', signal: controller ? controller.signal : undefined, headers: { Accept: 'application/vnd.github+json' } })
             .then(function (response) {
                 return response.ok ? response.json() : null;
             })
-            .then(function (release) {
+            .then(function (answer) {
                 clearTimeout(timeout);
-                var latest = release && parseVersion(release.tag_name);
-                if (latest && isNewer(latest, current)) {
-                    showUpdate(G, latest.join('.'), release.html_url);
+                // stable: the latest release (GitHub leaves pre-releases out); beta: the newest of all releases
+                var best = null;
+                (Array.isArray(answer) ? answer : answer ? [answer] : []).forEach(function (release) {
+                    var version = !release.draft && parseVersion(release.tag_name);
+                    if (version && (!best || isNewer(version, best.version))) {
+                        best = { version: version, release: release };
+                    }
+                });
+                if (best && isNewer(best.version, current)) {
+                    showUpdate(G, versionText(best.version), best.release.html_url);
                 }
             })
             .catch(function () {
@@ -469,7 +529,7 @@
                         clearTimeout(closeTimer);
                         note.classList.add('bc-updating');
                         textElement.textContent = texts.downloading.replace('{percent}', 0);
-                        fetch('/rest/local/update', { method: 'POST', cache: 'no-store' })
+                        fetch('/rest/local/update?channel=' + encodeURIComponent(settings.updateChannel || 'stable'), { method: 'POST', cache: 'no-store' })
                             .then(function () {
                                 poll();
                             })
@@ -617,12 +677,311 @@
         }, true);
     }
 
+    /* ------------------------------------------------------------------ settings */
+
+    var SETTINGS_TEXT = {
+        de: {
+            menu: 'Einstellungen', title: 'Einstellungen', close: 'Schließen', reset: 'Zurücksetzen',
+            appearance: 'Darstellung', theme: 'Farbschema', dark: 'Dunkel', light: 'Hell', system: 'Wie Windows',
+            language: 'Sprache', workspace: 'Programmierfläche', blockScale: 'Blockgröße', grid: 'Raster anzeigen',
+            watermark: 'Logo im Hintergrund', sounds: 'Klicktöne der Blöcke', start: 'Start', startBoard: 'Board beim Start',
+            last: 'Zuletzt benutztes', upload: 'Hochladen', rememberPort: 'Letzten COM-Port wieder wählen',
+            uploadPanel: 'Fortschritt beim Hochladen anzeigen', serial: 'Serieller Monitor', serialBaud: 'Baudrate',
+            serialTimestamps: 'Zeitstempel', updates: 'Updates', checkUpdates: 'Beim Start nach neuer Version suchen',
+            updateChannel: 'Update-Kanal', stable: 'Stabil', beta: 'Beta (Vorabversionen)',
+            about: 'Über BlockCore', aboutText: 'Blockprogrammierung für Arduino und ESP32, basierend auf dem Open Roberta Lab.',
+            licenses: 'Lizenzen', shortcuts: 'Tastenkürzel', shortcutsText: 'Strg+Z rückgängig · Strg+Y wiederholen · Strg+, Einstellungen'
+        },
+        en: {
+            menu: 'Settings', title: 'Settings', close: 'Close', reset: 'Reset',
+            appearance: 'Appearance', theme: 'Theme', dark: 'Dark', light: 'Light', system: 'Like Windows',
+            language: 'Language', workspace: 'Workspace', blockScale: 'Block size', grid: 'Show grid',
+            watermark: 'Logo in the background', sounds: 'Block click sounds', start: 'Start', startBoard: 'Board at start',
+            last: 'Last used', upload: 'Upload', rememberPort: 'Select the last COM port again',
+            uploadPanel: 'Show the upload progress', serial: 'Serial monitor', serialBaud: 'Baud rate',
+            serialTimestamps: 'Timestamps', updates: 'Updates', checkUpdates: 'Look for a new version at start',
+            updateChannel: 'Update channel', stable: 'Stable', beta: 'Beta (pre-releases)',
+            about: 'About BlockCore', aboutText: 'Block programming for Arduino and ESP32, based on the Open Roberta Lab.',
+            licenses: 'Licenses', shortcuts: 'Keyboard shortcuts', shortcutsText: 'Ctrl+Z undo · Ctrl+Y redo · Ctrl+, settings'
+        }
+    };
+
+    function resolvedTheme() {
+        if (settings.theme === 'system') {
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        }
+        return settings.theme === 'light' ? 'light' : 'dark';
+    }
+
+    var originalPlayAudio = null;
+
+    function applySettings(changed) {
+        var root = document.documentElement;
+        root.setAttribute('data-bc-theme', resolvedTheme());
+        root.classList.toggle('bc-grid', !!settings.grid);
+        root.classList.toggle('bc-no-watermark', !settings.watermark);
+        root.classList.toggle('bc-no-upload-panel', !settings.uploadPanel);
+        if (!changed || changed === 'blockScale') {
+            applyBlockScale(true);
+        }
+        var Blockly = window.Blockly;
+        if (Blockly && Blockly.WorkspaceSvg && Blockly.WorkspaceSvg.prototype.playAudio) {
+            if (!originalPlayAudio) {
+                originalPlayAudio = Blockly.WorkspaceSvg.prototype.playAudio;
+            }
+            Blockly.WorkspaceSvg.prototype.playAudio = settings.sounds ? originalPlayAudio : function () {};
+        }
+        if (!settings.rememberPort) {
+            try {
+                localStorage.removeItem('openroberta.localSerial.lastUploadPort');
+            } catch (e) {
+                // ignore
+            }
+        }
+        // the serial monitor window reads these
+        try {
+            localStorage.setItem('serial.baud', String(settings.serialBaud));
+            localStorage.setItem('serial.timestamps', settings.serialTimestamps ? '1' : '0');
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    /* block size of the program workspace (the configuration keeps the zoom of the lab, which fits the board) */
+    var scaledWorkspace = null;
+    function applyBlockScale(force) {
+        var ws = null;
+        try {
+            ws = window.require('guiState.controller').getBlocklyWorkspace();
+        } catch (e) {
+            return;
+        }
+        if (ws && ws.setScale && (force || ws !== scaledWorkspace)) {
+            scaledWorkspace = ws;
+            ws.setScale(Number(settings.blockScale) || 1);
+        }
+    }
+
+    function settingsText(G) {
+        return SETTINGS_TEXT[language(G)] || SETTINGS_TEXT.en;
+    }
+
+    function addSettingsMenu(G) {
+        ['#head-navigation-program-edit', '#head-navigation-configuration-edit'].forEach(function (selector) {
+            var menu = document.querySelector(selector + ' .dropdown-menu');
+            if (!menu || menu.querySelector('.blockcore-settings-item')) {
+                return;
+            }
+            var divider = document.createElement('li');
+            divider.innerHTML = '<hr class="dropdown-divider">';
+            var item = document.createElement('li');
+            item.className = 'blockcore-settings-item';
+            item.innerHTML = '<a class="dropdown-item" href="#"><span class="typcn typcn-cog-outline"></span><span class="bc-settings-label"></span></a>';
+            item.querySelector('a').addEventListener('click', function (event) {
+                event.preventDefault();
+                openSettings(G);
+            });
+            menu.appendChild(divider);
+            menu.appendChild(item);
+        });
+        updateSettingsMenuText(G);
+    }
+
+    function updateSettingsMenuText(G) {
+        Array.prototype.forEach.call(document.querySelectorAll('.bc-settings-label'), function (label) {
+            label.textContent = ' ' + settingsText(G).menu;
+        });
+    }
+
+    function openSettings(G) {
+        var t = settingsText(G);
+        var old = document.getElementById('bcSettings');
+        if (old) {
+            old.parentNode.removeChild(old);
+        }
+        var boards = BOARDS.map(function (b) {
+            return '<option value="' + b[0] + '">' + b[1] + '</option>';
+        }).join('');
+        var bauds = [300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 74880, 115200, 230400, 250000, 500000, 1000000].map(function (b) {
+            return '<option value="' + b + '">' + b + '</option>';
+        }).join('');
+        var overlay = document.createElement('div');
+        overlay.id = 'bcSettings';
+        overlay.innerHTML =
+            '<div class="bc-dialog" role="dialog" aria-modal="true" aria-labelledby="bcSettingsTitle">' +
+            '<div class="bc-dialog-head"><h2 id="bcSettingsTitle">' + t.title + '</h2><button type="button" class="bc-x" data-close aria-label="' + t.close + '">&times;</button></div>' +
+            '<div class="bc-dialog-body">' +
+            '<section><h3>' + t.appearance + '</h3>' +
+            '<div class="bc-row"><span>' + t.theme + '</span><div class="bc-seg" data-setting="theme">' +
+            '<button type="button" data-value="dark">' + t.dark + '</button><button type="button" data-value="light">' + t.light + '</button>' +
+            '<button type="button" data-value="system">' + t.system + '</button></div></div>' +
+            '<div class="bc-row"><span>' + t.language + '</span><div class="bc-seg" data-setting="language">' +
+            '<button type="button" data-value="en">English</button><button type="button" data-value="de">Deutsch</button></div></div>' +
+            '</section>' +
+            '<section><h3>' + t.workspace + '</h3>' +
+            '<div class="bc-row"><span>' + t.blockScale + '</span><div class="bc-range"><input type="range" min="0.6" max="1.6" step="0.1" data-setting="blockScale"><output></output></div></div>' +
+            '<label class="bc-row bc-switch"><span>' + t.grid + '</span><input type="checkbox" data-setting="grid"><i></i></label>' +
+            '<label class="bc-row bc-switch"><span>' + t.watermark + '</span><input type="checkbox" data-setting="watermark"><i></i></label>' +
+            '<label class="bc-row bc-switch"><span>' + t.sounds + '</span><input type="checkbox" data-setting="sounds"><i></i></label>' +
+            '</section>' +
+            '<section><h3>' + t.start + ' &amp; ' + t.upload + '</h3>' +
+            '<div class="bc-row"><span>' + t.startBoard + '</span><select data-setting="startBoard"><option value="last">' + t.last + '</option>' + boards + '</select></div>' +
+            '<label class="bc-row bc-switch"><span>' + t.rememberPort + '</span><input type="checkbox" data-setting="rememberPort"><i></i></label>' +
+            '<label class="bc-row bc-switch"><span>' + t.uploadPanel + '</span><input type="checkbox" data-setting="uploadPanel"><i></i></label>' +
+            '</section>' +
+            '<section><h3>' + t.serial + '</h3>' +
+            '<div class="bc-row"><span>' + t.serialBaud + '</span><select data-setting="serialBaud">' + bauds + '</select></div>' +
+            '<label class="bc-row bc-switch"><span>' + t.serialTimestamps + '</span><input type="checkbox" data-setting="serialTimestamps"><i></i></label>' +
+            '</section>' +
+            '<section><h3>' + t.updates + '</h3>' +
+            '<label class="bc-row bc-switch"><span>' + t.checkUpdates + '</span><input type="checkbox" data-setting="checkUpdates"><i></i></label>' +
+            '<div class="bc-row"><span>' + t.updateChannel + '</span><div class="bc-seg" data-setting="updateChannel">' +
+            '<button type="button" data-value="stable">' + t.stable + '</button><button type="button" data-value="beta">' + t.beta + '</button></div></div>' +
+            '</section>' +
+            '<section class="bc-about"><h3>' + t.about + '</h3><p>' + t.aboutText + '</p>' +
+            '<p class="bc-muted"><span class="bc-version"></span> · <a href="https://github.com/marvinramm/BlockCore" target="_blank" rel="noopener">GitHub</a> · ' +
+            '<a href="https://github.com/marvinramm/BlockCore/blob/main/THIRD-PARTY-NOTICES.md" target="_blank" rel="noopener">' + t.licenses + '</a></p>' +
+            '<p class="bc-muted">' + t.shortcuts + ': ' + t.shortcutsText + '</p></section>' +
+            '</div>' +
+            '<div class="bc-dialog-foot"><button type="button" class="bc-btn" data-reset>' + t.reset + '</button><button type="button" class="bc-btn bc-primary" data-close>' + t.close + '</button></div>' +
+            '</div>';
+        document.body.appendChild(overlay);
+        var version = document.getElementById('blockcoreVersion');
+        overlay.querySelector('.bc-version').textContent = 'BlockCore ' + (version ? version.textContent.replace(/^v/, '') : '');
+
+        function sync() {
+            Array.prototype.forEach.call(overlay.querySelectorAll('[data-setting]'), function (control) {
+                var key = control.getAttribute('data-setting');
+                var value = key === 'language' ? language(G) : settings[key];
+                if (control.classList.contains('bc-seg')) {
+                    Array.prototype.forEach.call(control.querySelectorAll('button'), function (button) {
+                        button.classList.toggle('active', button.getAttribute('data-value') === String(value));
+                    });
+                } else if (control.type === 'checkbox') {
+                    control.checked = !!value;
+                } else {
+                    control.value = String(value);
+                    if (control.type === 'range') {
+                        control.parentNode.querySelector('output').textContent = Math.round(Number(value) * 100) + ' %';
+                    }
+                }
+            });
+        }
+        function set(key, value) {
+            if (key === 'language') {
+                var link = document.querySelector('#language a[lang="' + value + '"]');
+                if (link) {
+                    link.click();
+                }
+                setTimeout(function () {
+                    updateSettingsMenuText(G);
+                    openSettings(G); // texts in the new language
+                }, 600);
+                return;
+            }
+            settings[key] = value;
+            saveSettings(settings);
+            applySettings(key);
+            sync();
+            if ((key === 'updateChannel' || key === 'checkUpdates') && value !== false && currentVersion) {
+                try {
+                    sessionStorage.removeItem('blockcore.updateChecked');
+                } catch (e) {
+                    // ignore
+                }
+                var note = document.getElementById('blockcoreUpdate');
+                if (note && note.parentNode) {
+                    note.parentNode.removeChild(note);
+                }
+                checkForUpdate(G, currentVersion);
+            }
+        }
+        Array.prototype.forEach.call(overlay.querySelectorAll('.bc-seg'), function (group) {
+            group.addEventListener('click', function (event) {
+                var button = event.target.closest('button');
+                if (button) {
+                    set(group.getAttribute('data-setting'), button.getAttribute('data-value'));
+                }
+            });
+        });
+        Array.prototype.forEach.call(overlay.querySelectorAll('input[data-setting], select[data-setting]'), function (control) {
+            control.addEventListener(control.type === 'range' ? 'input' : 'change', function () {
+                var key = control.getAttribute('data-setting');
+                set(key, control.type === 'checkbox' ? control.checked : control.type === 'range' ? Number(control.value) : control.value);
+            });
+        });
+        function close() {
+            document.removeEventListener('keydown', onKey, true);
+            overlay.classList.remove('bc-open');
+            setTimeout(function () {
+                if (overlay.parentNode) {
+                    overlay.parentNode.removeChild(overlay);
+                }
+            }, 200);
+        }
+        function onKey(event) {
+            if (event.key === 'Escape') {
+                event.stopPropagation();
+                close();
+            }
+        }
+        document.addEventListener('keydown', onKey, true);
+        overlay.addEventListener('click', function (event) {
+            if (event.target === overlay || event.target.closest('[data-close]')) {
+                close();
+            }
+            if (event.target.closest('[data-reset]')) {
+                settings = loadSettingsFrom({});
+                saveSettings(settings);
+                applySettings();
+                sync();
+            }
+        });
+        sync();
+        setTimeout(function () {
+            overlay.classList.add('bc-open');
+        }, 10);
+    }
+
+    function loadSettingsFrom(values) {
+        var result = {};
+        Object.keys(DEFAULTS).forEach(function (key) {
+            result[key] = values[key] === undefined ? DEFAULTS[key] : values[key];
+        });
+        return result;
+    }
+
+    function setupSettings(G) {
+        addSettingsMenu(G);
+        applySettings();
+        // the menu texts follow the language; a new program workspace gets the block size once (zooming by hand stays possible)
+        setInterval(function () {
+            updateSettingsMenuText(G);
+            applyBlockScale(false);
+        }, 1500);
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: light)').addListener(function () {
+                if (settings.theme === 'system') {
+                    applySettings('theme');
+                }
+            });
+        }
+        // Ctrl+, opens the settings
+        document.addEventListener('keydown', function (event) {
+            if ((event.ctrlKey || event.metaKey) && event.key === ',') {
+                event.preventDefault();
+                openSettings(G);
+            }
+        });
+    }
+
     whenLabReady(function () {
         modules(['guiState.controller', 'robot.controller', 'user.model'], function (G, R, U) {
             setupLanguages(G);
             setupBoards(G, R);
             setupUploadDisplay(G);
             setupVersion(G);
+            setupSettings(G);
             setupResizeFix();
             setupUndoRedo();
             autoLogin(G, U);

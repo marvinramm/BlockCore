@@ -35,10 +35,11 @@ final class LocalUpdate {
     static final int EXIT_CODE_UPDATE = 42;
     private static final Logger LOG = LoggerFactory.getLogger(LocalUpdate.class);
     private static final String LATEST_RELEASE = "https://api.github.com/repos/marvinramm/BlockCore/releases/latest";
+    private static final String ALL_RELEASES = "https://api.github.com/repos/marvinramm/BlockCore/releases?per_page=20";
     private static final String DOWNLOAD_PREFIX = "https://github.com/marvinramm/BlockCore/releases/download/";
     private static final String INSTALLER = "BlockCore-Setup.exe";
     private static final String PENDING_FILE = "pending.txt";
-    private static final Pattern VERSION = Pattern.compile("^v?(\\d+)\\.(\\d+)\\.(\\d+)$");
+    private static final Pattern VERSION = Pattern.compile("^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-([0-9A-Za-z.]+))?$");
     private static final Pattern VERSION_JSON = Pattern.compile("\"version\"\\s*:\\s*\"([^\"]*)\"");
 
     enum State {
@@ -69,8 +70,9 @@ final class LocalUpdate {
      *
      * @param updateDir directory for the installer, from the launcher
      * @param staticResources directory of the web frontend (it contains the version of this BlockCore)
+     * @param beta true: the newest release including pre-releases, false: the latest stable release
      */
-    static synchronized void start(Path updateDir, Path staticResources) {
+    static synchronized void start(Path updateDir, Path staticResources, boolean beta) {
         if ( state == State.DOWNLOADING || state == State.READY ) {
             return;
         }
@@ -78,30 +80,44 @@ final class LocalUpdate {
         done = 0;
         total = 0;
         message = "";
-        Thread thread = new Thread(() -> download(updateDir, staticResources), "BlockCore update");
+        Thread thread = new Thread(() -> download(updateDir, staticResources, beta), "BlockCore update");
         thread.setDaemon(true);
         thread.start();
     }
 
-    private static void download(Path updateDir, Path staticResources) {
+    private static void download(Path updateDir, Path staticResources, boolean beta) {
         try {
             HttpClient client =
                 HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).connectTimeout(Duration.ofSeconds(15)).build();
             HttpResponse<String> latest =
                 client
                     .send(
-                        HttpRequest.newBuilder(URI.create(LATEST_RELEASE)).header("Accept", "application/vnd.github+json").timeout(Duration.ofSeconds(20)).build(),
+                        HttpRequest
+                            .newBuilder(URI.create(beta ? ALL_RELEASES : LATEST_RELEASE))
+                            .header("Accept", "application/vnd.github+json")
+                            .timeout(Duration.ofSeconds(20))
+                            .build(),
                         HttpResponse.BodyHandlers.ofString());
             if ( latest.statusCode() != 200 ) {
                 throw new IOException("GitHub answered " + latest.statusCode());
             }
-            JSONObject release = new JSONObject(latest.body());
-            String tag = release.optString("tag_name", "");
-            int[] available = parse(tag);
-            int[] installed = parse(currentVersion(staticResources));
-            if ( available == null ) {
-                throw new IOException("the latest release has no version: " + tag);
+            // stable: the latest release (GitHub leaves pre-releases out); beta: the newest of all releases
+            JSONArray releases = beta ? new JSONArray(latest.body()) : new JSONArray().put(new JSONObject(latest.body()));
+            JSONObject release = null;
+            Object[] available = null;
+            for ( int i = 0; i < releases.length(); i++ ) {
+                JSONObject candidate = releases.getJSONObject(i);
+                Object[] version = parse(candidate.optString("tag_name", ""));
+                if ( !candidate.optBoolean("draft") && version != null && (available == null || compare(version, available) > 0) ) {
+                    release = candidate;
+                    available = version;
+                }
             }
+            Object[] installed = parse(currentVersion(staticResources));
+            if ( release == null ) {
+                throw new IOException("no release with a version found");
+            }
+            String tag = release.optString("tag_name", "");
             if ( installed != null && compare(available, installed) <= 0 ) {
                 throw new IOException("BlockCore is up to date");
             }
@@ -178,17 +194,27 @@ final class LocalUpdate {
         return directory == null || directory.trim().isEmpty() ? null : Paths.get(directory.trim());
     }
 
-    private static int[] parse(String text) {
+    /** "1.1.20-beta" -> {1, 1, 20, "beta"}, "1.0.15" -> {1, 0, 15, ""}; null for anything else */
+    static Object[] parse(String text) {
         Matcher matcher = VERSION.matcher(text == null ? "" : text.trim());
-        return matcher.matches() ? new int[] {Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2)), Integer.parseInt(matcher.group(3))} : null;
+        if ( !matcher.matches() ) {
+            return null;
+        }
+        return new Object[] {
+            Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2)), Integer.parseInt(matcher.group(3)), matcher.group(4) == null ? "" : matcher.group(4)
+        };
     }
 
-    private static int compare(int[] a, int[] b) {
+    /** the numbers decide; with equal numbers a stable version is newer than a pre-release */
+    static int compare(Object[] a, Object[] b) {
         for ( int i = 0; i < 3; i++ ) {
-            if ( a[i] != b[i] ) {
-                return Integer.compare(a[i], b[i]);
+            int result = Integer.compare((Integer) a[i], (Integer) b[i]);
+            if ( result != 0 ) {
+                return result;
             }
         }
-        return 0;
+        boolean aStable = ((String) a[3]).isEmpty();
+        boolean bStable = ((String) b[3]).isEmpty();
+        return aStable == bStable ? 0 : (aStable ? 1 : -1);
     }
 }
