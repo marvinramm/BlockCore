@@ -19,7 +19,8 @@ program that opens in its own window. On top it adds blocks for the hardware we 
 | **Runs on** | Windows 10 / 11 (64 bit), no admin rights needed; opens as its own window (no browser tabs, no console) |
 | **Upload** | over the USB COM port with avrdude, port selected in the lab |
 | **Serial monitor** | own window: baud rate, timestamps, autoscroll, send line; pauses itself during an upload |
-| **Extra blocks** | TCS34725 colour sensor (red / green / white / black, light, RGB channels), L293D motor shield (M1–M4) |
+| **Extra blocks** | TCS34725 colour sensor (red / green / white / black, light, RGB channels), MPU6050 gyro (tilt, rotation, acceleration), analog joystick, DS18B20 temperature probe, L293D motor shield (M1–M4) |
+| **Look** | dark (default) or light theme, pictures of the parts on the configuration blocks, settings in *edit → Settings* |
 | **Languages** | English (default) and German, switchable in the program |
 | **Inside** | Open Roberta server with a trimmed Java 21 runtime, avr-gcc 7.3 (AVR5/AVR6 only), avrdude 7.3, Arduino AVR core |
 | **Network** | the lab listens on `127.0.0.1` only; at start it asks GitHub once whether a newer version exists (silent when offline) |
@@ -65,13 +66,20 @@ A step-by-step guide for students is in **[docs/GUIDE.md](docs/GUIDE.md)**.
 Works like the one in the Arduino IDE: choose port and baud rate (9600 by default), read the output with or without timestamps, send a
 line with the chosen line ending. You do not have to close it before uploading: BlockCore pauses the monitor, uploads, and connects again.
 
+### Settings
+
+**edit → Settings** (or **Ctrl + ,**): theme dark / light / like Windows (dark by default), language, block size, grid, BlockCore logo in
+the background, pictures of the parts in the configuration, block click sounds, board at start, select the last COM port again, upload
+progress, default baud rate and timestamps of the serial monitor, update check and update channel. The settings are stored on this PC.
+
 ### Updates
 
 ![Update note](docs/images/update.jpg)
 
 The version is shown below the logo. When a newer release exists, a small note slides in at the bottom right. In an installed BlockCore
 **Update now** downloads the installer, closes BlockCore, installs the update without questions and starts BlockCore again; the portable
-version links to the download. Without internet nothing is shown.
+version links to the download. Without internet nothing is shown. With the update channel **Beta** (settings) BlockCore also offers
+pre-releases; they are built from the branch `next`.
 
 ## TCS34725 colour sensor
 
@@ -110,6 +118,18 @@ automatic gain 1× … 60×) and needs no Adafruit library. *light* keeps the sc
 The sensor needs light: the LED on the board must be on, about 1 cm distance, room light shaded. If *light* is below about 2 % on every
 surface, the sensor reports black. Only one sensor is possible (fixed I²C address `0x29`).
 
+## More sensors
+
+| Block | Part | Values |
+|---|---|---|
+| **gyro sensor MPU6050** | GY-521 module, I²C (A4 / A5, shares the bus with the TCS34725) | tilt sideways / forwards in degrees, rotation x/y/z in °/s, acceleration x/y/z in g, temperature |
+| **joystick** | analog joystick (KY-023): VRx, VRy at analog pins, SW at a digital pin | x and y in percent (−100 … 100), button pressed |
+| **temperature sensor DS18B20** | 1-Wire probe (e.g. waterproof), 4.7 kΩ pull-up from data to VCC | temperature in °C, −127 without sensor |
+
+The MPU6050 calibrates its gyro when the program starts: keep the robot still for half a second. Its tilt angles combine gyro and
+acceleration sensor (complementary filter), so they follow fast movements and do not drift. The DS18B20 measures in the background:
+reading it never blocks the program. Both drivers are small headers in `RobotArdu/src/main/resources/arduino` and need no library.
+
 ## L293D motor shield
 
 For the first-generation Adafruit motor shield (L293D + 74HC595 shift register) and its clones. Add one **L293D motor** block per motor
@@ -145,8 +165,10 @@ flowchart LR
   start, starts the server hidden with the bundled Java runtime and opens the lab as an app window (Microsoft Edge or Chrome in app mode
   with a profile of its own, otherwise the default browser). Closing that window stops the server.
 - The package build adds [`blockcore.js`](Resources/windowsStandalone/branding/web/blockcore.js) to the lab: board selection in the robot
-  menu instead of the start page, only English (default) and German, automatic login of a local user, and it hides what a local Arduino lab does
-  not need (gallery, tutorials, online help, simulation). Apart from the update check (GitHub, once per start) the lab contacts no other server.
+  menu instead of the start page, only English (default) and German, automatic login of a local user, settings with dark theme, pictures of
+  the parts, undo / redo keys and the update display. Apart from the update check (GitHub, once per start) the lab contacts no other server.
+- BlockCore contains only what an Arduino lab needs: the Open Roberta plugins of other robots, the simulation, the neural network, the robot
+  connectors and the other languages are removed.
 - The server runs in **local mode** (`server.local.serial=true`): it lists the COM ports (`/rest/local/ports`), compiles without a robot
   token, uploads with avrdude (`/rest/local/upload`) and runs the serial monitor (`/rest/local/monitor/*`). These services only answer
   requests from the same PC and from pages of this server.
@@ -160,7 +182,8 @@ Resources/windowsStandalone/      Launcher (C), build script, NSIS installer, br
 .github/workflows/                windows_installer.yml builds and releases the installer
 OpenRobertaServer/                Lab server; local mode in javaServer/restServices/local/, serial monitor page staticResources/serial.html
 OpenRobertaWeb/                   Frontend (TypeScript); LocalSerialOrTokenConnection in .../controller/connections/connections.ts
-RobotArdu/                        Arduino plugin: TCS34725 blocks, L293D shield, direct AVR build, TCS34725.h / L293DMotor.h drivers
+RobotArdu/                        Arduino plugin (Uno, Nano, Mega): blocks and drivers (TCS34725, MPU6050, DS18B20, L293D), direct AVR build
+OpenRobertaRobot/                 Core of the lab: program and configuration model, code generation base
 docs/                             Guide for students, images, CC BY 4.0 license of the documentation
 ```
 
@@ -194,8 +217,8 @@ java --add-opens java.base/java.lang=ALL-UNNAMED -Dora.arduino.directBuild=true 
 
 ### Test status
 
-- Unit tests for the colour sensor, the configuration checks, the local mode and the serial monitor; code generation test
-  `uno/tcs34725_colour`.
+- Unit tests for the sensors, the configuration checks, the local mode, the serial monitor and the update; code generation tests of all
+  common programs and of the Arduino programs (e.g. `uno/tcs34725_colour`, `uno/blockcore_sensors`) against expected C++ code.
 - Complete flow in the browser (port selection, compile, upload, messages) for Uno, Nano and Mega on Linux with the files of the Windows
   package; serial monitor tested with a virtual serial port (receive incl. UTF-8, send, pause and resume around an upload).
 - The colour sensor driver compiles against the Arduino AVR core and was tested with simulated readings.
@@ -205,7 +228,8 @@ java --add-opens java.base/java.lang=ALL-UNNAMED -Dora.arduino.directBuild=true 
 
 | Version | Changes |
 |---|---|
-| 1.0.15 – 1.0.16 | Versioned releases, version below the logo, update check and one-click update, upload panel with progress bar and check mark, USB symbol, COM port of the last upload is selected again, animated start window, BlockCore logo in the workspace, motor driver and colour sensor no longer slow down fast loops |
+| 1.1 | Settings (edit → Settings) with dark theme (default), language, block size, grid, sounds, start board, serial monitor and update channel (stable / beta); new sensors MPU6050, analog joystick, DS18B20; pictures of the parts on the configuration blocks; ultrasonic sensor, TCS34725 and L293D motor also in the beginner toolbox; undo / redo with Ctrl+Z / Ctrl+Y; menus work after the window was small; everything that is not needed for the Arduino removed (other robots, simulation, neural network, connectors, other languages) |
+| 1.0.15 – 1.0.19 | Versioned releases, version below the logo, update check and one-click update, upload panel with progress bar and check mark, USB symbol, COM port of the last upload is selected again, animated start window, BlockCore logo in the workspace, motor driver and colour sensor no longer slow down fast loops |
 | Build 8–14 | Colour detection tuned with real sensor readings (red, green, white recognised), defaults *black below* / *white above* 2.7, black no longer mistaken for green. Fix for "avr-objcopy … .elf: No such file" when run was clicked twice |
 | Build 6–7 | English by default, all texts in English. Colour sensor with automatic gain (154 ms, 1× … 60×) for dark surfaces. Launcher watches the BlockCore windows (no "click OK to quit" dialog) |
 | Build 4 | No console: start window and app window, server stops with the window. Board selection in the robot menu, German / English only, automatic local login, no online requests. Ultrasonic sensor fixed (10 µs trigger instead of 10 ms, 30 ms timeout). Trimmed Java 21 runtime and AVR toolchain (smaller, faster start) |

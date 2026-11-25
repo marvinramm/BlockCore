@@ -34,6 +34,11 @@ Choose the board (Uno, Nano, Mega) in the **robot** menu under **Board**:
 Switch the language (English / German) in the **languages** menu. BlockCore saves your programs on this PC – you do not need an
 account.
 
+## Settings
+
+**edit → Settings** (or **Ctrl + ,**) changes how BlockCore looks and behaves: dark or light theme (dark by default), language, size of
+the blocks, grid, pictures of the parts in the configuration, sounds, the board at start, the serial monitor and updates.
+
 ## Keyboard shortcuts
 
 | Keys | Action |
@@ -92,6 +97,15 @@ percent of *light*, set **white above %** just below that value (e.g. 2.5) and *
 Red and green are recognised before black, so they work with little light, too.
 
 A4 and A5 must not be used by other parts. Put an ultrasonic sensor on **A0 / A1**, for example.
+
+## Gyro sensor, joystick, temperature probe
+
+- **gyro sensor MPU6050** (GY-521): VCC → 5V, GND → GND, SDA → **A4**, SCL → **A5** (together with the colour sensor is fine). In the
+  program, *tilt sideways* and *tilt forwards* give the angle in degrees. Keep the robot still for half a second after switching on.
+- **joystick** (KY-023): VRx → A0, VRy → A1, SW → 2, +5V, GND. *x* and *y* go from −100 to 100, *pressed* is true while the stick is
+  pressed down.
+- **temperature sensor DS18B20**: data → e.g. pin 3, with a 4.7 kΩ resistor from data to 5V (most modules have it). −127 means: no sensor
+  found.
 
 ## L293D motor shield
 
