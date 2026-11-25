@@ -1,6 +1,0 @@
-Sensors: 
-[UsedSensor [GYRO, GYRO, DEFAULT]]
-Actors: 
-[UsedActor [, DISPLAY]]
-Methods: 
-[DISPLAY_TEXT]

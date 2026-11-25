@@ -1,0 +1,16 @@
+
+(repeat [FOREVER_ARDU, BoolConst[value: true]]
+AktionStmt [SerialWriteAction[value: SensorExpr [Mpu6050ImuSensor [G, ROLL, - EMPTY_SLOT -]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [Mpu6050ImuSensor [G, PITCH, - EMPTY_SLOT -]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [Mpu6050ImuSensor [G, GYRO_X, - EMPTY_SLOT -]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [Mpu6050ImuSensor [G, GYRO_Y, - EMPTY_SLOT -]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [Mpu6050ImuSensor [G, GYRO_Z, - EMPTY_SLOT -]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [Mpu6050ImuSensor [G, ACCEL_X, - EMPTY_SLOT -]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [Mpu6050ImuSensor [G, ACCEL_Y, - EMPTY_SLOT -]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [Mpu6050ImuSensor [G, ACCEL_Z, - EMPTY_SLOT -]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [Mpu6050ImuSensor [G, TEMPERATURE, - EMPTY_SLOT -]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [AnalogJoystick [J, X, - EMPTY_SLOT -]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [AnalogJoystick [J, Y, - EMPTY_SLOT -]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [AnalogJoystick [J, PRESSED, - EMPTY_SLOT -]]]]
+AktionStmt [SerialWriteAction[value: SensorExpr [Ds18b20TemperatureSensor [T, TEMPERATURE, - EMPTY_SLOT -]]]]
+)

@@ -24,14 +24,6 @@ import de.fhg.iais.roberta.syntax.actors.arduino.L293DMotorRunAction;
 import de.fhg.iais.roberta.syntax.actors.arduino.RelayAction;
 import de.fhg.iais.roberta.syntax.configuration.ConfigurationComponent;
 import de.fhg.iais.roberta.syntax.lang.functions.MathOnListFunct;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkAddClassifyData;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkAddRawData;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkAddTrainingsData;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkClassify;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkInitClassifyData;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkInitRawData;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkSetup;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkTrain;
 import de.fhg.iais.roberta.syntax.sensor.ExternalSensor;
 import de.fhg.iais.roberta.syntax.sensor.Sensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.AccelerometerSensor;
@@ -110,7 +102,7 @@ public class ArduinoValidatorAndCollectorVisitor extends CommonNepoAndMotorValid
     public Void visitGetSampleSensor(GetSampleSensor sensorGetSample) {
         Sensor sensor = sensorGetSample.sensor;
         requiredComponentVisited(sensorGetSample, sensor);
-        // TODO remove once rfid library is supported for unowifirev2
+        // the RFID reader is not supported by the generic "get sample" block
         if ( sensor.getKind().hasName("RFID_SENSING") ) {
             addWarningToPhrase(sensorGetSample, "BLOCK_NOT_SUPPORTED");
         }
@@ -222,50 +214,6 @@ public class ArduinoValidatorAndCollectorVisitor extends CommonNepoAndMotorValid
         return null;
     }
 
-    @Override
-    public Void visitNeuralNetworkAddRawData(NeuralNetworkAddRawData nn) {
-        requiredComponentVisited(nn, nn.rawData);
-        return null;
-    }
-
-    @Override
-    public Void visitNeuralNetworkAddTrainingsData(NeuralNetworkAddTrainingsData nn) {
-        requiredComponentVisited(nn, nn.classNumber);
-        return null;
-    }
-
-    @Override
-    public Void visitNeuralNetworkClassify(NeuralNetworkClassify nn) {
-        requiredComponentVisited(nn, nn.probabilities);
-        return null;
-    }
-
-    @Override
-    public Void visitNeuralNetworkInitRawData(NeuralNetworkInitRawData nn) {
-        return null;
-    }
-
-    @Override
-    public Void visitNeuralNetworkSetup(NeuralNetworkSetup nn) {
-        requiredComponentVisited(nn, nn.numberOfClasses, nn.numberInputNeurons, nn.maxNumberOfNeurons);
-        return null;
-    }
-
-    @Override
-    public Void visitNeuralNetworkTrain(NeuralNetworkTrain nn) {
-        return null;
-    }
-
-    @Override
-    public Void visitNeuralNetworkAddClassifyData(NeuralNetworkAddClassifyData nn) {
-        return null;
-    }
-
-    @Override
-    public Void visitNeuralNetworkInitClassifyData(NeuralNetworkInitClassifyData nn) {
-        return null;
-    }
-
 
     @Override
     public Void visitPinGetValueSensor(PinGetValueSensor pinGetValueSensor) {
@@ -312,11 +260,7 @@ public class ArduinoValidatorAndCollectorVisitor extends CommonNepoAndMotorValid
 
     @Override
     public Void visitRfidSensor(RfidSensor rfidSensor) {
-        if ( !this.robotConfiguration.getRobotName().equals("unowifirev2") ) { // TODO remove when rfid library is supported for unowifirev2
-            checkSensorPort(rfidSensor);
-        } else {
-            addWarningToPhrase(rfidSensor, "BLOCK_NOT_SUPPORTED");
-        }
+        checkSensorPort(rfidSensor);
         usedHardwareBuilder.addUsedSensor(new UsedSensor(rfidSensor.getUserDefinedPort(), SC.RFID, rfidSensor.getMode()));
         return null;
     }

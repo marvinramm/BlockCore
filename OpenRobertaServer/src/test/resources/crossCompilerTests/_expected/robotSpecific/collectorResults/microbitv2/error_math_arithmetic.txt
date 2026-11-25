@@ -1,7 +1,0 @@
-<-- This file was automatically generated, if the content is alright, remove this line -->
-Sensors: 
-[]
-Actors: 
-[]
-Methods: 
-[]

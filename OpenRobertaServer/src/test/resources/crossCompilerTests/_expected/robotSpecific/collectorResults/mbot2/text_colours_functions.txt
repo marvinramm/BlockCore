@@ -1,6 +1,0 @@
-Sensors: 
-[UsedSensor [Q, QUADRGB, LED], UsedSensor [Q, MBUILDSENSOR, QUADRGB]]
-Actors: 
-[UsedActor [_LCD, DISPLAY], UsedActor [_R, RGBLED]]
-Methods: 
-[CAST, RGBASSTRING]

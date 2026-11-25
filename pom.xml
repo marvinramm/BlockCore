@@ -38,19 +38,8 @@
 
     <modules>
         <module>OpenRobertaRobot</module>
-        <module>RobotEV3</module>
-        <module>RobotNXT</module>
         <module>RobotArdu</module>
-        <module>RobotNAO</module>
-        <module>RobotMbed</module>
-        <module>RobotWeDo</module>
-        <module>RobotEdison</module>
         <module>OpenRobertaServer</module>
-        <module>RobotCyberpi</module>
-        <module>RobotThymio</module>
-        <module>RobotRobotino</module>
-        <module>RobotSpike</module>
-        <module>RobotFischertechnik</module>
     </modules>
     <pluginRepositories>
         <pluginRepository>

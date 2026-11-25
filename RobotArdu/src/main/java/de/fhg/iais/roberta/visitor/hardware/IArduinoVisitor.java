@@ -12,14 +12,6 @@ import de.fhg.iais.roberta.syntax.action.sound.ToneAction;
 import de.fhg.iais.roberta.syntax.actors.arduino.L293DMotorRunAction;
 import de.fhg.iais.roberta.syntax.actors.arduino.RelayAction;
 import de.fhg.iais.roberta.syntax.lang.blocksequence.MainTask;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkAddClassifyData;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkAddRawData;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkAddTrainingsData;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkClassify;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkInitClassifyData;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkInitRawData;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkSetup;
-import de.fhg.iais.roberta.syntax.neuralnetwork.NeuralNetworkTrain;
 import de.fhg.iais.roberta.syntax.sensor.generic.AccelerometerSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.DropSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.GyroReset;
@@ -113,19 +105,4 @@ public interface IArduinoVisitor<V> extends IVisitor<V> {
 
     V visitVoltageSensor(VoltageSensor potentiometer);
 
-    V visitNeuralNetworkSetup(NeuralNetworkSetup nn);
-
-    V visitNeuralNetworkInitRawData(NeuralNetworkInitRawData nn);
-
-    V visitNeuralNetworkAddRawData(NeuralNetworkAddRawData nn);
-
-    V visitNeuralNetworkAddTrainingsData(NeuralNetworkAddTrainingsData nn);
-
-    V visitNeuralNetworkTrain(NeuralNetworkTrain nn);
-
-    V visitNeuralNetworkAddClassifyData(NeuralNetworkAddClassifyData nn);
-
-    V visitNeuralNetworkInitClassifyData(NeuralNetworkInitClassifyData nn);
-
-    V visitNeuralNetworkClassify(NeuralNetworkClassify nn);
 }

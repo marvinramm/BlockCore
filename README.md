@@ -162,7 +162,6 @@ OpenRobertaServer/                Lab server; local mode in javaServer/restServi
 OpenRobertaWeb/                   Frontend (TypeScript); LocalSerialOrTokenConnection in .../controller/connections/connections.ts
 RobotArdu/                        Arduino plugin: TCS34725 blocks, L293D shield, direct AVR build, TCS34725.h / L293DMotor.h drivers
 docs/                             Guide for students, images, CC BY 4.0 license of the documentation
-README.openroberta.md             Original documentation of the Open Roberta Lab
 ```
 
 ## Building

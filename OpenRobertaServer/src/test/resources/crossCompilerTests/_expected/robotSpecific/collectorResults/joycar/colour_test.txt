@@ -1,6 +1,0 @@
-Sensors: 
-[]
-Actors: 
-[UsedActor [FL, RGBLED]]
-Methods: 
-[LED_SET_COLOUR]

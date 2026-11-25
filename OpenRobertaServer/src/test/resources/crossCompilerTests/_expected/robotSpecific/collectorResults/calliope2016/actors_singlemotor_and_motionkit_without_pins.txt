@@ -1,6 +1,0 @@
-Sensors: 
-[]
-Actors: 
-[UsedActor [m1, MOTOR], UsedActor [C17, MOTIONKIT], UsedActor [C16, MOTIONKIT], UsedActor [, MOTIONKIT], UsedActor [, KEY]]
-Methods: 
-[SERVO_GET_ANGLE, SET_MOTOR]

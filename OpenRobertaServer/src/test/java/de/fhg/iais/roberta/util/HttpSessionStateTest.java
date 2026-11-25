@@ -25,12 +25,9 @@ public class HttpSessionStateTest {
         List<String> serverDefines = serverDefineOpt.options();
 
         Map<String, RobotFactory> robotPluginMap = new HashMap<>();
-        robotPluginMap.put("ev3lejosv1", new RobotFactory(new PluginProperties("ev3lejosv1", "", "", Util.loadPropertiesRecursively("classpath:/ev3lejosv1.properties"))));
-        robotPluginMap
-            .put("calliope2017", new RobotFactory(new PluginProperties("calliope2017", "", "", Util.loadPropertiesRecursively("classpath:/calliope2017.properties"))));
-        robotPluginMap
-            .put("calliope2016", new RobotFactory(new PluginProperties("calliope2016", "", "", Util.loadPropertiesRecursively("classpath:/calliope2016.properties"))));
-        robotPluginMap.put("mbot", new RobotFactory(new PluginProperties("mbot", "", "", Util.loadPropertiesRecursively("classpath:/mbot.properties"))));
+        for ( String board : Arrays.asList("uno", "nano", "mega") ) {
+            robotPluginMap.put(board, new RobotFactory(new PluginProperties(board, "", "", Util.loadPropertiesRecursively("classpath:/" + board + ".properties"))));
+        }
         ServerProperties serverProperties = new ServerProperties(Util.loadAndMergeOpenRobertaServerProperties("classpath:/openRoberta.properties", serverDefines));
 
         this.httpSessionState = HttpSessionState.init(robotPluginMap, serverProperties, "en", "");
@@ -38,16 +35,9 @@ public class HttpSessionStateTest {
 
     @Test
     public void getRobotFactoriesOfGroup_ShouldReturnMembers_WhenGivenValidGroup() {
-        List<RobotFactory> ev3Members = this.httpSessionState.getRobotFactoriesOfGroup("ev3");
-        Assert.isTrue(ev3Members.stream().allMatch(factory -> factory.getGroup().equals("ev3")));
-        List<RobotFactory> calliopeMembers = this.httpSessionState.getRobotFactoriesOfGroup("calliope");
-        Assert.isTrue(calliopeMembers.stream().allMatch(factory -> factory.getGroup().equals("calliope")));
-    }
-
-    @Test
-    public void getRobotFactoriesOfGroup_ShouldReturnListWithRobot_WhenGivenNoGroupRobot() {
-        List<RobotFactory> mbotMembers = this.httpSessionState.getRobotFactoriesOfGroup("mbot");
-        Assert.isTrue(mbotMembers.stream().allMatch(factory -> factory.getGroup().equals("mbot")));
+        List<RobotFactory> arduinoMembers = this.httpSessionState.getRobotFactoriesOfGroup("arduino");
+        Assert.isTrue(arduinoMembers.size() == 3);
+        Assert.isTrue(arduinoMembers.stream().allMatch(factory -> factory.getGroup().equals("arduino")));
     }
 
     @Test

@@ -1,3 +1,0 @@
-StmtTextComment[textComment: This program tests the move motor left/right blocks]
-MethodCall [motorLeftRightOnForMS, , , VOID]
-MethodCall [motorLeftRightOn, , , VOID]

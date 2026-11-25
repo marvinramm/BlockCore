@@ -1,6 +1,0 @@
-Sensors: 
-[]
-Actors: 
-[UsedActor [, RADIO], UsedActor [, DISPLAY]]
-Methods: 
-[]

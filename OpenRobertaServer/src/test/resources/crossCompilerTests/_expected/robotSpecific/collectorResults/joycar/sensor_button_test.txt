@@ -1,6 +1,0 @@
-Sensors: 
-[UsedSensor [_LO, LOGOTOUCH, - EMPTY_SLOT -]]
-Actors: 
-[UsedActor [, KEY], UsedActor [, DISPLAY_GRAYSCALE], UsedActor [, DISPLAY]]
-Methods: 
-[]

@@ -1,6 +1,0 @@
-Sensors: 
-[UsedSensor [F, COLOR, DEFAULT]]
-Actors: 
-[]
-Methods: 
-[GET_COLOR, HUB_LIGHT]

@@ -1,6 +1,0 @@
-Sensors: 
-[]
-Actors: 
-[]
-Methods: 
-[HUB_LIGHT]

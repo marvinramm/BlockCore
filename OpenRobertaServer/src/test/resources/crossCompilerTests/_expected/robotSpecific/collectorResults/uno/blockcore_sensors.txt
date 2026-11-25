@@ -1,0 +1,6 @@
+Sensors: 
+[UsedSensor [G, MPU6050, ROLL], UsedSensor [G, MPU6050, PITCH], UsedSensor [G, MPU6050, GYRO_X], UsedSensor [G, MPU6050, GYRO_Y], UsedSensor [G, MPU6050, GYRO_Z], UsedSensor [G, MPU6050, ACCEL_X], UsedSensor [G, MPU6050, ACCEL_Y], UsedSensor [G, MPU6050, ACCEL_Z], UsedSensor [G, MPU6050, TEMPERATURE], UsedSensor [J, ANALOGJOYSTICK, X], UsedSensor [J, ANALOGJOYSTICK, Y], UsedSensor [J, ANALOGJOYSTICK, PRESSED], UsedSensor [T, DS18B20, TEMPERATURE]]
+Actors: 
+[UsedActor [SERIAL, SERIAL]]
+Methods: 
+[]

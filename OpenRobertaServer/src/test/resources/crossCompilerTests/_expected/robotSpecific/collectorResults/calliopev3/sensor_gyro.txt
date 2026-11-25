@@ -1,6 +1,0 @@
-Sensors: 
-[]
-Actors: 
-[UsedActor [, KEY]]
-Methods: 
-[GET_ROTATION]

@@ -184,7 +184,7 @@ public class ArduinoConfigurationValidator {
         if ( configurationComponent.componentType.equals(SC.RGBLED) ) {
             Map<String, String> componentProperties = configurationComponent.getComponentProperties();
             componentProperties.forEach((k, v) -> {
-                if ( v.equals(SC.LED_BUILTIN) && !project.getRobot().equals("unowifirev2") ) {
+                if ( v.equals(SC.LED_BUILTIN) ) {
                     project.addToErrorCounter(1, null);
                     project.setResult(Key.PROGRAM_INVALID_STATEMETNS);
                     BlocklyProperties blocklyProperties = configurationComponent.getProperty();

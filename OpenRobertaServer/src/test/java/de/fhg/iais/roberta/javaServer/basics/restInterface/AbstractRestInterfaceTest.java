@@ -81,13 +81,12 @@ public abstract class AbstractRestInterfaceTest {
             + "<comment w=\\\"0\\\" h=\\\"0\\\" pinned=\\\"false\\\">";
     protected static final String PROG_POST = "</comment>" + "</block></instance></block_set>";
     protected static final String CONF_PRE =
-        "<block_set xmlns=\\\"http://de.fhg.iais.roberta.blockly\\\" robottype=\\\"ev3\\\" xmlversion=\\\"3.0\\\" description=\\\"\\\" tags=\\\"\\\">"
+        "<block_set xmlns=\\\"http://de.fhg.iais.roberta.blockly\\\" robottype=\\\"arduino\\\" xmlversion=\\\"3.0\\\" description=\\\"\\\" tags=\\\"\\\">"
             + "<instance x=\\\"213\\\" y=\\\"213\\\">"
-            + "<block type=\\\"robBrick_EV3-Brick\\\" id=\\\"1\\\" intask=\\\"true\\\" deletable=\\\"false\\\">"
+            + "<block type=\\\"robConf_robot\\\" id=\\\"1\\\" intask=\\\"true\\\" deletable=\\\"false\\\">"
             + "<comment w=\\\"0\\\" h=\\\"0\\\" pinned=\\\"false\\\">";
     protected static final String CONF_POST =
         "</comment>"
-            + "<value name=\\\"S1\\\"><block type=\\\"robBrick_touch\\\" id=\\\"2\\\" intask=\\\"true\\\"></block></value>"
             + "</block></instance></block_set>";
 
     protected XsltAndJavaTransformer xsltAndJavaTransformer;

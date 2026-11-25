@@ -1,6 +1,0 @@
-Sensors: 
-[]
-Actors: 
-[UsedActor [DIFFERENTIALDRIVE, DIFFERENTIALDRIVE]]
-Methods: 
-[]

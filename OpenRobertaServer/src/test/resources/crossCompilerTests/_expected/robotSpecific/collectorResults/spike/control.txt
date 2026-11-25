@@ -1,6 +1,0 @@
-Sensors: 
-[UsedSensor [B, TOUCH, PRESSED]]
-Actors: 
-[]
-Methods: 
-[SETSTATUSLIGHT]

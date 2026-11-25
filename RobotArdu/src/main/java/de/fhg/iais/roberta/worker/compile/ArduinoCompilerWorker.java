@@ -9,24 +9,17 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Charsets;
 
 import de.fhg.iais.roberta.bean.CompilerSetupBean;
 import de.fhg.iais.roberta.components.Project;
 import de.fhg.iais.roberta.util.Key;
 import de.fhg.iais.roberta.util.Util;
-import de.fhg.iais.roberta.util.ZipHelper;
 import de.fhg.iais.roberta.util.basic.Pair;
 import de.fhg.iais.roberta.util.dbc.DbcException;
-import de.fhg.iais.roberta.visitor.codegen.NIBOHexPrefix;
 import de.fhg.iais.roberta.worker.ICompilerWorker;
 
 public class ArduinoCompilerWorker implements ICompilerWorker {
@@ -76,59 +69,11 @@ public class ArduinoCompilerWorker implements ICompilerWorker {
                 arduinoVariant = "ARDUINO_AVR_" + project.getRobot().toUpperCase();
                 arduinoArch = "avr";
                 break;
-            case "mbot":
-                boardVariant = "standard";
-                mmcu = "atmega328p";
-                arduinoVariant = "ARDUINO_AVR_UNO";
-                scriptName = Util.getOsSpecificAbsolutePath(compilerResourcesDir + "arduino-resources/build_project_mbot.sh");
-                arduinoArch = "avr";
-                break;
-            case "botnroll":
-                boardVariant = "standard";
-                mmcu = "atmega328p";
-                arduinoVariant = "ARDUINO_AVR_UNO";
-                scriptName = Util.getOsSpecificAbsolutePath(compilerResourcesDir + "arduino-resources/build_project_botnroll.sh");
-                arduinoArch = "avr";
-                break;
-            case "unowifirev2":
-                boardVariant = "uno2018";
-                mmcu = "atmega4809";
-                arduinoVariant = "ARDUINO_AVR_UNO_WIFI_REV2";
-                scriptName = Util.getOsSpecificAbsolutePath(compilerResourcesDir + "arduino-resources/build_project_unowifirev2.sh");
-                arduinoArch = "megaavr";
-                break;
             case "mega":
                 boardVariant = "mega";
                 mmcu = "atmega2560";
                 arduinoVariant = "ARDUINO_AVR_MEGA2560";
                 arduinoArch = "avr";
-                break;
-            case "sensebox":
-                boardVariant = "sensebox_mcu";
-                arduinoVariant = "ARDUINO_SAMD_MKR1000";
-                scriptName = Util.getOsSpecificAbsolutePath(compilerResourcesDir + "arduino-resources/build_project_sensebox.sh");
-                arduinoArch = "samd";
-                break;
-            case "bob3":
-                mmcu = "atmega88";
-                scriptName = Util.getOsSpecificAbsolutePath(compilerResourcesDir + "arduino-resources/build_project_bob3.sh");
-                break;
-            case "rob3rta":
-                mmcu = "atmega328pb";
-                scriptName = Util.getOsSpecificAbsolutePath(compilerResourcesDir + "arduino-resources/build_project_rob3rta.sh");
-                break;
-            case "festobionic":
-            case "festobionicflower":
-                boardVariant = "esp32";
-                arduinoVariant = "ARDUINO_ESP32_DEV";
-                scriptName = Util.getOsSpecificAbsolutePath(compilerResourcesDir + "arduino-resources/build_project_" + project.getRobot() + ".sh");
-                arduinoArch = "esp32";
-                break;
-            case "nano33ble":
-                boardVariant = "nano_33_iot";
-                arduinoVariant = "ARDUINO_ARDUINO_NANO33BLE";
-                scriptName = Util.getOsSpecificAbsolutePath(compilerResourcesDir + "arduino-resources/build_project_nano33ble.sh");
-                arduinoArch = "mbed";
                 break;
             default:
                 throw new DbcException("Unsupported Arduino type: " + project.getRobot());
@@ -180,44 +125,7 @@ public class ArduinoCompilerWorker implements ICompilerWorker {
 
         Key resultKey = result.getFirst() ? Key.COMPILERWORKFLOW_SUCCESS : Key.COMPILERWORKFLOW_ERROR_PROGRAM_COMPILE_FAILED;
         if ( result.getFirst() ) {
-            String base64EncodedHex = null, optHexPrefix = null;
-            switch ( project.getBinaryFileExtension() ) {
-                case "hex":
-                    try {
-                        optHexPrefix = NIBOHexPrefix.getHexPrefixForRobot(project.getRobot());
-                    } catch ( IllegalArgumentException e ) {
-                        LOG.warn(e.getMessage()); // no hex prefix needed for this robot
-                    }
-                    base64EncodedHex = Util.getBase64EncodedHex(targetDir + programName + "." + project.getBinaryFileExtension(), optHexPrefix);
-                    break;
-                case "bin":
-                    base64EncodedHex = Util.getBase64EncodedBinary(targetDir + programName + "." + project.getBinaryFileExtension());
-                    break;
-                case "zip":
-                    // as we currently only support sending a single file to robots and esp32 needs two files, they are zipped and send the zip is sent to the Connector
-                    // the connector then unzips the files and correctly flashes them to the robot
-                    // in order to circumvent large changes
-                    try {
-                        ZipHelper
-                            .zipFiles(
-                                Stream
-                                    .concat(
-                                        Files.walk(Paths.get(targetDir)).filter(Files::isRegularFile),
-                                        Stream
-                                            .of(
-                                                Paths.get(Util.getOsSpecificAbsolutePath(compilerResourcesDir + "arduino-resources/hardware/esp32/esp32/tools/sdk/bin/bootloader_qio_80m.bin")),
-                                                Paths.get(Util.getOsSpecificAbsolutePath(compilerResourcesDir + "arduino-resources/hardware/esp32/esp32/tools/partitions/boot_app0.bin"))))
-                                    .collect(Collectors.toList()),
-                                Paths.get(targetDir, programName + "." + project.getBinaryFileExtension()));
-                        base64EncodedHex =
-                            FileUtils.readFileToString(Paths.get(targetDir + programName + "." + project.getBinaryFileExtension()).toFile(), Charsets.UTF_8);
-                    } catch ( IOException e ) {
-                        LOG.warn("The generated esp32 build files could not be zipped:", e);
-                    }
-                    break;
-                default:
-                    throw new DbcException("Unsupported file extension: " + project.getRobot());
-            }
+            String base64EncodedHex = Util.getBase64EncodedHex(targetDir + programName + ".hex", null);
             project.setCompiledHex(base64EncodedHex);
             if ( project.getCompiledHex() != null ) {
                 resultKey = Key.COMPILERWORKFLOW_SUCCESS;

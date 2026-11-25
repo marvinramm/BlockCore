@@ -75,15 +75,8 @@ public class ReuseIntegrationAsUnitTest {
     private static final boolean TEST_SUCCEEDS_EVEN_IF_COLLECTOR_TEST_FAILS = false;
 
     private static final Logger LOG = LoggerFactory.getLogger(ReuseIntegrationAsUnitTest.class);
-    private static final String ROBOT_NAME_FOR_COMMON_TESTS = "ev3lejosv1";
-    private static final String[] ROBOTS_FOR_TARGET_LANGUAGE_GENERATION =
-        {
-            "ev3lejosv1",
-            "calliope2017NoBlue",
-            "ev3dev",
-            "wedo",
-            "microbitv2"
-        };
+    private static final String ROBOT_NAME_FOR_COMMON_TESTS = "uno";
+    private static final String[] ROBOTS_FOR_TARGET_LANGUAGE_GENERATION = {"uno"};
 
     private static final String COMMON = "common/";
     private static final String ROBOT_SPECIFIC = "robotSpecific/";
@@ -170,7 +163,7 @@ public class ReuseIntegrationAsUnitTest {
     @Test
     public void testOneCommonProgrammAsUnitTest() throws Exception {
         String programName = "display";
-        String[] robotNames = {"microbitv2"}; // set to null, if all robots should be tested; otherwise put the robots under test into the array
+        String[] robotNames = {"uno"}; // set to null, if all robots should be tested; otherwise put the robots under test into the array
         {
             List<String> pluginDefines = new ArrayList<>(); // maybe used later to add properties
             testFactory = Util.configureRobotPlugin(ROBOT_NAME_FOR_COMMON_TESTS, "", "", pluginDefines);
@@ -315,8 +308,8 @@ public class ReuseIntegrationAsUnitTest {
     @Ignore
     @Test
     public void testOneRobotSpecificProgramAsUnitTests() throws Exception {
-        String robotName = "ev3lejosv1";
-        String programName = "textlyJava";
+        String robotName = "uno";
+        String programName = "action";
         LOG.info("========= testing program " + programName + " for robot " + robotName);
         final String resourceDirectory = setupRobotFactoryAndGetResourceDirForRobotSpecificTests(robotName);
         runRegenerateAndCodeGenerationForOneRobotSpecificProgram(resourceDirectory, programName + ".xml", robotName, Collections.emptyList());

@@ -349,20 +349,6 @@ public class ArduinoValidatorAndCollectorWorkflowTest extends WorkflowTestHelper
     }
 
     @Test
-    public void visitRfidSensor_onUnoWifiRev2() {
-        setupRobotFactory("unowifirev2");
-
-        configurationComponents.add(new ConfigurationComponent(SC.RFID, "CONFIGURATION_SENSOR", "P1", "P1", new HashMap<>()));
-
-        RfidSensor rfidSensor = new RfidSensor(bp, new ExternalSensorBean("P1", "", "", null));
-        phrases.add(rfidSensor);
-
-        executeWorkflow();
-
-        assertHasNepoInfo(rfidSensor, NepoInfo.Severity.WARNING, "BLOCK_NOT_SUPPORTED");
-    }
-
-    @Test
     public void visitRfidSensor_withoutPort() {
         RfidSensor rfidSensor = new RfidSensor(bp, new ExternalSensorBean("P1", "", "", null));
         phrases.add(rfidSensor);

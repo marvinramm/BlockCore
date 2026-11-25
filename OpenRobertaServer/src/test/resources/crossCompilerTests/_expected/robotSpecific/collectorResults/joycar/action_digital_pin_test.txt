@@ -1,6 +1,0 @@
-Sensors: 
-[]
-Actors: 
-[UsedActor [, KEY], UsedActor [A2, DIGITAL_INPUT]]
-Methods: 
-[]

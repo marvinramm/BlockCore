@@ -1,0 +1,174 @@
+<export xmlns="http://de.fhg.iais.roberta.blockly">
+    <program>
+        <block_set xmlns="http://de.fhg.iais.roberta.blockly" robottype="arduino" xmlversion="3.1" description="" tags="">
+            <instance x="20" y="20">
+                <block type="robControls_start_ardu" id="start" intask="true" deletable="false">
+                    <mutation declare="false"></mutation>
+                    <field name="DEBUG"></field>
+                </block>
+                <block type="robControls_loopForever_ardu" id="forever" intask="true" deletable="false" movable="false">
+                    <statement name="DO">
+                        <block type="robActions_serial_print" id="print-0" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_mpu6050_getSample" id="mpu6050-0" intask="true">
+                                    <mutation mode="ROLL"></mutation>
+                                    <field name="MODE">ROLL</field>
+                                    <field name="SENSORPORT">G</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-1" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_mpu6050_getSample" id="mpu6050-1" intask="true">
+                                    <mutation mode="PITCH"></mutation>
+                                    <field name="MODE">PITCH</field>
+                                    <field name="SENSORPORT">G</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-2" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_mpu6050_getSample" id="mpu6050-2" intask="true">
+                                    <mutation mode="GYRO_X"></mutation>
+                                    <field name="MODE">GYRO_X</field>
+                                    <field name="SENSORPORT">G</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-3" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_mpu6050_getSample" id="mpu6050-3" intask="true">
+                                    <mutation mode="GYRO_Y"></mutation>
+                                    <field name="MODE">GYRO_Y</field>
+                                    <field name="SENSORPORT">G</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-4" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_mpu6050_getSample" id="mpu6050-4" intask="true">
+                                    <mutation mode="GYRO_Z"></mutation>
+                                    <field name="MODE">GYRO_Z</field>
+                                    <field name="SENSORPORT">G</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-5" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_mpu6050_getSample" id="mpu6050-5" intask="true">
+                                    <mutation mode="ACCEL_X"></mutation>
+                                    <field name="MODE">ACCEL_X</field>
+                                    <field name="SENSORPORT">G</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-6" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_mpu6050_getSample" id="mpu6050-6" intask="true">
+                                    <mutation mode="ACCEL_Y"></mutation>
+                                    <field name="MODE">ACCEL_Y</field>
+                                    <field name="SENSORPORT">G</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-7" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_mpu6050_getSample" id="mpu6050-7" intask="true">
+                                    <mutation mode="ACCEL_Z"></mutation>
+                                    <field name="MODE">ACCEL_Z</field>
+                                    <field name="SENSORPORT">G</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-8" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_mpu6050_getSample" id="mpu6050-8" intask="true">
+                                    <mutation mode="TEMPERATURE"></mutation>
+                                    <field name="MODE">TEMPERATURE</field>
+                                    <field name="SENSORPORT">G</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-9" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_analogjoystick_getSample" id="analogjoystick-9" intask="true">
+                                    <mutation mode="X"></mutation>
+                                    <field name="MODE">X</field>
+                                    <field name="SENSORPORT">J</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-10" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_analogjoystick_getSample" id="analogjoystick-10" intask="true">
+                                    <mutation mode="Y"></mutation>
+                                    <field name="MODE">Y</field>
+                                    <field name="SENSORPORT">J</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-11" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_analogjoystick_getSample" id="analogjoystick-11" intask="true">
+                                    <mutation mode="PRESSED"></mutation>
+                                    <field name="MODE">PRESSED</field>
+                                    <field name="SENSORPORT">J</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                        <block type="robActions_serial_print" id="print-12" intask="true">
+                            <value name="OUT">
+                                <block type="robSensors_ds18b20_getSample" id="ds18b20-12" intask="true">
+                                    <mutation mode="TEMPERATURE"></mutation>
+                                    <field name="MODE">TEMPERATURE</field>
+                                    <field name="SENSORPORT">T</field>
+                                    <field name="SLOT"></field>
+                                </block>
+                            </value>
+                        </block>
+                    </statement>
+                </block>
+            </instance>
+        </block_set>
+    </program>
+    <config>
+        <block_set xmlns="http://de.fhg.iais.roberta.blockly" robottype="arduino" xmlversion="3.1" description="" tags="">
+            <instance x="20" y="20">
+                <block type="robConf_mpu6050" id="mpu6050-config" intask="true">
+                    <field name="NAME">G</field>
+                </block>
+            </instance>
+            <instance x="20" y="120">
+                <block type="robConf_analogjoystick" id="joystick-config" intask="true">
+                    <field name="NAME">J</field>
+                    <field name="VRX">A0</field>
+                    <field name="VRY">A1</field>
+                    <field name="SW">2</field>
+                </block>
+            </instance>
+            <instance x="20" y="220">
+                <block type="robConf_ds18b20" id="ds18b20-config" intask="true">
+                    <field name="NAME">T</field>
+                    <field name="INPUT">3</field>
+                </block>
+            </instance>
+            <instance x="20" y="320">
+                <block type="robConf_robot" id="robot" intask="true">
+                    <field name="NAME">undefined</field>
+                </block>
+            </instance>
+        </block_set>
+    </config>
+</export>

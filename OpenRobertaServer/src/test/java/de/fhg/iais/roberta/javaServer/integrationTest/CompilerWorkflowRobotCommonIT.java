@@ -256,7 +256,7 @@ public class CompilerWorkflowRobotCommonIT {
     @Test
     public void testGenSimulationOneProgram() {
         String progName = "controlFlowDecisons";
-        String robotName = "nxt";
+        String robotName = "uno";
         boolean showGeneratedSimCode = true;
 
         LOG.info("********** generate simluation code for program " + progName + " and robot " + robotName + " **********");

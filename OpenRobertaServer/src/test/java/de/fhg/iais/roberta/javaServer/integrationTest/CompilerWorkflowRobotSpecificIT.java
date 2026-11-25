@@ -60,7 +60,6 @@ import static org.junit.Assert.fail;
  * <br>
  * TODO: Currently some robot specific tests are prefixed with '___'. Probably these are redundant and can be removed. <br>
  * TODO: decide, whether the generation of simulation programs should be tested. Currently disabled.<br>
- * TODO: wedo programs are currently not evaluated, because new test programs freeze the evaluator
  */
 @Category(IntegrationTest.class)
 @RunWith(MockitoJUnitRunner.class)
@@ -83,7 +82,6 @@ public class CompilerWorkflowRobotSpecificIT {
     private static JSONObject robotsFromTestSpec;
 
     private static String resourceBase;
-    private static String generatedStackmachineProgramsDir;
 
     private static RobotCommunicator robotCommunicator;
     private static ServerProperties serverProperties;
@@ -113,8 +111,6 @@ public class CompilerWorkflowRobotSpecificIT {
         httpSessionState = HttpSessionState.initOnlyLegalForDebugging("", pluginMap, serverProperties, 1);
 
         String tempDir = serverProperties.getTempDir().replace("\\", "/");
-        generatedStackmachineProgramsDir = tempDir + "generatedStackmachinePrograms/";
-        org.apache.commons.io.FileUtils.forceMkdir(new File(generatedStackmachineProgramsDir));
 
         resourceBase = "/crossCompilerTests/robotSpecific/";
         JSONObject testSpecification = Util.loadYAML("classpath:/crossCompilerTests/testSpec.yml");
@@ -257,16 +253,6 @@ public class CompilerWorkflowRobotSpecificIT {
                     }
                 } else {
                     result = compileSucceeded;
-                }
-                if ( evalGeneratedProgram && result && robotName.equals("wedo") ) {
-                    String compiledCode = entity.optString("compiledCode", null);
-                    if ( compiledCode != null ) {
-                        StackMachineJsonRunner stackmachineRunner = new StackMachineJsonRunner(generatedStackmachineProgramsDir);
-                        result = stackmachineRunner.run(programName, programText, compiledCode);
-                    } else {
-                        LOG.error("no compiled code found for program " + resource);
-                        result = false;
-                    }
                 }
             } else {
                 result = true;

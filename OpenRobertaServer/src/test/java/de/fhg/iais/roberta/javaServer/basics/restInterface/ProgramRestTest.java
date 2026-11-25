@@ -21,15 +21,14 @@ public class ProgramRestTest extends AbstractRestInterfaceTest {
 
     @Test
     public void programWorkflowTest() throws Exception {
-        restClient.setRobot(mkFRR(this.sPid.getInitToken(), "{'cmd':'setRobot'; 'robot':'ev3lejosv1', 'extensions':{}}"));
-        restClient.setRobot(mkFRR(this.sMinscha.getInitToken(), "{'cmd':'setRobot'; 'robot':'ev3lejosv1', 'extensions':{}}"));
+        restClient.setRobot(mkFRR(this.sPid.getInitToken(), "{'cmd':'setRobot'; 'robot':'uno', 'extensions':{}}"));
+        restClient.setRobot(mkFRR(this.sMinscha.getInitToken(), "{'cmd':'setRobot'; 'robot':'uno', 'extensions':{}}"));
         pidCreatesAndUpdates4Programs();
         minschaCreates1ConfAnd2Programs();
         pidSharesProgramsMinschaCanAccessRW();
         pidDeletesProgramsMinschaCannotAccess();
         pidSharesProgram1MinschaCanDeleteTheShare();
         pidAndMinschaAccessConcurrently();
-        pidChangedRobotAndSavesProgram();
 
         saveProgramsAndConfigurations();
     }
@@ -235,7 +234,7 @@ public class ProgramRestTest extends AbstractRestInterfaceTest {
         restProgram(this.sMinscha, "{'cmd':'deleteP';'programName':'p2';'author':'minscha'}", "ok", Key.PROGRAM_DELETE_SUCCESS);
         restProgram(
             this.sMinscha,
-            "{'cmd':'loadP';'programName':'p2';'owner':'minscha';'robot':'ev3';'author':'minscha'}",
+            "{'cmd':'loadP';'programName':'p2';'owner':'minscha';'robot':'arduino';'author':'minscha'}",
             "error",
             Key.PROGRAM_GET_ONE_ERROR_NOT_FOUND);
         restProgram(this.sMinscha, "{'cmd':'deleteP';'programName':'p2';'author':'minscha'}", "error", Key.PROGRAM_DELETE_ERROR);
@@ -389,41 +388,6 @@ public class ProgramRestTest extends AbstractRestInterfaceTest {
         }
     }
 
-    /**
-     * create a program with a different robot for "pid"<br>
-     * <b>INVARIANT:</b> two users exist, both user have logged in<br>
-     * <b>PRE:</b> "pid" has 2 programs both are ev3 programs<br>
-     * <b>POST:</b> "pid" has 3 programs one is a calliope programm
-     * <ul>
-     * <li>"pid" changes robot to calliope
-     * <li>"pid" saves a new program
-     * <li>"pid" can no longer see his ev3 programs but only the new calliope one
-     * <li>"pid" changes back to ev3
-     * <li>"pid" can now see his old ev3 programs again
-     * </ul>
-     */
-    private void pidChangedRobotAndSavesProgram() throws Exception {
-        //check if pid is logged in
-        int pidId = this.sPid.getUserId();
-        Assert.assertTrue(this.sPid.isUserLoggedIn());
-
-        //change robot and check if it worked
-        restClient.setRobot(mkFRR(this.sPid.getInitToken(), "{'cmd':'setRobot'; 'robot':'calliope2017', 'extensions':{}}"));
-        Assert.assertEquals("calliope2017", this.sPid.getRobotName());
-
-        //save new Program and check number of Programs
-        saveProgramAs(this.sPid, "pid", "pid", "p5", ".1.pid", null, null, "ok", Key.PROGRAM_SAVE_SUCCESS);
-        Assert.assertEquals(3, this.memoryDbSetup.getOneBigIntegerAsLong("select count(*) from PROGRAM where OWNER_ID = " + pidId));
-        Assert.assertEquals(4, this.memoryDbSetup.getOneBigIntegerAsLong("select count(*) from PROGRAM"));
-        //check that 1 program is is in current session state and check its name
-        assertProgramListingAsExpected(this.sPid, "['p5']");
-
-        //swap back
-        restClient.setRobot(mkFRR(this.sPid.getInitToken(), "{'cmd':'setRobot'; 'robot':'ev3lejosv1', 'extensions':{}}"));
-        Assert.assertEquals("ev3lejosv1", this.sPid.getRobotName());
-        //check if program list of ev3 prorams remained unchanged
-        assertProgramListingAsExpected(this.sPid, "['p1','p4']");
-    }
 
     /**
      * check, that the relationship between programs and configurations works<br>

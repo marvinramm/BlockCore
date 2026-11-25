@@ -1,6 +1,0 @@
-Sensors: 
-[]
-Actors: 
-[]
-Methods: 
-[DIFFCURVE, DIFFDRIVE, DIFFTURN, GETDIR, MOTORON, SHORTEN]

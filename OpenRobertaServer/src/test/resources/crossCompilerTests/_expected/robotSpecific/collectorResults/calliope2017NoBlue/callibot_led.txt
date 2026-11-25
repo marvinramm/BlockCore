@@ -1,6 +1,0 @@
-Sensors: 
-[]
-Actors: 
-[UsedActor [, CALLIBOT], UsedActor [, KEY]]
-Methods: 
-[]

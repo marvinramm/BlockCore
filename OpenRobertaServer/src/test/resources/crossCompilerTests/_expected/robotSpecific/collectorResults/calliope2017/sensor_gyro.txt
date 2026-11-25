@@ -1,6 +1,0 @@
-Sensors: 
-[UsedSensor [_G, ACCELEROMETER, ANGLE]]
-Actors: 
-[UsedActor [, KEY]]
-Methods: 
-[]

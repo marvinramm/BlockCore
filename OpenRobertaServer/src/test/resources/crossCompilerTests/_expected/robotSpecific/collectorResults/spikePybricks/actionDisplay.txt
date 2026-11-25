@@ -1,6 +1,0 @@
-Sensors: 
-[]
-Actors: 
-[UsedActor [, DISPLAY]]
-Methods: 
-[DISPLAY_TEXT, SHOW_ANIMATION]

@@ -1,6 +1,0 @@
-Sensors: 
-[]
-Actors: 
-[UsedActor [A, MOTOR], UsedActor [B, MOTOR]]
-Methods: 
-[DEG_SEC_FROM_PERCENT]
