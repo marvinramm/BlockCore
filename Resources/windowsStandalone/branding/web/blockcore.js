@@ -496,12 +496,46 @@
         }, 20000);
     }
 
+    /*
+     * the narrow layout (small window) collapses the menus into a button. If that menu was open when the window gets wide again, the
+     * navigation bars keep the class "show" and the tab bar covers the dropdown menus (edit, robot, languages): they open but cannot be
+     * seen or clicked. Close that state as soon as the wide layout is back; in the narrow layout the version label is hidden.
+     */
+    function setupResizeFix() {
+        function narrow() {
+            var toggler = document.getElementById('navbarButtonsHead');
+            return !!toggler && getComputedStyle(toggler).display !== 'none';
+        }
+        function check() {
+            var isNarrow = narrow();
+            document.documentElement.classList.toggle('blockcore-narrow', isNarrow);
+            if (isNarrow) {
+                return;
+            }
+            Array.prototype.forEach.call(document.querySelectorAll('#header .navbar-collapse.show'), function (bar) {
+                bar.classList.remove('show');
+            });
+            var toggler = document.getElementById('navbarButtonsHead');
+            if (toggler) {
+                toggler.classList.add('collapsed');
+                toggler.setAttribute('aria-expanded', 'false');
+            }
+        }
+        var timer = null;
+        window.addEventListener('resize', function () {
+            clearTimeout(timer);
+            timer = setTimeout(check, 150);
+        });
+        check();
+    }
+
     whenLabReady(function () {
         modules(['guiState.controller', 'robot.controller', 'user.model'], function (G, R, U) {
             setupLanguages(G);
             setupBoards(G, R);
             setupUploadDisplay(G);
             setupVersion(G);
+            setupResizeFix();
             autoLogin(G, U);
             // the robot or the language can change elsewhere (e.g. loading a program): keep the check marks right
             setInterval(function () {

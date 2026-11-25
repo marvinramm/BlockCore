@@ -141,3 +141,6 @@ li:has(> #menuRobotInfo),
 /* "connect": wide enough for "COM3 – USB-SERIAL CH340" */
 #single-modal-list .modal-dialog { max-width: 460px; }
 #single-modal-list #singleModalListInput { min-width: 300px; }
+
+/* small window (menus collapsed into a button): no room for the version below the logo */
+.blockcore-narrow #blockcoreVersion { display: none; }
