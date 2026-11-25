@@ -4,7 +4,6 @@ import * as $ from 'jquery';
 import * as Blockly from 'blockly';
 import 'jquery-validate';
 import 'bootstrap';
-import * as U from 'interpreter.util';
 import * as GUISTATE_C from 'guiState.controller';
 
 const ANIMATION_DURATION = 750;
@@ -1124,7 +1123,7 @@ export function addVariableValue($elem, name, value) {
             break;
         }
         default: {
-            U.warn('unexpected variable type received');
+            console.warn('unexpected variable type received');
             break;
         }
     }

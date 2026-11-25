@@ -5,7 +5,6 @@ import * as GUISTATE_C from 'guiState.controller';
 import * as ROBOT from 'robot.model';
 import * as PROGRAM_C from 'program.controller';
 import * as CONFIGURATION_C from 'configuration.controller';
-import * as WEBVIEW_C from 'webview.controller';
 import * as $ from 'jquery';
 // @ts-ignore
 import * as Blockly from 'blockly';
@@ -166,66 +165,6 @@ function initRobotForms() {
     );
 
     $formSingleModal = $('#single-modal-form');
-
-    $('#connectionsTable').bootstrapTable({
-        formatNoMatches: function () {
-            return '<div class="lds-ellipsis"></div>';
-        },
-        columns: [
-            {
-                // TODO: translations
-                title: 'Name',
-                field: 'name',
-            },
-            {
-                visible: false,
-                field: 'id',
-            },
-        ],
-    });
-    $('#connectionsTable').onWrap(
-        'click-row.bs.table',
-        function (e, row) {
-            WEBVIEW_C.jsToAppInterface({
-                target: GUISTATE_C.getRobot(),
-                type: 'connect',
-                robot: row.id,
-            });
-        },
-        'connect to robot'
-    );
-    $('#show-available-connections').on('hidden.bs.modal', function (e) {
-        WEBVIEW_C.jsToAppInterface({
-            target: GUISTATE_C.getRobot(),
-            type: 'stopScan',
-        });
-    });
-
-    $('#show-available-connections').onWrap(
-        'add',
-        function (event, data) {
-            $('#connectionsTable').bootstrapTable('insertRow', {
-                index: 999,
-                row: {
-                    name: data.brickname,
-                    id: data.brickid,
-                },
-            });
-        },
-        'insert robot connections'
-    );
-
-    $('#show-available-connections').onWrap(
-        'connect',
-        function (event, data) {
-            let result = {};
-            result['robotName'] = data.brickname;
-            result['robotState'] = 'wait';
-            GUISTATE_C.setState(result);
-            $('#show-available-connections').modal('hide');
-        },
-        'connect to a robot'
-    );
 }
 
 function showSetTokenModal(tokenMinLength: number, tokenMaxLength: number) {
@@ -318,18 +257,6 @@ function showSetApiKeyModal(placeHolderUrl) {
             },
         }
     );
-}
-
-function showScanModal() {
-    if ($('#show-available-connections').is(':visible')) {
-        return;
-    }
-    $('#connectionsTable').bootstrapTable('removeAll');
-    WEBVIEW_C.jsToAppInterface({
-        target: GUISTATE_C.getRobot(),
-        type: 'startScan',
-    });
-    $('#show-available-connections').modal('show');
 }
 
 function showListModal() {
@@ -469,11 +396,6 @@ function switchRobot(robot: string, extensions: object, opt_continue?: boolean, 
                 if (GUISTATE_C.getView() == 'tabProgList') {
                     $('#progList>.bootstrap-table').find('button[name="refresh"]').clickWrap();
                 }
-                //TODO inform app if one is there
-                //                    WEBVIEW_C.jsToAppInterface({
-                //                        'target' : 'wedo',
-                //                        'op' : {'type''disconnect'
-                //                    });
                 typeof opt_callback === 'function'
                     ? opt_callback()
                     : // @ts-ignore
@@ -521,4 +443,4 @@ function switchRobot(robot: string, extensions: object, opt_continue?: boolean, 
         }
     }
 }
-export { init, setPort, getPort, showSetTokenModal, showSetApiKeyModal, showScanModal, showListModal, handleFirmwareConflict, updateFirmware, switchRobot };
+export { init, setPort, getPort, showSetTokenModal, showSetApiKeyModal, showListModal, handleFirmwareConflict, updateFirmware, switchRobot };

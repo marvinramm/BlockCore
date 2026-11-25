@@ -3,7 +3,6 @@ import * as MSG from 'message';
 import * as GUISTATE from 'guiState.model';
 import * as HELP_C from 'progHelp.controller';
 import * as LEGAL_C from 'legal.controller';
-import * as WEBVIEW_C from 'webview.controller';
 import * as CV from 'confVisualization';
 import * as $ from 'jquery';
 import * as Blockly from 'blockly';
@@ -12,7 +11,6 @@ import * as CONNECTION_C from 'connection.controller';
 import * as PROGRAM_C from 'program.controller';
 import * as CONFIGURATION_C from 'configuration.controller';
 import * as USER_C from 'user.controller';
-import * as NN_C from 'nn.controller';
 import { switchLanguage as PROGLIST_C_switchLanguage } from 'progList.controller';
 import { switchLanguage as CONFLIST_C_switchLanguage } from 'confList.controller';
 import { switchLanguage as GALLERYLIST_C_switchLanguage } from 'galleryList.controller';
@@ -306,14 +304,6 @@ function setRobot(robot, result, opt_init) {
     }
     if (groupSwitched) {
         HELP_C.initView();
-        if (inWebview()) {
-            WEBVIEW_C.setRobotBehaviour();
-            WEBVIEW_C.jsToAppInterface({
-                target: 'internal',
-                type: 'setRobot',
-                robot: robotGroup,
-            });
-        }
     }
 
     if (hasExtension('nn')) {
@@ -614,7 +604,6 @@ function setLanguage(language) {
         TUTORIALLIST_C_switchLanguage();
         LOGLIST_C_switchLanguage();
         PROGINFO_C_switchLanguage();
-        NN_C.reloadViews();
         var value = Blockly.Msg.MENU_START_BRICK;
         if (value.indexOf('$') >= 0) {
             value = value.replace('$', getRobotRealName());

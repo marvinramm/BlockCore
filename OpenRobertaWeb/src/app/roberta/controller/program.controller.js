@@ -3,7 +3,6 @@ import * as LOG from 'log';
 import * as UTIL from 'util.roberta';
 import * as GUISTATE_C from 'guiState.controller';
 import * as ROBOT_C from 'robot.controller';
-import * as NN_C from 'nn.controller';
 import * as PROGRAM from 'program.model';
 import * as USER from 'user.model';
 import * as CONFIGURATION_C from 'configuration.controller';
@@ -409,7 +408,6 @@ function newProgram(opt_further) {
         result.lastChanged = '';
         GUISTATE_C.setProgram(result);
         initProgramEnvironment();
-        NN_C.programWasReplaced();
         LOG.info('New program loaded');
     }
     if (further || GUISTATE_C.isProgramSaved()) {

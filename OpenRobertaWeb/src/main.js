@@ -15,15 +15,6 @@ require.config({
         'jquery-scrollto': 'libs/jquery/jquery.scrollTo-2.1.2.min',
         'jquery-validate': 'libs/jquery/jquery.validate-1.17.0.min',
         'jquery-hotkeys': 'libs/jquery/jquery.hotkeys-0.2.0',
-        'socket.io': 'libs/socket.io/socket.io',
-        'volume-meter': 'libs/sound/volume-meter',
-        'neuralnetwork-lib': 'libs/neuralnetwork/lib',
-        d3: 'libs/neuralnetwork/d3.min',
-        webots: 'libs/webots/webots.min',
-        glm: 'libs/webots/glm-js.min',
-        'webots.enum': 'libs/webots/enum',
-        'webots.wren': 'libs/webots/wrenjs',
-        dapjs: 'libs/dapjs/dap.umd',
 
         'startView.controller': 'js/app/roberta/controller/startView.controller',
         'confDelete.controller': 'js/app/roberta/controller/confDelete.controller',
@@ -43,12 +34,10 @@ require.config({
         'menu.controller': 'js/app/roberta/controller/menu.controller',
         'notification.controller': 'js/app/roberta/controller/notification.controller',
         'notification.model': 'js/app/roberta/models/notification.model',
-        'nn.controller': 'js/app/roberta/controller/nn.controller',
         'progCode.controller': 'js/app/roberta/controller/progCode.controller',
         'progDelete.controller': 'js/app/roberta/controller/progDelete.controller',
         'progHelp.controller': 'js/app/roberta/controller/progHelp.controller',
         'progInfo.controller': 'js/app/roberta/controller/progInfo.controller',
-        'progSim.controller': 'js/app/roberta/controller/progSim.controller',
         'progRun.controller': 'js/app/roberta/controller/progRun.controller',
         'progList.controller': 'js/app/roberta/controller/progList.controller',
         'progList.model': 'js/app/roberta/models/progList.model',
@@ -71,35 +60,6 @@ require.config({
 
         connections: 'js/app/roberta/controller/connections/connections',
         'connection.controller': 'js/app/roberta/controller/connection.controller',
-        'webview.controller': 'js/app/roberta/controller/webview.controller',
-        'simulation.constants': 'js/app/simulation/simulationLogic/constants',
-        'simulation.math': 'js/app/simulation/simulationLogic/math',
-        'robot.calliope': 'js/app/simulation/simulationLogic/robot.calliope',
-        'robot.calliopev3': 'js/app/simulation/simulationLogic/robot.calliopev3',
-        'robot.mbot': 'js/app/simulation/simulationLogic/robot.mbot',
-        'robot.microbit': 'js/app/simulation/simulationLogic/robot.microbit',
-        'robot.microbitv2': 'js/app/simulation/simulationLogic/robot.microbitv2',
-        'robot.math': 'js/app/simulation/simulationLogic/robot.math',
-        'robot.rob3rta': 'js/app/simulation/simulationLogic/robot.rob3rta',
-        'robot.ev3': 'js/app/simulation/simulationLogic/robot.ev3',
-        'robot.nxt': 'js/app/simulation/simulationLogic/robot.nxt',
-        'robot.rcj': 'js/app/simulation/simulationLogic/robot.rcj',
-        'robot.xnn': 'js/app/simulation/simulationLogic/robot.xnn',
-        'robot.thymio': 'js/app/simulation/simulationLogic/robot.thymio',
-        'robot.edison': 'js/app/simulation/simulationLogic/robot.edison',
-        'robot.robotino': 'js/app/simulation/simulationLogic/robot.robotino',
-        'robot.txt4': 'js/app/simulation/simulationLogic/robot.txt4',
-        'robot.base.mobile': 'js/app/simulation/simulationLogic/robot.base.mobile',
-        'robot.base.stationary': 'js/app/simulation/simulationLogic/robot.base.stationary',
-        'robot.base': 'js/app/simulation/simulationLogic/robot.base',
-        'simulation.objects': 'js/app/simulation/simulationLogic/simulation.objects',
-        'robot.sensors': 'js/app/simulation/simulationLogic/robot.sensors',
-        'robot.actuators': 'js/app/simulation/simulationLogic/robot.actuators',
-        'simulation.types': 'js/app/simulation/simulationLogic/types',
-        'simulation.scene': 'js/app/simulation/simulationLogic/simulation.scene',
-        'simulation.roberta': 'js/app/simulation/simulationLogic/simulation.roberta',
-        'simulation.webots': 'js/app/simulation/simulationLogic/simulation.webots',
-        maze: 'js/app/simulation/simulationLogic/maze',
 
         comm: 'js/helper/comm',
         log: 'js/helper/log',
@@ -109,28 +69,6 @@ require.config({
         table: 'js/helper/table',
         aceEditor: 'js/helper/aceEditor',
 
-        'interpreter.constants': 'js/app/nepostackmachine/interpreter.constants',
-        'interpreter.interpreter': 'js/app/nepostackmachine/interpreter.interpreter',
-        'interpreter.aRobotBehaviour': 'js/app/nepostackmachine/interpreter.aRobotBehaviour',
-        'interpreter.robotWeDoBehaviour': 'js/app/nepostackmachine/interpreter.robotWeDoBehaviour',
-        'interpreter.robotSimBehaviour': 'js/app/nepostackmachine/interpreter.robotSimBehaviour',
-        'interpreter.state': 'js/app/nepostackmachine/interpreter.state',
-        'interpreter.util': 'js/app/nepostackmachine/interpreter.util',
-
-        'neuralnetwork.nn': 'js/app/neuralnetwork/neuralnetwork.nn',
-        'neuralnetwork.uistate': 'js/app/neuralnetwork/neuralnetwork.uistate',
-        'neuralnetwork.ui': 'js/app/neuralnetwork/neuralnetwork.ui',
-        'neuralnetwork.linechart': 'js/app/neuralnetwork/neuralnetwork.linechart',
-        'neuralnetwork.helper': 'js/app/neuralnetwork/neuralnetwork.helper',
-        'neuralnetwork.msg': 'js/app/neuralnetwork/neuralnetwork.msg',
-
-        thymio: 'js/app/roberta/models/thymio',
-        thymio_generated: 'js/app/roberta/models/thymio_generated',
-        flatbuffers: 'libs/thymio/flatbuffers',
-        '@cor3ntin/flexbuffers-wasm': 'libs/thymio/flexbuffers',
-        'isomorphic-ws': 'libs/thymio/browser',
-        'lodash.isequal': 'libs/thymio/lodash/isEqual',
-
         confVisualization: 'js/app/configVisualization/confVisualization',
         'const.robots': 'js/app/configVisualization/const.robots',
         port: 'js/app/configVisualization/port',
@@ -138,24 +76,6 @@ require.config({
         wires: 'js/app/configVisualization/wires',
     },
     shim: {
-        webots: {
-            deps: ['glm', 'webots.enum', 'webots.wren'],
-        },
-        '@cor3ntin/flexbuffers-wasm': {
-            exports: 'FlexBuffers',
-        },
-        flatbuffers: {
-            exports: 'flatbuffers',
-            init: function () {
-                return this;
-            },
-        },
-        'lodash.isequal': {
-            exports: 'isEqual',
-        },
-        thymio: {
-            deps: ['flatbuffers', '@cor3ntin/flexbuffers-wasm', 'lodash.isequal'],
-        },
         ace_lang: {
             deps: ['ace'],
         },
@@ -188,14 +108,6 @@ require.config({
         },
         port: {
             deps: ['blockly'],
-        },
-        'volume-meter': {
-            exports: 'VolumeMeter',
-            init: function () {
-                return {
-                    createAudioMeter: createAudioMeter,
-                };
-            },
         },
         'jquery-validate': {
             deps: ['jquery'],
@@ -285,10 +197,8 @@ require([
     'menu.controller',
     'user.controller',
     'galleryList.controller',
-    'nn.controller',
     'robot.controller',
     'program.controller',
-    'progSim.controller',
     'notification.controller',
     'progCode.controller',
     'progDelete.controller',
@@ -301,7 +211,6 @@ require([
     'progTutorial.controller',
     'tutorialList.controller',
     'userGroup.controller',
-    'volume-meter',
     'user.model',
     'sourceCodeEditor.controller',
     'confVisualization',
@@ -340,16 +249,13 @@ require([
     progInfoController = require('progInfo.controller');
     notificationController = require('notification.controller');
     progCodeController = require('progCode.controller');
-    progSimController = require('progSim.controller');
     progRunController = require('progRun.controller');
     progShareController = require('progShare.controller');
     robotController = require('robot.controller');
     userController = require('user.controller');
-    nnController = require('nn.controller');
     userModel = require('user.model');
     tutorialController = require('progTutorial.controller');
     userGroupController = require('userGroup.controller');
-    webviewController = require('webview.controller');
     sourceCodeEditorController = require('sourceCodeEditor.controller');
     confVisualization = require('confVisualization');
     robotBlock = require('robotBlock');
@@ -368,10 +274,7 @@ function init() {
 
     $.when(languageController.init())
         .then(function (language) {
-            return webviewController.init(language);
-        })
-        .then(function (language, opt_data) {
-            return guiStateController.init(language, opt_data);
+            return guiStateController.init(language);
         })
         .then(function () {
             return userController.init();
@@ -416,11 +319,7 @@ function initProgramming(robot, extensions, opt_callback, opt_params) {
             progHelpController.init();
             progInfoController.init();
             progCodeController.init();
-            progSimController.createProgSimInstance();
-            progSimController.createProgSimDebugInstance();
-            progSimController.createProgSimMultiInstance();
             progRunController.init();
-            nnController.init();
             progListController.init();
             progDeleteController.init();
             confListController.init();

@@ -9,49 +9,15 @@ import * as Blockly from 'blockly';
  */
 function init() {
     var ready = new $.Deferred();
-    var language;
-    if (navigator.language.indexOf('de') > -1) {
-        language = 'de';
-    } else if (navigator.language.indexOf('fi') > -1) {
-        language = 'fi';
-    } else if (navigator.language.indexOf('da') > -1) {
-        language = 'da';
-    } else if (navigator.language.indexOf('es') > -1) {
-        language = 'es';
-    } else if (navigator.language.indexOf('fr') > -1) {
-        language = 'fr';
-    } else if (navigator.language.indexOf('it') > -1) {
-        language = 'it';
-    } else if (navigator.language.indexOf('ca') > -1) {
-        language = 'ca';
-    } else if (navigator.language.indexOf('pt') > -1) {
-        language = 'pt';
-    } else if (navigator.language.indexOf('pl') > -1) {
-        language = 'pl';
-    } else if (navigator.language.indexOf('ru') > -1) {
-        language = 'ru';
-    } else if (navigator.language.indexOf('be') > -1) {
-        language = 'be';
-    } else if (navigator.language.indexOf('cs') > -1) {
-        language = 'cs';
-    } else if (navigator.language.indexOf('tr') > -1) {
-        language = 'tr';
-    } else if (navigator.language.indexOf('nl') > -1) {
-        language = 'nl';
-    } else if (navigator.language.indexOf('sv') > -1) {
-        language = 'sv';
-    } else if (navigator.language.indexOf('zh-hans') > -1) {
-        language = 'zh-hans';
-    } else if (navigator.language.indexOf('zh-hant') > -1) {
-        language = 'zh-hant';
-    } else if (navigator.language.indexOf('ro') > -1) {
-        language = 'ro';
-    } else if (navigator.language.indexOf('eu') > -1) {
-        language = 'eu';
-    } else if (navigator.language.indexOf('uk') > -1) {
-        language = 'uk';
-    } else {
-        language = 'en';
+    // BlockCore has English and German only: the language chosen last (blockcore.js stores it), English on the first start
+    var language = 'en';
+    try {
+        var stored = localStorage.getItem('blockcore.language');
+        if (stored === 'de' || stored === 'en') {
+            language = stored;
+        }
+    } catch (e) {
+        // no local storage: English
     }
     if (language === 'de') {
         $('.EN').css('display', 'none');
