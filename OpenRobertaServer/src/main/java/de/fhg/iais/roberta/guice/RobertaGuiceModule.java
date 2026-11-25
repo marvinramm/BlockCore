@@ -12,15 +12,13 @@ import com.google.inject.name.Names;
 
 import de.fhg.iais.roberta.factory.RobotFactory;
 import de.fhg.iais.roberta.javaServer.restServices.all.controller.ClientAdmin;
-import de.fhg.iais.roberta.javaServer.restServices.all.controller.ClientConfiguration;
 import de.fhg.iais.roberta.javaServer.restServices.all.controller.ClientPing;
-import de.fhg.iais.roberta.javaServer.restServices.all.controller.ClientUser;
 import de.fhg.iais.roberta.javaServer.restServices.all.controller.RestExample;
+import de.fhg.iais.roberta.javaServer.restServices.local.LocalConfigurationController;
+import de.fhg.iais.roberta.javaServer.restServices.local.LocalUserController;
 import de.fhg.iais.roberta.javaServer.restServices.robot.RobotCommand;
 import de.fhg.iais.roberta.javaServer.restServices.robot.RobotDownloadProgram;
 import de.fhg.iais.roberta.main.IIpToCountry;
-import de.fhg.iais.roberta.main.MailManagement;
-import de.fhg.iais.roberta.persistence.util.SessionFactoryWrapper;
 import de.fhg.iais.roberta.robotCommunication.RobotCommunicator;
 import de.fhg.iais.roberta.util.NotificationService;
 import de.fhg.iais.roberta.util.ServerProperties;
@@ -48,8 +46,8 @@ public class RobertaGuiceModule extends AbstractModule {
     protected void configure() {
         // configure at least one JAX-RS resource or the server won't start.
         bind(ClientAdmin.class);
-        bind(ClientConfiguration.class);
-        bind(ClientUser.class);
+        bind(LocalConfigurationController.class);
+        bind(LocalUserController.class);
         bind(RobotDownloadProgram.class);
         bind(RobotCommand.class);
         bind(RestExample.class);
@@ -57,16 +55,13 @@ public class RobertaGuiceModule extends AbstractModule {
 
         bind(ServerProperties.class).toInstance(this.serverProperties);
         bind(NotificationService.class).in(Singleton.class);
-        bind(SessionFactoryWrapper.class).in(Singleton.class);
         bind(RobotCommunicator.class).toInstance(this.robotCommunicator);
-        bind(MailManagement.class).in(Singleton.class);
         bind(IIpToCountry.class).toInstance(this.ipToCountry);
 
         requestStaticInjection(UtilForREST.class);
 
         bind(new TypeLiteral<Map<String, RobotFactory>>() {
         }).annotatedWith(Names.named("robotPluginMap")).toInstance(this.robotPluginMap);
-        bind(String.class).annotatedWith(Names.named("hibernate.config.xml")).toInstance("/hibernate-cfg.xml");
 
         try {
             Names.bindProperties(binder(), this.serverProperties.getserverProperties());

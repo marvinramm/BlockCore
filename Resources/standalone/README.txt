@@ -22,7 +22,8 @@ How to use it
 6. Close the BlockCore window to quit.
 
 Choose the board (Uno, Nano, Mega) under "robot -> Board" and the language
-(English / German) under "languages". Programs are saved on this PC.
+(English / German) under "languages". Programs are saved as files in
+Documents\BlockCore (one .xml file per program: easy to back up and share).
 
 Problems?
 ---------
@@ -32,7 +33,7 @@ Problems?
 - Colour sensor always says "black": it gets too little light. The LED on the
   sensor board must be on, hold the sensor about 1 cm above the surface and
   shade it from room light. Lower "black below %" in the robot configuration.
-- Programs are stored in %LOCALAPPDATA%\BlockCore,
+- Programs are stored in Documents\BlockCore,
   the server log in %LOCALAPPDATA%\BlockCore\logs\server.log.
 
 BlockCore is only reachable from this computer (http://127.0.0.1:1999).

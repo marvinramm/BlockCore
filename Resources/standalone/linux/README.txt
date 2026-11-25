@@ -37,7 +37,7 @@ Problems?
   device. Remove it: sudo apt remove brltty
 - Upload fails: is the right port selected? Is another program (e.g. the
   Arduino IDE) using the port? For the Nano the old bootloader is tried, too.
-- Programs are stored in ~/.local/share/BlockCore,
+- Programs are stored in ~/Documents/BlockCore (one .xml file per program),
   the server log in ~/.local/share/BlockCore/logs/server.log.
 - Stop a BlockCore running in the background: ./BlockCore/BlockCore --stop
 

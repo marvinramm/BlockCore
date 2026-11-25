@@ -8,11 +8,12 @@
  *   staticResources\ the web frontend
  *   ora-cc-rsc\      cross compiler resources (AVR toolchain, avrdude, Arduino cores and libraries)
  *
- * User data (database, logs, window profile) goes to %LOCALAPPDATA%\BlockCore, because the program directory may not be writable.
+ * The programs are files in Documents\BlockCore. Other user data (logs, window profile, class data archive) goes to %LOCALAPPDATA%\BlockCore,
+ * because the program directory may not be writable.
  *
  * What it does (no console window):
  *   1. a small start window is shown while the server starts
- *   2. on first start an empty database is created
+ *   2. the programs of an older BlockCore (database in %LOCALAPPDATA%\BlockCore\db) are copied to Documents\BlockCore once (by the server)
  *   3. the server is started hidden (output -> logs\server.log)
  *   4. the lab opens in its own window: Microsoft Edge or Google Chrome in app mode with a profile of its own
  *   5. when all BlockCore windows (lab and serial monitor) are closed, the server is stopped (found by their title): the launcher closes the
@@ -51,6 +52,7 @@
 
 static wchar_t appDir[MAX_PATH];
 static wchar_t dataDir[MAX_PATH];
+static wchar_t programsDir[MAX_PATH];
 static wchar_t status[256] = L"Starting \x2026";
 static wchar_t failure[512];
 static HWND splash;
@@ -447,27 +449,6 @@ static DWORD WINAPI startServer(LPVOID unused) {
         return fail(L"The log file cannot be written.");
     }
 
-    swprintf(path, MAX_PATH, L"%ls\\db\\openroberta-db.script", dataDir);
-    if ( GetFileAttributesW(path) == INVALID_FILE_ATTRIBUTES ) {
-        HANDLE create;
-        DWORD exitCode = 1;
-        setStatus(L"First start: preparing BlockCore \x2026");
-        addJavaStart(cmd, L"de.fhg.iais.roberta.main.Administration", FALSE);
-        addArg(cmd, L"create-empty-db");
-        swprintf(path, MAX_PATH, L"jdbc:hsqldb:file:%ls\\db\\openroberta-db", dataDir);
-        addArg(cmd, path);
-        create = startHidden(cmd, NULL, log);
-        if ( create == NULL ) {
-            return fail(L"Java could not be started.");
-        }
-        WaitForSingleObject(create, INFINITE);
-        GetExitCodeProcess(create, &exitCode);
-        CloseHandle(create);
-        if ( exitCode != 0 ) {
-            return fail(L"The database could not be created.");
-        }
-    }
-
     /* the class data archive of the Java runtime itself cannot be created when the package is built (on Linux): it is created once here */
     swprintf(path, MAX_PATH, L"%ls\\jre\\bin\\server\\classes.jsa", appDir);
     if ( GetFileAttributesW(path) == INVALID_FILE_ATTRIBUTES ) {
@@ -489,10 +470,9 @@ static DWORD WINAPI startServer(LPVOID unused) {
     setStatus(L"Starting \x2026");
     cmd[0] = 0;
     addJavaStart(cmd, L"de.fhg.iais.roberta.main.ServerStarter", TRUE);
-    addProperty(cmd, L"database.mode", L"embedded");
-    swprintf(path, MAX_PATH, L"%ls\\db", dataDir);
-    addProperty(cmd, L"database.parentdir", path);
-    addProperty(cmd, L"database.name", L"openroberta-db");
+    addProperty(cmd, L"server.local.programs.dir", programsDir);
+    swprintf(path, MAX_PATH, L"%ls\\db\\openroberta-db", dataDir);
+    addProperty(cmd, L"server.local.olddb", path);
     swprintf(path, MAX_PATH, L"%ls\\staticResources", appDir);
     addProperty(cmd, L"server.staticresources.dir", path);
     swprintf(path, MAX_PATH, L"%ls\\ora-cc-rsc", appDir);
@@ -671,8 +651,13 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE prev, LPWSTR cmdLine, int show
     }
     swprintf(dataDir, MAX_PATH, L"%ls\\BlockCore", localAppData);
     CreateDirectoryW(dataDir, NULL);
-    swprintf(path, MAX_PATH, L"%ls\\db", dataDir);
-    CreateDirectoryW(path, NULL);
+    /* the programs: Documents\BlockCore (visible, easy to back up); without a documents folder in the data folder */
+    if ( SHGetFolderPathW(NULL, CSIDL_PERSONAL | CSIDL_FLAG_CREATE, NULL, 0, path) == S_OK ) {
+        swprintf(programsDir, MAX_PATH, L"%ls\\BlockCore", path);
+    } else {
+        swprintf(programsDir, MAX_PATH, L"%ls\\programs", dataDir);
+    }
+    CreateDirectoryW(programsDir, NULL);
     removeOldInstallers();
 
     /* already running (or just starting): open another window only */

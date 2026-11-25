@@ -64,9 +64,7 @@ sell boards with it): then the LGPL applies to the core part. Uploading to your 
 | Eclipse Jetty (http, io, security, server, servlet, util) | 9.4.15 | Apache 2.0 / EPL 1.0 |
 | Jersey (core, server, servlet, json, guice) | 1.19.4 | CDDL 1.1 / GPL 2.0 with Classpath Exception |
 | Guice, Guice Servlet | 5.1.0 | Apache 2.0 |
-| Hibernate ORM (core, c3p0), Hibernate Commons Annotations | 5.4.24, 5.1.2 | LGPL 2.1 |
-| HyperSQL (hsqldb) | 2.4.0 | HSQLDB licence (BSD-style) |
-| c3p0, mchange-commons-java | 0.9.5.5, 0.2.19 | LGPL 2.1 / EPL 1.0 |
+| HyperSQL (hsqldb), only to copy the programs of BlockCore 1.2 and older | 2.4.0 | HSQLDB licence (BSD-style) |
 | jSerialComm | 2.11.0 | Apache 2.0 / LGPL 3.0 |
 | Logback (classic, core) | 1.3.12 | EPL 1.0 / LGPL 2.1 |
 | SLF4J API | 2.0.13 | MIT |
@@ -74,13 +72,9 @@ sell boards with it): then the LGPL applies to the core part. Uploading to your 
 | Apache Commons Lang 3, Text, IO, Codec | 3.7, 1.4, 2.14.0, 1.11 | Apache 2.0 |
 | JSON in Java (org.json) | 20231013 | Public domain |
 | ANTLR 4 runtime | 4.7.2 | BSD 3-clause |
-| ANTLR 2 (used by Hibernate) | 2.7.7 | ANTLR 2 licence (public domain) |
-| JAXB API, JAXB runtime, TXW2, istack, FastInfoset, stax-ex, jaxb-impl | 2.3.1, 2.2.3 | CDDL 1.1 / GPL 2.0 with CE, EDL 1.0 (BSD), Apache 2.0 |
-| JavaBeans Activation Framework, JavaMail | 1.1/1.2, 1.6.0 | CDDL 1.0 / GPL 2.0 with CE |
-| Java Persistence API, JBoss Transaction API, Servlet API, JSR 311 API, javax.inject | 2.2, 1.1.1, 3.1.0, 1.1.1, 1 | EPL 1.0 / EDL 1.0, CDDL / GPL 2.0 with CE, CDDL / GPL 2.0 with CE, CDDL 1.0, Apache 2.0 |
+| JAXB API, JAXB reference implementation (jaxb-impl), StAX API, JavaBeans Activation Framework | 2.2.2, 2.2.3, 1.0-2, 1.1 | CDDL 1.1 / GPL 2.0 with CE, Apache 2.0 (StAX API) |
+| Servlet API, JSR 311 API, javax.inject | 3.1.0, 1.1.1, 1 | CDDL / GPL 2.0 with CE, CDDL 1.0, Apache 2.0 |
 | Jackson 1 (core, mapper, jaxrs, xc), Jettison | 1.9.2, 1.1 | Apache 2.0 |
-| Byte Buddy, Javassist, Jandex, ClassMate, JBoss Logging | 1.10.17, 3.27.0, 2.1.3, 1.5.1, 3.4.1 | Apache 2.0, MPL 1.1 / LGPL 2.1 / Apache 2.0, Apache 2.0, Apache 2.0, Apache 2.0 |
-| dom4j | 2.1.3 | dom4j licence (BSD-style) |
 | SnakeYAML | 2.0 | Apache 2.0 |
 | JOpt Simple | 5.0.4 | MIT |
 | UserAgentUtils | 1.21 | BSD 3-clause |

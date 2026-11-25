@@ -131,4 +131,6 @@ Free pins with the shield: **2, 13, A0–A3** (A4 / A5 for the colour sensor). T
 | BlockCore window does not open | Open <http://127.0.0.1:1999> in your browser. |
 | Other errors | `%LOCALAPPDATA%\BlockCore\logs\server.log` tells what happened. |
 
-Your programs are stored in `%LOCALAPPDATA%\BlockCore`. They are kept when you uninstall BlockCore (Settings → Apps → BlockCore).
+Your programs are files in **Documents\BlockCore** (Linux: `~/Documents/BlockCore`), one `.xml` file per program. Copy them to back
+them up or to give a program to someone else; files you copy into that folder appear under *my programs*. They are kept when you uninstall
+BlockCore (Settings → Apps → BlockCore).

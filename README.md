@@ -23,21 +23,21 @@ for Windows or Linux that opens in its own window. On top it adds blocks for the
 | **Look** | dark (default) or light theme, pictures of the parts on the configuration blocks, settings in *edit → Settings* |
 | **Languages** | English (default) and German, switchable in the program |
 | **Inside** | Open Roberta server with a trimmed Java 21 runtime, avr-gcc 7.3 (AVR5/AVR6 only), avrdude, Arduino AVR core |
-| **Speed** | starts in about 1.5 s (class data archive), compiles in a fraction of a second (precompiled Arduino headers) |
+| **Speed** | starts in about 1 s (no database, class data archive), compiles in a fraction of a second (precompiled Arduino headers) |
 | **Network** | the lab listens on `127.0.0.1` only; at start it asks GitHub once whether a newer version exists (silent when offline) |
 
 ## Download
 
 All files are on the **[latest release](../../releases/latest)**.
 
-**Windows: `BlockCore-Setup.exe`** (≈ 70 MB)
+**Windows: `BlockCore-Setup.exe`** (≈ 55 MB)
 
 1. Run the installer. Windows SmartScreen warns about unsigned programs: **More info → Run anyway**.
 2. It installs to `%LOCALAPPDATA%\Programs\BlockCore` and adds shortcuts to the desktop and the start menu.
 
 No installation wanted? Unzip **`BlockCore-portable.zip`** from the same release (e.g. onto a USB stick) and start `BlockCore.exe`.
 
-**Linux: `BlockCore-linux-x64.tar.gz`** (≈ 110 MB)
+**Linux: `BlockCore-linux-x64.tar.gz`** (≈ 95 MB)
 
 ```bash
 tar -xzf BlockCore-linux-x64.tar.gz
@@ -185,11 +185,15 @@ flowchart LR
 ```
 
 - **`BlockCore.exe`** ([`launcher.c`](Resources/standalone/launcher.c)) on Windows and the script **`BlockCore`**
-  ([`linux/BlockCore`](Resources/standalone/linux/BlockCore)) on Linux show a start window, create the database on the first start, start
-  the server hidden with the bundled Java runtime and open the lab as an app window (Edge, Chrome or Chromium in app mode with a profile
+  ([`linux/BlockCore`](Resources/standalone/linux/BlockCore)) on Linux show a start window, start the server hidden with the bundled Java runtime and open the lab as an app window (Edge, Chrome or Chromium in app mode with a profile
   of its own, otherwise the default browser). Closing that window stops the server: the launcher closes the server's standard input, the
   server ends normally and Java stores the classes it loaded in a class data archive (`cds/blockcore.jsa` in the data folder). The next
-  start maps that archive and is about 40 % faster.
+  start maps that archive and is faster.
+- **No database:** the programs are files in **`Documents/BlockCore`** (`<name>.xml`, the export format of the lab, so every file can
+  also be imported elsewhere; named robot configurations in `configurations/`). Files copied into that folder appear under *my programs*.
+  [`LocalProgramStore`](OpenRobertaServer/src/main/java/de/fhg/iais/roberta/javaServer/restServices/local/LocalProgramStore.java) and
+  the controllers next to it answer the program, configuration and login requests of the lab like the original server did. Programs of
+  BlockCore 1.2 and older (database in the data folder) are copied into the folder on the first start, once.
 - The package build adds [`blockcore.js`](Resources/standalone/branding/web/blockcore.js) to the lab: board selection in the robot
   menu instead of the start page, only English (default) and German, automatic login of a local user, settings with dark theme, pictures of
   the parts, undo / redo keys and the update display. Apart from the update check (GitHub, once per start) the lab contacts no other server.
@@ -241,15 +245,11 @@ libraries it needs. `Resources/standalone/collect-sources.sh` collects the sourc
 `npm ci && npx gulp` in `OpenRobertaWeb/`; the generated files in `OpenRobertaServer/staticResources/js` are checked in.
 
 To run the local mode on Linux (avr-gcc and avrdude from the package manager, Arduino resources from
-[ora-cc-rsc](https://github.com/OpenRoberta/ora-cc-rsc) under `<rsc>/RobotArdu/arduino-resources`), create the database once and start
-the server:
+[ora-cc-rsc](https://github.com/OpenRoberta/ora-cc-rsc) under `<rsc>/RobotArdu/arduino-resources`), start the server (programs in
+`/tmp/blockcore-programs`):
 
 ```bash
-java -cp "OpenRobertaServer/target/resources/*" de.fhg.iais.roberta.main.Administration create-empty-db jdbc:hsqldb:file:/tmp/ora-db/openroberta-db
-```
-
-```bash
-java --add-opens java.base/java.lang=ALL-UNNAMED -cp "OpenRobertaServer/target/resources/*" de.fhg.iais.roberta.main.ServerStarter -d database.mode=embedded -d database.parentdir=/tmp/ora-db -d database.name=openroberta-db -d server.staticresources.dir=OpenRobertaServer/staticResources -d robot.crosscompiler.resourcebase=<rsc> -d server.ip=127.0.0.1 -d server.local.serial=true
+java --add-opens java.base/java.lang=ALL-UNNAMED -cp "OpenRobertaServer/target/resources/*" de.fhg.iais.roberta.main.ServerStarter -d server.local.programs.dir=/tmp/blockcore-programs -d server.staticresources.dir=OpenRobertaServer/staticResources -d robot.crosscompiler.resourcebase=<rsc> -d server.ip=127.0.0.1 -d server.local.serial=true
 ```
 
 ### Test status
@@ -266,6 +266,7 @@ java --add-opens java.base/java.lang=ALL-UNNAMED -cp "OpenRobertaServer/target/r
 
 | Version | Changes |
 |---|---|
+| 1.3 | **No database any more:** programs are files in `Documents/BlockCore` (visible, easy to back up and share; the programs of older versions are copied there automatically). Starts faster (about 1.1 s) and is smaller: Hibernate, the database layer, user accounts and e-mail removed (53 instead of 74 Java libraries, 17 instead of 33 MB). Every release contains the source code of the GPL / LGPL software (`BlockCore-third-party-sources.tar`) |
 | 1.2 | **Linux version** (`BlockCore-linux-x64.tar.gz`). Faster: start about 40 % faster (class data archive), compiling about 4 × faster from the second program on (precompiled headers), Nano uploads with the old bootloader without the failing first attempt; packages smaller (Windows installer ≈ 70 MB instead of 83 MB) – unused Java libraries, Arduino libraries of other robots and compiler parts removed. Licences of all included software in `THIRD-PARTY-NOTICES.md` (also in the packages and under *edit → Settings → Licenses*) |
 | 1.1 | Settings (edit → Settings) with dark theme (default), language, block size, grid, sounds, start board, serial monitor and update channel (stable / beta); new sensors MPU6050, analog joystick, DS18B20; pictures of the parts on the configuration blocks; ultrasonic sensor, TCS34725 and L293D motor also in the beginner toolbox; undo / redo with Ctrl+Z / Ctrl+Y; menus work after the window was small; everything that is not needed for the Arduino removed (other robots, simulation, neural network, connectors, other languages) |
 | 1.0.15 – 1.0.19 | Versioned releases, version below the logo, update check and one-click update, upload panel with progress bar and check mark, USB symbol, COM port of the last upload is selected again, animated start window, BlockCore logo in the workspace, motor driver and colour sensor no longer slow down fast loops |

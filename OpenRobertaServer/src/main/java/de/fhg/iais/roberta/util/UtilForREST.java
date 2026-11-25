@@ -20,8 +20,6 @@ import com.google.inject.Inject;
 import de.fhg.iais.roberta.generated.restEntities.BaseResponse;
 import de.fhg.iais.roberta.generated.restEntities.FullRestRequest;
 import de.fhg.iais.roberta.javaServer.restServices.all.controller.ClientAdmin;
-import de.fhg.iais.roberta.persistence.AbstractProcessor;
-import de.fhg.iais.roberta.persistence.util.DbSession;
 import de.fhg.iais.roberta.persistence.util.HttpSessionState;
 import de.fhg.iais.roberta.robotCommunication.RobotCommunicationData;
 import de.fhg.iais.roberta.robotCommunication.RobotCommunicationData.State;
@@ -78,27 +76,6 @@ public class UtilForREST {
     }
 
     /**
-     * all REST services, excluded is only the /init request, have to call this method. It processes the init-token, which protects user and server against a
-     * frontend session not backed up by a backend session (occurs only when the server is restarted)<br>
-     *
-     * @param dbSession to be closed, when the http session is invalid (server restart); may be null
-     * @param loggerForRequest
-     * @param fullRequest
-     * @param rememberTheCall if true, count the request as a real call (a login, e.g.); otherwise don't increase the call counter (a ping, e.g.)
-     * @return
-     */
-    public static HttpSessionState handleRequestInit(DbSession dbSession, Logger loggerForRequest, FullRestRequest fullRequest, boolean rememberTheCall) {
-        try {
-            return handleRequestInit(loggerForRequest, fullRequest, rememberTheCall);
-        } catch ( Exception e ) {
-            if ( dbSession != null ) {
-                dbSession.close();
-            }
-            throw e;
-        }
-    }
-
-    /**
      * validate the init-token from the frontend-request and the init-token from the state stored in this object.<br>
      * If an error is detected a {@linkplain DbcKeyException} is thrown.<br>
      * <i>Only for debugging:</i> if the init-token in this object is set to "", all checks are disabled. This should <i>NEVER</i> happen, when a real server is
@@ -127,15 +104,6 @@ public class UtilForREST {
             }
             return httpSessionState;
         }
-    }
-
-    public static <T extends BaseResponse> void addResultInfo(T response, AbstractProcessor processor) throws JSONException {
-        String realKey = processor.getMessage().getKey();
-        String responseCode = processor.succeeded() ? "ok" : "error";
-        response.setRc(responseCode);
-        response.setMessage(realKey);
-        response.setCause(realKey);
-        response.setParameters(processor.getParameters());
     }
 
     public static <T extends BaseResponse> T addSuccessInfo(T response, Key key) throws JSONException {

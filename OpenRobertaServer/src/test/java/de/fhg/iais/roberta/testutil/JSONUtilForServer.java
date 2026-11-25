@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import de.fhg.iais.roberta.generated.restEntities.FullRestRequest;
 import de.fhg.iais.roberta.javaServer.restServices.all.controller.ClientAdmin;
 import de.fhg.iais.roberta.javaServer.restServices.robot.RobotCommand;
-import de.fhg.iais.roberta.persistence.util.DbSession;
 import de.fhg.iais.roberta.persistence.util.HttpSessionState;
 import de.fhg.iais.roberta.util.Key;
 import de.fhg.iais.roberta.util.test.SenderReceiverJUnit;
@@ -178,7 +177,6 @@ public class JSONUtilForServer {
         final RobotCommand brickCommand,
         final ClientAdmin restBlocks,
         final HttpSessionState sessionState,
-        final DbSession dbSession,
         final String token)
         throws Exception //
     {

@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 
-import de.fhg.iais.roberta.persistence.util.DbSession;
 import de.fhg.iais.roberta.persistence.util.HttpSessionState;
 import de.fhg.iais.roberta.robotCommunication.RobotCommunicator;
 import de.fhg.iais.roberta.util.AliveData;
@@ -85,19 +84,8 @@ public class ServerData {
     @Produces(MediaType.APPLICATION_JSON)
     public Response tellUsageOfHttpAndDatabaseSessions() throws Exception {
         JSONObject answer = new JSONObject();
-        answer.put("dbSessions", DbSession.getOpenSessionCounter());
-        answer.put("unusedDbSessions", DbSession.getUnusedSessionCounter());
-        answer.put("cleanedDbSessions", DbSession.getCleanedSessionCounter());
         answer.put("httpSessions", HttpSessionState.getNumberOfHttpSessionStates());
         return Response.ok(answer.toString()).build();
-    }
-
-    @Path("/server/dbsessions")
-    @GET
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response tellUsageOfDatabaseSessions() throws Exception {
-        String dbSessionData = DbSession.getInfoAboutOpenDbDessions();
-        return Response.ok(dbSessionData).build();
     }
 
     @Path("/robot/whitelist")

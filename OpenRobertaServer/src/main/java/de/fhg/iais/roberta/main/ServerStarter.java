@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,11 +35,9 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import de.fhg.iais.roberta.factory.RobotFactory;
 import de.fhg.iais.roberta.guice.RobertaGuiceServletConfig;
-import de.fhg.iais.roberta.persistence.bo.Robot;
-import de.fhg.iais.roberta.persistence.dao.RobotDao;
-import de.fhg.iais.roberta.persistence.util.DbSession;
+import de.fhg.iais.roberta.javaServer.restServices.local.LocalDatabaseMigration;
+import de.fhg.iais.roberta.javaServer.restServices.local.LocalProgramStore;
 import de.fhg.iais.roberta.persistence.util.HttpSessionState;
-import de.fhg.iais.roberta.persistence.util.SessionFactoryWrapper;
 import de.fhg.iais.roberta.robotCommunication.RobotCommunicator;
 import de.fhg.iais.roberta.transformer.AnnotationHelper;
 import de.fhg.iais.roberta.transformer.NepoAnnotationException;
@@ -61,7 +58,7 @@ import joptsimple.OptionSpec;
  * - configures jersey and the package with the resources<br>
  * - configures jaxb and the package with the providers<br>
  * - configures a resource holder for static content<br>
- * - configures hibernate and tests the connection to the database.<br>
+ * - BlockCore: the programs of the local user are files (see {@link LocalProgramStore}), there is no database.<br>
  * <br>
  *
  * @author rbudde
@@ -73,7 +70,6 @@ public class ServerStarter {
     private static final String LOG_LEVEL_KEY = "server.log.level=";
 
     private static final long INTERVAL_HTTPSESSION_EXPIRE_SEC = TimeUnit.HOURS.toSeconds(3);
-    private static final long INTERVAL_DB_SESSION_EXPIRE_SEC = TimeUnit.MINUTES.toSeconds(15);
 
     private final ServerProperties serverProperties; // for the startup
     private Injector injector;
@@ -114,7 +110,7 @@ public class ServerStarter {
 
     /**
      * the BlockCore launcher keeps a pipe to the standard input of the server open while the lab window is open. When it closes the pipe (or when
-     * the launcher ends), the server stops <b>normally</b>: the database is closed cleanly and the JVM writes its class data archive (see the
+     * the launcher ends), the server stops <b>normally</b>: the JVM writes its class data archive (see the
      * launcher, -XX:+AutoCreateSharedArchive), which makes the next start faster.
      */
     private static void exitWhenStdinCloses() {
@@ -141,7 +137,6 @@ public class ServerStarter {
      */
     public ServerStarter(String propertyPath, List<String> serverDefines) {
         Properties properties = Util.loadAndMergeOpenRobertaServerProperties(propertyPath, serverDefines);
-        setupPropertyForDatabaseConnection(properties);
         this.serverProperties = new ServerProperties(properties);
         UtilForREST.setServerVersion(this.serverProperties.getStringProperty("openRobertaServer.version"));
     }
@@ -190,7 +185,8 @@ public class ServerStarter {
         RobertaGuiceServletConfig robertaGuiceServletConfig =
             new RobertaGuiceServletConfig(this.serverProperties, robotPluginMap, robotCommunicator, ipToCountry);
 
-        configureCleanupThreads(); // setup a service to cleanup expired http sessions and expired database sessions
+        configureCleanupThreads(); // setup a service to cleanup expired http sessions
+        configureProgramStore();
 
         //  REST API with /rest prefix
         ServletContextHandler restHttpHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
@@ -241,11 +237,7 @@ public class ServerStarter {
         }
 
         this.injector = robertaGuiceServletConfig.getCreatedInjector();
-        DbSession dbSession = this.injector.getInstance(SessionFactoryWrapper.class).getSession();  // session is closed in the method called below
-        checkRobotPluginsDB(dbSession, robotPluginMap.values());
         checkAstClassAnnotations();
-        Runtime.getRuntime().addShutdownHook(new ShutdownHook("embedded".equals(this.serverProperties.getStringProperty("database.mode")), this.injector));
-        LOG.info("Shutdown hook added. If the server is gracefully stopped in the future, a shutdown message is logged");
 
         return server;
     }
@@ -360,9 +352,20 @@ public class ServerStarter {
     }
 
     /**
-     * configure threads, that runs periodically a service,<br>
-     * - that will remove expired HttpSessionState objects<br>
-     * - that will remove expired database sessions
+     * the programs of the local user: files in server.local.programs.dir (default: &lt;server.admin.dir&gt;/programs). The programs of the
+     * database of an older BlockCore (server.local.olddb) are copied once.
+     */
+    private void configureProgramStore() {
+        LocalProgramStore store =
+            LocalProgramStore
+                .init(
+                    LocalProgramStore
+                        .directoryFor(this.serverProperties.getStringProperty("server.local.programs.dir"), this.serverProperties.getStringProperty("server.admin.dir")));
+        LocalDatabaseMigration.migrateIfNeeded(this.serverProperties.getStringProperty("server.local.olddb"), store);
+    }
+
+    /**
+     * configure a thread, that runs periodically a service, that removes expired HttpSessionState objects
      */
     private void configureCleanupThreads() {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(0);
@@ -372,35 +375,7 @@ public class ServerStarter {
                 HttpSessionState.removeExpired();
             }
         };
-        Runnable cleanupDbSession = new Runnable() {
-            @Override
-            public void run() {
-                DbSession.cleanupSessions();
-            }
-        };
         scheduler.scheduleAtFixedRate(cleanupHttpSessionState, INTERVAL_HTTPSESSION_EXPIRE_SEC + 1, INTERVAL_HTTPSESSION_EXPIRE_SEC, TimeUnit.SECONDS);
-        scheduler.scheduleAtFixedRate(cleanupDbSession, INTERVAL_DB_SESSION_EXPIRE_SEC + 2, INTERVAL_DB_SESSION_EXPIRE_SEC, TimeUnit.SECONDS);
-    }
-
-    /**
-     * setup the hibernate.connection.url and add it to the properties. From there it is retrieved later by GUICE.
-     *
-     * @param properties for configuring OpenRoberta, merged from property file and runtime arguments.
-     */
-    private void setupPropertyForDatabaseConnection(Properties properties) {
-        String databaseParentDir = properties.getProperty("database.parentdir");
-        String databaseUri = properties.getProperty("database.uri");
-        String databaseName = properties.getProperty("database.name");
-        String databaseMode = properties.getProperty("database.mode");
-        String dbUrl;
-        if ( "embedded".equals(databaseMode) ) {
-            dbUrl = "jdbc:hsqldb:file:" + databaseParentDir + "/" + databaseName + ";ifexists=true";
-        } else if ( "server".equals(databaseMode) ) {
-            dbUrl = "jdbc:hsqldb:hsql://" + databaseUri + "/" + databaseName;
-        } else {
-            throw new DbcException("invalid database mode (use either embedded or server): " + databaseMode);
-        }
-        properties.put("hibernate.connection.url", dbUrl);
     }
 
     /**
@@ -411,35 +386,6 @@ public class ServerStarter {
         AstFactory.getAstClasses().stream()
             .filter(AnnotationHelper::isNepoAnnotatedClass)
             .forEach(AnnotationHelper::checkNepoAnnotatedClass);
-    }
-
-    /**
-     * step through all configured robot factories and make sure, that the group name of each robot (or its name, if no group is configured) is in the
-     * database.<br>
-     * This is required, because the robot (group) name is used as foreign key in some tables. The method is public and static because it is used
-     * in class {@link RestInterfaceTest}
-     *
-     * @param robotFactories collection of all configured robot factories
-     */
-    public static void checkRobotPluginsDB(DbSession dbSession, Collection<RobotFactory> robotFactories) {
-        try {
-            LOG.error("Match robot plugins and database rows of table ROBOT");
-            RobotDao robotDao = new RobotDao(dbSession);
-            for ( RobotFactory robotFactory : robotFactories ) {
-                String robotForDb = robotFactory.getGroup();
-                Robot pluginRobot = robotDao.loadRobot(robotForDb);
-                if ( pluginRobot == null ) {
-                    // add missing robot type to database
-                    Robot robot = new Robot(robotForDb);
-                    dbSession.save(robot);
-                    ServerStarter.LOG.info(robot.getName() + " added to the database");
-                }
-            }
-            dbSession.close();
-        } catch ( Exception e ) {
-            LOG.error("Server could not check robot names in the database (exit 20)", e);
-            System.exit(20);
-        }
     }
 
     private static String extractValue(String valueMaybeQuoted) {
