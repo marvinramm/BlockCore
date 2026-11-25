@@ -35,4 +35,15 @@ public class LocalSerialControllerTest {
         assertEquals("wiring", LocalSerialController.AvrdudeTarget.forRobot("mega").programmer);
         assertNull(LocalSerialController.AvrdudeTarget.forRobot("ev3dev"));
     }
+
+    @Test
+    public void baudratesToTry_startsWithTheOneThatWorkedLastTime() {
+        LocalSerialController.AvrdudeTarget nano = LocalSerialController.AvrdudeTarget.forRobot("nano");
+        LocalSerialController.AvrdudeTarget uno = LocalSerialController.AvrdudeTarget.forRobot("uno");
+        assertArrayEquals(new int[] {115200, 57600}, LocalSerialController.baudratesToTry(nano, null));
+        assertArrayEquals(new int[] {115200, 57600}, LocalSerialController.baudratesToTry(nano, 115200));
+        assertArrayEquals(new int[] {57600, 115200}, LocalSerialController.baudratesToTry(nano, 57600));
+        assertArrayEquals(new int[] {115200}, LocalSerialController.baudratesToTry(uno, 57600));
+        assertArrayEquals(new int[] {115200, 57600}, LocalSerialController.baudratesToTry(nano, 9600));
+    }
 }

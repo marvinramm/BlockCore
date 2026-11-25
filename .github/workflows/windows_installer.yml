@@ -1,10 +1,11 @@
 name: Windows-Installer
 
 # The version is <major.minor from the file VERSION>.<build number>, e.g. 1.0.15; the release tag is v1.0.15.
+# (The build number is the run number of this workflow: do not rename this file, the numbers would start at 1 again.)
 # Branch main: stable releases ("latest"). Branch next: pre-releases (1.1.20-beta), offered only to users on the beta channel.
-# Builds BlockCore for Windows (installer and portable zip) on every push to main
-# (or by hand: Actions -> Windows-Installer -> Run workflow) and publishes both as a GitHub release.
-# See Resources/windowsStandalone/build-windows.sh
+# Builds BlockCore for Windows (installer and portable zip) and Linux (tar.gz) on every push to main and next
+# (or by hand: Actions -> Windows-Installer -> Run workflow) and publishes them as a GitHub release.
+# See Resources/standalone/build-windows.sh and build-linux.sh
 
 on:
   push:
@@ -36,13 +37,13 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
-      - name: Cache downloaded Windows tools
+      - name: Cache downloaded tools
         uses: actions/cache@v4
         with:
-          path: target/windowsStandalone/downloads
-          key: windows-downloads-${{ hashFiles('Resources/windowsStandalone/build-windows.sh') }}
-      - name: Install cross compiler and installer builder
-        run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64 nsis zip unzip
+          path: target/standalone/downloads
+          key: standalone-downloads-${{ hashFiles('Resources/standalone/common.sh', 'Resources/standalone/build-windows.sh', 'Resources/standalone/build-linux.sh') }}
+      - name: Install cross compiler, installer builder and avrdude (for the Linux package)
+        run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64 nsis zip unzip avrdude
       - name: Build with maven
         run: mvn --batch-mode clean install -DskipTests
       - name: Version (major.minor from the file VERSION, the build number as patch; -beta on the branch next)
@@ -50,8 +51,10 @@ jobs:
           if [ "${{ github.ref_name }}" = "next" ]; then suffix="-beta"; prerelease=true; else suffix=""; prerelease=false; fi
           echo "BLOCKCORE_VERSION=$(tr -d '[:space:]' < VERSION).${{ github.run_number }}$suffix" >> "$GITHUB_ENV"
           echo "PRERELEASE=$prerelease" >> "$GITHUB_ENV"
-      - name: Build the Windows standalone lab
-        run: Resources/windowsStandalone/build-windows.sh target/windowsStandalone
+      - name: Build BlockCore for Windows
+        run: Resources/standalone/build-windows.sh target/standalone
+      - name: Build BlockCore for Linux
+        run: Resources/standalone/build-linux.sh target/standalone
       - name: Publish the release
         id: publish
         continue-on-error: true
@@ -63,17 +66,21 @@ jobs:
           prerelease: ${{ env.PRERELEASE == 'true' }}
           make_latest: ${{ env.PRERELEASE == 'true' && 'false' || 'true' }}
           body: |
-            **BlockCore ${{ env.BLOCKCORE_VERSION }}** for Windows${{ env.PRERELEASE == 'true' && ' – pre-release for testing (beta channel)' || '' }}
+            **BlockCore ${{ env.BLOCKCORE_VERSION }}** for Windows and Linux${{ env.PRERELEASE == 'true' && ' – pre-release for testing (beta channel)' || '' }}
 
-            Download **BlockCore-Setup.exe** and install it (no admin rights needed).
+            **Windows:** download **BlockCore-Setup.exe** and install it (no admin rights needed).
             Or unzip **BlockCore-portable.zip** and start `BlockCore.exe`.
+
+            **Linux (x86_64):** download **BlockCore-linux-x64.tar.gz**, unpack it (`tar -xzf BlockCore-linux-x64.tar.gz`) and start `BlockCore/BlockCore`.
+            `BlockCore/BlockCore --install` adds it to the application menu. See `README.txt` for the serial port permission.
 
             Guide and help: see the [README](https://github.com/${{ github.repository }}#readme).
 
             Commit: ${{ github.sha }}
           files: |
-            target/windowsStandalone/BlockCore-Setup.exe
-            target/windowsStandalone/BlockCore-portable.zip
+            target/standalone/BlockCore-Setup.exe
+            target/standalone/BlockCore-portable.zip
+            target/standalone/BlockCore-linux-x64.tar.gz
       - name: Wait before the second attempt (GitHub answers 500 now and then)
         if: steps.publish.outcome == 'failure'
         run: sleep 60
@@ -87,14 +94,18 @@ jobs:
           prerelease: ${{ env.PRERELEASE == 'true' }}
           make_latest: ${{ env.PRERELEASE == 'true' && 'false' || 'true' }}
           body: |
-            **BlockCore ${{ env.BLOCKCORE_VERSION }}** for Windows${{ env.PRERELEASE == 'true' && ' – pre-release for testing (beta channel)' || '' }}
+            **BlockCore ${{ env.BLOCKCORE_VERSION }}** for Windows and Linux${{ env.PRERELEASE == 'true' && ' – pre-release for testing (beta channel)' || '' }}
 
-            Download **BlockCore-Setup.exe** and install it (no admin rights needed).
+            **Windows:** download **BlockCore-Setup.exe** and install it (no admin rights needed).
             Or unzip **BlockCore-portable.zip** and start `BlockCore.exe`.
+
+            **Linux (x86_64):** download **BlockCore-linux-x64.tar.gz**, unpack it (`tar -xzf BlockCore-linux-x64.tar.gz`) and start `BlockCore/BlockCore`.
+            `BlockCore/BlockCore --install` adds it to the application menu. See `README.txt` for the serial port permission.
 
             Guide and help: see the [README](https://github.com/${{ github.repository }}#readme).
 
             Commit: ${{ github.sha }}
           files: |
-            target/windowsStandalone/BlockCore-Setup.exe
-            target/windowsStandalone/BlockCore-portable.zip
+            target/standalone/BlockCore-Setup.exe
+            target/standalone/BlockCore-portable.zip
+            target/standalone/BlockCore-linux-x64.tar.gz

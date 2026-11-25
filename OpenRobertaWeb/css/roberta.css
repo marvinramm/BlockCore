@@ -731,52 +731,6 @@ button#simCustomObstacle.typcn:before {
     color: #009EE3;
 }
 
-.huebee__container {
-    position: absolute;
-    left: -50px;
-    top: 6px;
-    padding: 24px 10px 10px;
-    background: #e7e7e7;
-    border-radius: 2px;
-    box-shadow: none;
-}
-
-.huebee__cursor {
-    border: 5px solid #fff;
-    border-radius: 2px;
-    width: 30px;
-    height: 30px;
-}
-
-.huebee {
-    /* disable reveal/hide transition */
-    transition: none;
-}
-
-.huebee__close-button {
-    display: block;
-    position: absolute;
-    width: 24px;
-    height: 24px;
-    top: 0;
-    right: 0;
-    border-radius: 0;
-    background: none;
-}
-
-.huebee__close-button__x {
-    stroke-width: 2;
-    stroke: #bbb;
-}
-
-.huebee__close-button__x:hover, .huebee__close-button__x:focus {
-    stroke: #333;
-}
-
-.huebee__close-button:hover, .huebee__close-button:focus {
-    background: #e7e7e7;
-}
-
 #codeButtons {
     left: 12px;
     bottom: 0;

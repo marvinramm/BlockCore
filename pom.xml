@@ -145,11 +145,6 @@
                 <version>9.4.15.v20190215</version>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.jetty.websocket</groupId>
-                <artifactId>websocket-server</artifactId>
-                <version>9.4.15.v20190215</version>
-            </dependency>
-            <dependency>
                 <groupId>com.sun.jersey</groupId>
                 <artifactId>jersey-servlet</artifactId>
                 <version>1.19.4</version>
@@ -264,7 +259,7 @@
             </dependency>
             <dependency>
                 <groupId>org.antlr</groupId>
-                <artifactId>antlr4</artifactId>
+                <artifactId>antlr4-runtime</artifactId>
                 <version>4.7.2</version>
             </dependency>
             <dependency>
@@ -314,11 +309,6 @@
                 <groupId>com.google.code.findbugs</groupId>
                 <artifactId>annotations</artifactId>
                 <version>3.0.1</version>
-            </dependency>
-            <dependency>
-                <groupId>com.jcraft</groupId>
-                <artifactId>jsch</artifactId>
-                <version>0.1.54</version>
             </dependency>
             <dependency>
                 <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>

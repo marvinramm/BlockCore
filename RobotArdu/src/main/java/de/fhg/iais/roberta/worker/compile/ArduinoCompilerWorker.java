@@ -104,11 +104,12 @@ public class ArduinoCompilerWorker implements ICompilerWorker {
         Pair<Boolean, String> result;
 
         if ( useDirectBuild(project.getRobot(), arduinoArch) ) {
-            // no bash on Windows: run the AVR toolchain directly (see ArduinoAvrDirectBuild)
+            // run the AVR toolchain directly, with a precompiled header (see ArduinoAvrDirectBuild)
             result =
                 ArduinoAvrDirectBuild
                     .build(
                         compilerResourcesDir,
+                        tempDir,
                         project.getRobot(),
                         boardVariant,
                         mmcu,
@@ -144,11 +145,11 @@ public class ArduinoCompilerWorker implements ICompilerWorker {
     }
 
     /**
-     * The AVR boards are built without bash on Windows. Setting the system property <code>ora.arduino.directBuild=true</code> enables this on other
-     * systems, too (used for tests).
+     * The AVR boards are built without the bash script build_project.sh (no bash on Windows, faster everywhere). The system property
+     * <code>ora.arduino.directBuild=false</code> selects the script again.
      */
     static boolean useDirectBuild(String robot, String arduinoArch) {
-        return ArduinoAvrDirectBuild.isSupported(robot, arduinoArch) && (SystemUtils.IS_OS_WINDOWS || Boolean.getBoolean("ora.arduino.directBuild"));
+        return ArduinoAvrDirectBuild.isSupported(robot, arduinoArch) && !"false".equals(System.getProperty("ora.arduino.directBuild"));
     }
 
     static void storeBundledHeaders(Path sourceDir, String crosscompilerSource) {

@@ -2,39 +2,62 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/code-Apache%202.0-blue.svg)](LICENSE)
 [![License: CC BY 4.0](https://img.shields.io/badge/docs-CC%20BY%204.0-lightgrey.svg)](docs/LICENSE)
-[![Windows installer](https://github.com/marvinramm/BlockCore/actions/workflows/windows_installer.yml/badge.svg)](../../actions/workflows/windows_installer.yml)
+[![Release build](https://github.com/marvinramm/BlockCore/actions/workflows/windows_installer.yml/badge.svg)](../../actions/workflows/windows_installer.yml)
 
-**Offline block programming for Arduino on Windows: install it, plug in an Arduino, pick its COM port, snap blocks together and press ▶. Compiler, upload and serial monitor run on your own PC – no internet, no server, no connector app.**
+**Offline block programming for Arduino on Windows and Linux: install it, plug in an Arduino, pick its port, snap blocks together and press ▶. Compiler, upload and serial monitor run on your own PC – no internet, no server, no connector app.**
 
 ![BlockCore with a line follower program, just uploaded to COM3](docs/images/hero.jpg)
 
 BlockCore is a standalone edition of the [Open Roberta Lab](https://lab.open-roberta.org) by Fraunhofer IAIS. The online lab needs a server
-and a separate connector program to reach the robot; BlockCore packs the whole lab, the AVR compiler and the uploader into one Windows
-program that opens in its own window. On top it adds blocks for the hardware we use in class: the **TCS34725 colour sensor** and the
+and a separate connector program to reach the robot; BlockCore packs the whole lab, the AVR compiler and the uploader into one program
+for Windows or Linux that opens in its own window. On top it adds blocks for the hardware we use in class: the **TCS34725 colour sensor** and the
 **L293D motor shield**.
 
 | | |
 |---|---|
 | **Boards** | Arduino Uno, Arduino Nano (new and old bootloader), Arduino Mega 2560 |
-| **Runs on** | Windows 10 / 11 (64 bit), no admin rights needed; opens as its own window (no browser tabs, no console) |
+| **Runs on** | Windows 10 / 11 (64 bit) and Linux (x86_64: Ubuntu 22.04, Debian 12, Fedora 36, Mint 21 or newer), no admin rights needed; opens as its own window (no browser tabs, no console) |
 | **Upload** | over the USB COM port with avrdude, port selected in the lab |
 | **Serial monitor** | own window: baud rate, timestamps, autoscroll, send line; pauses itself during an upload |
 | **Extra blocks** | TCS34725 colour sensor (red / green / white / black, light, RGB channels), MPU6050 gyro (tilt, rotation, acceleration), analog joystick, DS18B20 temperature probe, L293D motor shield (M1–M4) |
 | **Look** | dark (default) or light theme, pictures of the parts on the configuration blocks, settings in *edit → Settings* |
 | **Languages** | English (default) and German, switchable in the program |
-| **Inside** | Open Roberta server with a trimmed Java 21 runtime, avr-gcc 7.3 (AVR5/AVR6 only), avrdude 7.3, Arduino AVR core |
+| **Inside** | Open Roberta server with a trimmed Java 21 runtime, avr-gcc 7.3 (AVR5/AVR6 only), avrdude, Arduino AVR core |
+| **Speed** | starts in about 1.5 s (class data archive), compiles in a fraction of a second (precompiled Arduino headers) |
 | **Network** | the lab listens on `127.0.0.1` only; at start it asks GitHub once whether a newer version exists (silent when offline) |
 
 ## Download
 
-**[⬇ BlockCore-Setup.exe – latest release](../../releases/latest)** (≈ 110 MB)
+All files are on the **[latest release](../../releases/latest)**.
+
+**Windows: `BlockCore-Setup.exe`** (≈ 70 MB)
 
 1. Run the installer. Windows SmartScreen warns about unsigned programs: **More info → Run anyway**.
 2. It installs to `%LOCALAPPDATA%\Programs\BlockCore` and adds shortcuts to the desktop and the start menu.
 
 No installation wanted? Unzip **`BlockCore-portable.zip`** from the same release (e.g. onto a USB stick) and start `BlockCore.exe`.
 
-Every push to `main` builds a new installer and publishes it as a release
+**Linux: `BlockCore-linux-x64.tar.gz`** (≈ 110 MB)
+
+```bash
+tar -xzf BlockCore-linux-x64.tar.gz
+```
+
+```bash
+BlockCore/BlockCore --install
+```
+
+`--install` adds BlockCore to the application menu (no root needed); `BlockCore/BlockCore` starts it directly. The window is Chrome,
+Chromium, Edge, Brave or Vivaldi in app mode (otherwise your default browser). For uploads your user must be in the group `dialout`
+(Arch: `uucp`) once – BlockCore tells you if it is missing:
+
+```bash
+sudo usermod -aG dialout $USER
+```
+
+Then log out and in again. On Ubuntu with CH340 clones, remove `brltty` if no port shows up (`sudo apt remove brltty`).
+
+Every push to `main` builds new packages and publishes them as a release
 ([Actions → Windows-Installer](../../actions/workflows/windows_installer.yml)).
 
 ## Getting started
@@ -150,9 +173,9 @@ For the first-generation Adafruit motor shield (L293D + 74HC595 shift register) 
 
 ```mermaid
 flowchart LR
-    subgraph PC["Windows PC"]
-        L["BlockCore.exe<br/>(launcher)"] -->|starts| S["lab server<br/>Java, 127.0.0.1:1999"]
-        W["BlockCore window<br/>Edge app mode"] <-->|HTTP| S
+    subgraph PC["Windows / Linux PC"]
+        L["BlockCore.exe / BlockCore<br/>(launcher)"] -->|starts| S["lab server<br/>Java, 127.0.0.1:1999"]
+        W["BlockCore window<br/>Edge / Chrome app mode"] <-->|HTTP| S
         M["serial monitor<br/>window"] <-->|HTTP| S
         S -->|generate C++, compile| G["avr-gcc"]
         S -->|upload hex| D["avrdude"]
@@ -161,10 +184,13 @@ flowchart LR
     S <-->|serial monitor| A
 ```
 
-- **`BlockCore.exe`** ([`launcher.c`](Resources/windowsStandalone/launcher.c)) shows a start window, creates the database on the first
-  start, starts the server hidden with the bundled Java runtime and opens the lab as an app window (Microsoft Edge or Chrome in app mode
-  with a profile of its own, otherwise the default browser). Closing that window stops the server.
-- The package build adds [`blockcore.js`](Resources/windowsStandalone/branding/web/blockcore.js) to the lab: board selection in the robot
+- **`BlockCore.exe`** ([`launcher.c`](Resources/standalone/launcher.c)) on Windows and the script **`BlockCore`**
+  ([`linux/BlockCore`](Resources/standalone/linux/BlockCore)) on Linux show a start window, create the database on the first start, start
+  the server hidden with the bundled Java runtime and open the lab as an app window (Edge, Chrome or Chromium in app mode with a profile
+  of its own, otherwise the default browser). Closing that window stops the server: the launcher closes the server's standard input, the
+  server ends normally and Java stores the classes it loaded in a class data archive (`cds/blockcore.jsa` in the data folder). The next
+  start maps that archive and is about 40 % faster.
+- The package build adds [`blockcore.js`](Resources/standalone/branding/web/blockcore.js) to the lab: board selection in the robot
   menu instead of the start page, only English (default) and German, automatic login of a local user, settings with dark theme, pictures of
   the parts, undo / redo keys and the update display. Apart from the update check (GitHub, once per start) the lab contacts no other server.
 - BlockCore contains only what an Arduino lab needs: the Open Roberta plugins of other robots, the simulation, the neural network, the robot
@@ -172,14 +198,18 @@ flowchart LR
 - The server runs in **local mode** (`server.local.serial=true`): it lists the COM ports (`/rest/local/ports`), compiles without a robot
   token, uploads with avrdude (`/rest/local/upload`) and runs the serial monitor (`/rest/local/monitor/*`). These services only answer
   requests from the same PC and from pages of this server.
-- On Windows the AVR boards are compiled without bash: `ArduinoAvrDirectBuild` calls avr-g++, avr-gcc and avr-objcopy directly.
+- The AVR boards are compiled without bash: `ArduinoAvrDirectBuild` calls avr-g++, avr-gcc and avr-objcopy directly. Every generated
+  program includes the Arduino core and the ArduinoSTL (over 2000 header files); after the first program of a board these headers are
+  compiled once into a precompiled header (`blockcore-pch/` in the temporary folder), and every further program compiles in a fraction of
+  the time – with byte for byte the same result. Uploads remember the baud rate that worked for a board and port (Nano with the old
+  bootloader).
 - On a normal, public lab server the local mode is off and everything works as in the original (token and connector).
 
 ## Repository layout
 
 ```
-Resources/windowsStandalone/      Launcher (C), build script, NSIS installer, branding, LIESMICH
-.github/workflows/                windows_installer.yml builds and releases the installer
+Resources/standalone/             build-windows.sh, build-linux.sh, common.sh, Windows launcher (C), NSIS installer, linux/ launcher, branding
+.github/workflows/                windows_installer.yml builds and releases the Windows and Linux packages
 OpenRobertaServer/                Lab server; local mode in javaServer/restServices/local/, serial monitor page staticResources/serial.html
 OpenRobertaWeb/                   Frontend (TypeScript); LocalSerialOrTokenConnection in .../controller/connections/connections.ts
 RobotArdu/                        Arduino plugin (Uno, Nano, Mega): blocks and drivers (TCS34725, MPU6050, DS18B20, L293D), direct AVR build
@@ -189,18 +219,24 @@ docs/                             Guide for students, images, CC BY 4.0 license 
 
 ## Building
 
-On Linux (e.g. Ubuntu) with Java 11+, Maven, `gcc-mingw-w64-x86-64`, `nsis`, `zip`, `unzip` and `curl`:
+On Linux (e.g. Ubuntu) with Java 11+, Maven, `python3`, `gcc-mingw-w64-x86-64`, `nsis`, `zip`, `unzip`, `curl` and `avrdude`:
 
 ```bash
 mvn clean install -DskipTests
 ```
 
 ```bash
-Resources/windowsStandalone/build-windows.sh target/windowsStandalone
+Resources/standalone/build-windows.sh target/standalone
 ```
 
-The result is `target/windowsStandalone/BlockCore-Setup.exe` and `BlockCore-portable.zip`. The script downloads Temurin JRE 11,
-avr-gcc 7.3, avrdude 7.3 and the Arduino resources from GitHub and only packs the AVR boards. The frontend is built with
+```bash
+Resources/standalone/build-linux.sh target/standalone
+```
+
+The result is `target/standalone/BlockCore-Setup.exe`, `BlockCore-portable.zip` and `BlockCore-linux-x64.tar.gz`. The scripts download
+Temurin JDK 21 (for jlink), avr-gcc 7.3, avrdude 7.3 (Windows) and the Arduino resources from GitHub and only pack the AVR boards and the
+Arduino libraries the code generator uses. The Linux package takes avrdude from the build system (Ubuntu package) together with the
+libraries it needs. The frontend is built with
 `npm ci && npx gulp` in `OpenRobertaWeb/`; the generated files in `OpenRobertaServer/staticResources/js` are checked in.
 
 To run the local mode on Linux (avr-gcc and avrdude from the package manager, Arduino resources from
@@ -212,7 +248,7 @@ java -cp "OpenRobertaServer/target/resources/*" de.fhg.iais.roberta.main.Adminis
 ```
 
 ```bash
-java --add-opens java.base/java.lang=ALL-UNNAMED -Dora.arduino.directBuild=true -cp "OpenRobertaServer/target/resources/*" de.fhg.iais.roberta.main.ServerStarter -d database.mode=embedded -d database.parentdir=/tmp/ora-db -d database.name=openroberta-db -d server.staticresources.dir=OpenRobertaServer/staticResources -d robot.crosscompiler.resourcebase=<rsc> -d server.ip=127.0.0.1 -d server.local.serial=true
+java --add-opens java.base/java.lang=ALL-UNNAMED -cp "OpenRobertaServer/target/resources/*" de.fhg.iais.roberta.main.ServerStarter -d database.mode=embedded -d database.parentdir=/tmp/ora-db -d database.name=openroberta-db -d server.staticresources.dir=OpenRobertaServer/staticResources -d robot.crosscompiler.resourcebase=<rsc> -d server.ip=127.0.0.1 -d server.local.serial=true
 ```
 
 ### Test status
@@ -222,12 +258,14 @@ java --add-opens java.base/java.lang=ALL-UNNAMED -Dora.arduino.directBuild=true 
 - Complete flow in the browser (port selection, compile, upload, messages) for Uno, Nano and Mega on Linux with the files of the Windows
   package; serial monitor tested with a virtual serial port (receive incl. UTF-8, send, pause and resume around an upload).
 - The colour sensor driver compiles against the Arduino AVR core and was tested with simulated readings.
-- **Still open:** a test on a real Windows PC and with a real TCS34725.
+- Linux package: launcher tested end to end (start, compile, window closed, normal stop, class data archive).
+- **Still open:** a test of this version on a real Windows PC and of the Linux package on a desktop with a real Arduino.
 
 ## Changelog
 
 | Version | Changes |
 |---|---|
+| 1.2 | **Linux version** (`BlockCore-linux-x64.tar.gz`). Faster: start about 40 % faster (class data archive), compiling about 4 × faster from the second program on (precompiled headers), Nano uploads with the old bootloader without the failing first attempt; packages smaller (Windows installer ≈ 70 MB instead of 83 MB) – unused Java libraries, Arduino libraries of other robots and compiler parts removed. Licences of all included software in `THIRD-PARTY-NOTICES.md` (also in the packages and under *edit → Settings → Licenses*) |
 | 1.1 | Settings (edit → Settings) with dark theme (default), language, block size, grid, sounds, start board, serial monitor and update channel (stable / beta); new sensors MPU6050, analog joystick, DS18B20; pictures of the parts on the configuration blocks; ultrasonic sensor, TCS34725 and L293D motor also in the beginner toolbox; undo / redo with Ctrl+Z / Ctrl+Y; menus work after the window was small; everything that is not needed for the Arduino removed (other robots, simulation, neural network, connectors, other languages) |
 | 1.0.15 – 1.0.19 | Versioned releases, version below the logo, update check and one-click update, upload panel with progress bar and check mark, USB symbol, COM port of the last upload is selected again, animated start window, BlockCore logo in the workspace, motor driver and colour sensor no longer slow down fast loops |
 | Build 8–14 | Colour detection tuned with real sensor readings (red, green, white recognised), defaults *black below* / *white above* 2.7, black no longer mistaken for green. Fix for "avr-objcopy … .elf: No such file" when run was clicked twice |
@@ -248,5 +286,6 @@ Credit "BlockCore by Marvin Ramm" with a link to this repository. Details are in
 BlockCore is based on the [Open Roberta Lab](https://github.com/OpenRoberta/openroberta-lab) © Fraunhofer IAIS (via
 [rosslight/openroberta-lab](https://github.com/rosslight/openroberta-lab), develop @ `40ef141`). "Roberta", "Open Roberta" and
 "Open Roberta Lab" are trademarks of the Fraunhofer Society; BlockCore is not an official Fraunhofer product and uses its own name and
-logo, as the [NOTICE](NOTICE) requires for modified versions. The Windows package also contains Eclipse Temurin (GPLv2 with Classpath
-Exception), avr-gcc / avr-libc (GPL / modified BSD) and avrdude (GPLv2).
+logo, as the [NOTICE](NOTICE) requires for modified versions. The packages also contain Eclipse Temurin (GPLv2 with Classpath
+Exception), avr-gcc / avr-libc (GPL / modified BSD), avrdude (GPLv2) and the Arduino core (LGPL); all included software and its licence is
+listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

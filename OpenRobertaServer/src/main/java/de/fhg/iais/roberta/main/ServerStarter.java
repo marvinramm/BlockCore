@@ -100,6 +100,9 @@ public class ServerStarter {
 
             Server server = serverStarter.start(pluginDefines);
             Statistics.info("ServerStart", "success", true);
+            if ( serverStarter.serverProperties.getBooleanProperty("server.local.exitWithStdin") ) {
+                exitWhenStdinCloses();
+            }
             server.join();
             System.exit(0);
         } catch ( Exception e ) {
@@ -107,6 +110,27 @@ public class ServerStarter {
             LOG.error("Exception during server startup. Server NOT started", e);
             System.exit(12);
         }
+    }
+
+    /**
+     * the BlockCore launcher keeps a pipe to the standard input of the server open while the lab window is open. When it closes the pipe (or when
+     * the launcher ends), the server stops <b>normally</b>: the database is closed cleanly and the JVM writes its class data archive (see the
+     * launcher, -XX:+AutoCreateSharedArchive), which makes the next start faster.
+     */
+    private static void exitWhenStdinCloses() {
+        Thread watcher = new Thread(() -> {
+            try {
+                while ( System.in.read() != -1 ) {
+                    // the launcher sends nothing, it only closes the pipe
+                }
+            } catch ( IOException e ) {
+                // the pipe is broken: the launcher is gone
+            }
+            LOG.info("the launcher closed the standard input: the server stops");
+            System.exit(0);
+        }, "exit-with-stdin");
+        watcher.setDaemon(true);
+        watcher.start();
     }
 
     /**

@@ -77,6 +77,12 @@ Section "Install"
     SetOutPath "$INSTDIR"
     File /r "${STAGE}\*.*"
 
+    ; the class data archive of the Java runtime (faster start). It cannot be created when the package is built (on Linux).
+    ; If this fails, BlockCore.exe creates it on its first start.
+    DetailPrint "Preparing Java ..."
+    nsExec::Exec '"$INSTDIR\jre\bin\java.exe" -Xshare:dump'
+    Pop $0
+
     WriteUninstaller "$INSTDIR\Uninstall.exe"
     WriteRegStr HKCU "Software\${APPKEY}" "InstallDir" "$INSTDIR"
     WriteRegStr HKCU "${UNINSTKEY}" "DisplayName" "${APPNAME}"

@@ -15,7 +15,9 @@
  *   2. on first start an empty database is created
  *   3. the server is started hidden (output -> logs\server.log)
  *   4. the lab opens in its own window: Microsoft Edge or Google Chrome in app mode with a profile of its own
- *   5. when all BlockCore windows (lab and serial monitor) are closed, the server is stopped (found by their title)
+ *   5. when all BlockCore windows (lab and serial monitor) are closed, the server is stopped (found by their title): the launcher closes the
+ *      standard input of the server, the server ends normally (database closed cleanly) and Java writes its class data archive
+ *      (%LOCALAPPDATA%\BlockCore\cds): the next start is faster. A server that does not end within 15 s is killed.
  *   6. update: if the server ends with exit code 42, it has downloaded a new installer (see LocalUpdate.java). The windows are closed and
  *      the installer is started with /UPDATE; it installs without questions and starts BlockCore again.
  *   If neither Edge nor Chrome is found, the default browser is used and a small dialog stops BlockCore.
@@ -54,6 +56,7 @@ static wchar_t failure[512];
 static HWND splash;
 static HANDLE job;
 static HANDLE server;
+static HANDLE serverInput; /* write end of the pipe to the standard input of the server: closing it stops the server */
 static HICON icon;
 static DWORD splashStart;
 
@@ -98,7 +101,7 @@ static void addProperty(wchar_t *cmd, const wchar_t *name, const wchar_t *value)
     addArg(cmd, property);
 }
 
-static void addJavaStart(wchar_t *cmd, const wchar_t *mainClass) {
+static void addJavaStart(wchar_t *cmd, const wchar_t *mainClass, BOOL classDataSharing) {
     wchar_t path[MAX_PATH];
     swprintf(path, MAX_PATH, L"%ls\\jre\\bin\\java.exe", appDir);
     addArg(cmd, path);
@@ -110,19 +113,27 @@ static void addJavaStart(wchar_t *cmd, const wchar_t *mainClass) {
     addArg(cmd, L"--add-opens");
     addArg(cmd, L"java.base/java.lang=ALL-UNNAMED");
     addArg(cmd, L"-Dfile.encoding=UTF-8");
+    if ( classDataSharing ) {
+        /* the classes loaded during a session are stored when the server ends, the next start maps them (about 40 % faster) */
+        swprintf(path, MAX_PATH, L"-XX:SharedArchiveFile=%ls\\cds\\blockcore.jsa", dataDir);
+        addArg(cmd, L"-XX:+AutoCreateSharedArchive");
+        addArg(cmd, path);
+        addArg(cmd, L"-Xlog:cds=off");
+        addArg(cmd, L"-Xlog:cds+dynamic=off");
+    }
     addArg(cmd, L"-cp");
     swprintf(path, MAX_PATH, L"%ls\\lib\\*", appDir);
     addArg(cmd, path);
     addArg(cmd, mainClass);
 }
 
-static HANDLE startHidden(wchar_t *cmd, HANDLE log) {
+static HANDLE startHidden(wchar_t *cmd, HANDLE input, HANDLE log) {
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
     ZeroMemory(&si, sizeof(si));
     si.cb = sizeof(si);
     si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdInput = NULL;
+    si.hStdInput = input;
     si.hStdOutput = log;
     si.hStdError = log;
     if ( !CreateProcessW(NULL, cmd, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, dataDir, &si, &pi) ) {
@@ -441,11 +452,11 @@ static DWORD WINAPI startServer(LPVOID unused) {
         HANDLE create;
         DWORD exitCode = 1;
         setStatus(L"First start: preparing BlockCore \x2026");
-        addJavaStart(cmd, L"de.fhg.iais.roberta.main.Administration");
+        addJavaStart(cmd, L"de.fhg.iais.roberta.main.Administration", FALSE);
         addArg(cmd, L"create-empty-db");
         swprintf(path, MAX_PATH, L"jdbc:hsqldb:file:%ls\\db\\openroberta-db", dataDir);
         addArg(cmd, path);
-        create = startHidden(cmd, log);
+        create = startHidden(cmd, NULL, log);
         if ( create == NULL ) {
             return fail(L"Java could not be started.");
         }
@@ -457,9 +468,27 @@ static DWORD WINAPI startServer(LPVOID unused) {
         }
     }
 
+    /* the class data archive of the Java runtime itself cannot be created when the package is built (on Linux): it is created once here */
+    swprintf(path, MAX_PATH, L"%ls\\jre\\bin\\server\\classes.jsa", appDir);
+    if ( GetFileAttributesW(path) == INVALID_FILE_ATTRIBUTES ) {
+        HANDLE dump;
+        setStatus(L"First start: preparing Java \x2026");
+        cmd[0] = 0;
+        swprintf(path, MAX_PATH, L"%ls\\jre\\bin\\java.exe", appDir);
+        addArg(cmd, path);
+        addArg(cmd, L"-Xshare:dump");
+        dump = startHidden(cmd, NULL, log);
+        if ( dump != NULL ) {
+            WaitForSingleObject(dump, 120000);
+            CloseHandle(dump);
+        }
+    }
+    swprintf(path, MAX_PATH, L"%ls\\cds", dataDir);
+    CreateDirectoryW(path, NULL);
+
     setStatus(L"Starting \x2026");
     cmd[0] = 0;
-    addJavaStart(cmd, L"de.fhg.iais.roberta.main.ServerStarter");
+    addJavaStart(cmd, L"de.fhg.iais.roberta.main.ServerStarter", TRUE);
     addProperty(cmd, L"database.mode", L"embedded");
     swprintf(path, MAX_PATH, L"%ls\\db", dataDir);
     addProperty(cmd, L"database.parentdir", path);
@@ -482,7 +511,25 @@ static DWORD WINAPI startServer(LPVOID unused) {
         CreateDirectoryW(path, NULL);
         addProperty(cmd, L"server.local.update.dir", path);
     }
-    server = startHidden(cmd, log);
+    {
+        /* the server ends normally when the launcher closes this pipe (see stopServer) */
+        SECURITY_ATTRIBUTES sa;
+        HANDLE inputRead = NULL;
+        sa.nLength = sizeof(sa);
+        sa.lpSecurityDescriptor = NULL;
+        sa.bInheritHandle = TRUE;
+        if ( CreatePipe(&inputRead, &serverInput, &sa, 0) ) {
+            SetHandleInformation(serverInput, HANDLE_FLAG_INHERIT, 0);
+            addProperty(cmd, L"server.local.exitWithStdin", L"true");
+        } else {
+            inputRead = NULL;
+            serverInput = NULL;
+        }
+        server = startHidden(cmd, inputRead, log);
+        if ( inputRead != NULL ) {
+            CloseHandle(inputRead);
+        }
+    }
     free(cmd);
     if ( server == NULL ) {
         return fail(L"Java could not be started.");
@@ -498,6 +545,20 @@ static DWORD WINAPI startServer(LPVOID unused) {
         }
     }
     return fail(L"The BlockCore server did not answer in time.");
+}
+
+/* stops the server normally: it closes the database and Java writes its class data archive. Killed, if it does not end within 15 s. */
+static void stopServer(void) {
+    if ( serverInput != NULL ) {
+        CloseHandle(serverInput);
+        serverInput = NULL;
+        if ( server != NULL ) {
+            WaitForSingleObject(server, 15000);
+        }
+    }
+    if ( job != NULL ) {
+        TerminateJobObject(job, 0);
+    }
 }
 
 /* ---------------------------------------------------------------- update */
@@ -691,9 +752,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE prev, LPWSTR cmdLine, int show
             MB_OK | MB_ICONINFORMATION);
     }
 
-    if ( job != NULL ) {
-        TerminateJobObject(job, 0);
-    }
+    stopServer();
     if ( instanceMutex != NULL ) {
         CloseHandle(instanceMutex);
     }

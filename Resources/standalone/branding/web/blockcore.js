@@ -913,7 +913,7 @@
             '</section>' +
             '<section class="bc-about"><h3>' + t.about + '</h3><p>' + t.aboutText + '</p>' +
             '<p class="bc-muted"><span class="bc-version"></span> · <a href="https://github.com/marvinramm/BlockCore" target="_blank" rel="noopener">GitHub</a> · ' +
-            '<a href="https://github.com/marvinramm/BlockCore/blob/main/THIRD-PARTY-NOTICES.md" target="_blank" rel="noopener">' + t.licenses + '</a></p>' +
+            '<a href="/blockcore/THIRD-PARTY-NOTICES.txt" target="_blank" rel="noopener">' + t.licenses + '</a></p>' +
             '<p class="bc-muted">' + t.shortcuts + ': ' + t.shortcutsText + '</p></section>' +
             '</div>' +
             '<div class="bc-dialog-foot"><button type="button" class="bc-btn" data-reset>' + t.reset + '</button><button type="button" class="bc-btn bc-primary" data-close>' + t.close + '</button></div>' +

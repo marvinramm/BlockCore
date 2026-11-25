@@ -7,9 +7,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
@@ -43,6 +46,8 @@ import de.fhg.iais.roberta.util.ServerProperties;
 @javax.ws.rs.Path("/local")
 public class LocalSerialController {
     private static final Logger LOG = LoggerFactory.getLogger(LocalSerialController.class);
+    /** board@port -> the baud rate of the last successful upload */
+    private static final Map<String, Integer> WORKING_BAUDRATES = new ConcurrentHashMap<>();
     private static final Object UPLOAD_LOCK = new Object();
     private static final long UPLOAD_TIMEOUT_SECONDS = 90;
 
@@ -160,9 +165,11 @@ public class LocalSerialController {
                 Files.write(hexFile, hex.getBytes(StandardCharsets.US_ASCII));
                 StringBuilder log = new StringBuilder();
                 boolean ok = false;
-                for ( int baudrate : target.baudrates ) {
+                String baudrateKey = robot + "@" + port;
+                for ( int baudrate : baudratesToTry(target, WORKING_BAUDRATES.get(baudrateKey)) ) {
                     ok = runAvrdude(target, baudrate, port, hexFile, log);
                     if ( ok ) {
+                        WORKING_BAUDRATES.put(baudrateKey, baudrate);
                         break;
                     }
                 }
@@ -302,6 +309,25 @@ public class LocalSerialController {
             default:
                 return false;
         }
+    }
+
+    /**
+     * the baud rates for avrdude: the one that worked last time for this board and port first. A Nano with the old bootloader (57600) is then
+     * flashed at once, without a failing (and slow) attempt at 115200 before.
+     */
+    static int[] baudratesToTry(AvrdudeTarget target, Integer workedLastTime) {
+        if ( workedLastTime == null || target.baudrates[0] == workedLastTime || !Arrays.stream(target.baudrates).anyMatch(b -> b == workedLastTime) ) {
+            return target.baudrates;
+        }
+        int[] baudrates = new int[target.baudrates.length];
+        baudrates[0] = workedLastTime;
+        int i = 1;
+        for ( int baudrate : target.baudrates ) {
+            if ( baudrate != workedLastTime ) {
+                baudrates[i++] = baudrate;
+            }
+        }
+        return baudrates;
     }
 
     private static SerialPort findPort(String name) {

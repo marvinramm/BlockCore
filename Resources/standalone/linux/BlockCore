@@ -1,0 +1,234 @@
+#!/bin/bash
+# BlockCore for Linux: starts the lab (server on http://127.0.0.1:1999) and opens it in its own window.
+#
+#   ./BlockCore              start BlockCore
+#   ./BlockCore --install    add BlockCore to the application menu (no root needed)
+#   ./BlockCore --uninstall  remove it from the application menu (the programs in ~/.local/share/BlockCore are kept)
+#   ./BlockCore --stop       stop a BlockCore that runs in the background (e.g. in the default browser)
+#
+# Layout next to this script: jre/ (Java runtime), lib/ (server jars), staticResources/ (frontend), ora-cc-rsc/ (AVR toolchain, avrdude, Arduino
+# cores and libraries). User data (database, logs, window profile) goes to ${XDG_DATA_HOME:-~/.local/share}/BlockCore.
+#
+# The lab window is Google Chrome, Chromium, Microsoft Edge, Brave or Vivaldi in app mode with a profile of its own. When it is closed, the
+# server is stopped: this script closes the standard input of the server, the server ends normally and Java stores its class data archive (the
+# next start is faster). Without one of these browsers the default browser is used.
+
+set -u
+APP_DIR=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/BlockCore"
+PORT=1999
+URL="http://127.0.0.1:$PORT/?loadSystem=uno"
+START_TIMEOUT_SECONDS=180
+JAVA="$APP_DIR/jre/bin/java"
+RSC="$APP_DIR/ora-cc-rsc/RobotArdu/arduino-resources"
+
+message() { # title text: a dialog if possible, always on the terminal
+    echo "$1: $2" >&2
+    if command -v zenity > /dev/null 2>&1; then
+        zenity --info --title="$1" --text="$2" --width=420 2> /dev/null
+    elif command -v kdialog > /dev/null 2>&1; then
+        kdialog --title "$1" --msgbox "$2" 2> /dev/null
+    elif command -v notify-send > /dev/null 2>&1; then
+        notify-send "$1" "$2" 2> /dev/null
+    fi
+}
+
+fail() {
+    message "BlockCore" "$1
+
+Details: $DATA_DIR/logs/server.log"
+    exit 1
+}
+
+port_in_use() {
+    (exec 3<> "/dev/tcp/127.0.0.1/$PORT") 2> /dev/null
+}
+
+install_menu_entry() {
+    local apps="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+    local icons="${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor/512x512/apps"
+    mkdir -p "$apps" "$icons"
+    cp "$APP_DIR/blockcore.png" "$icons/blockcore.png"
+    cat > "$apps/blockcore.desktop" << EOF
+[Desktop Entry]
+Type=Application
+Name=BlockCore
+GenericName=Block programming for Arduino
+GenericName[de]=Blockprogrammierung für Arduino
+Comment=Program Arduino Uno, Nano and Mega with blocks, offline
+Comment[de]=Arduino Uno, Nano und Mega mit Blöcken programmieren, offline
+Exec="$APP_DIR/BlockCore"
+Icon=blockcore
+Terminal=false
+Categories=Development;Education;Electronics;
+StartupWMClass=BlockCore
+EOF
+    command -v update-desktop-database > /dev/null 2>&1 && update-desktop-database "$apps" > /dev/null 2>&1
+    echo "BlockCore was added to the application menu."
+    serial_permission_hint
+}
+
+uninstall_menu_entry() {
+    rm -f "${XDG_DATA_HOME:-$HOME/.local/share}/applications/blockcore.desktop" "${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor/512x512/apps/blockcore.png"
+    echo "BlockCore was removed from the application menu. Your programs are still in $DATA_DIR."
+}
+
+# serial ports belong to the group dialout (Debian, Ubuntu, Fedora, openSUSE) or uucp (Arch, Manjaro)
+serial_permission_hint() {
+    local group
+    for group in dialout uucp; do
+        if getent group "$group" > /dev/null 2>&1; then
+            if ! id -nG | tr ' ' '\n' | grep -qx "$group"; then
+                message "BlockCore" "To upload programs to the Arduino your user must be in the group '$group'.
+Run once in a terminal:
+
+    sudo usermod -aG $group ${USER:-$(id -un)}
+
+then log out and in again."
+            fi
+            return
+        fi
+    done
+}
+
+find_browser() {
+    local candidate
+    for candidate in google-chrome google-chrome-stable chromium chromium-browser microsoft-edge microsoft-edge-stable brave-browser vivaldi; do
+        if command -v "$candidate" > /dev/null 2>&1; then
+            command -v "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# the window profile: a snap browser (Ubuntu's chromium) may only write to its own directory
+profile_dir() {
+    case "$(readlink -f "$1")" in
+        */snap/* | /usr/bin/snap) echo "$HOME/snap/$(basename "$1")/common/blockcore-window" ;;
+        *) echo "$DATA_DIR/window" ;;
+    esac
+}
+
+open_window() { # -> starts the app window in the background, its pid in BROWSER_PID; returns 1 without a suitable browser
+    local browser
+    browser=$(find_browser) || return 1
+    "$browser" --app="$URL" --user-data-dir="$(profile_dir "$browser")" --class=BlockCore --no-first-run --no-default-browser-check \
+        --password-store=basic --disable-features=Translate --window-size=1400,900 > /dev/null 2>&1 &
+    BROWSER_PID=$!
+    return 0
+}
+
+case "${1:-}" in
+    --install) install_menu_entry; exit 0 ;;
+    --uninstall) uninstall_menu_entry; exit 0 ;;
+    --stop)
+        [ -f "$DATA_DIR/run/server.pid" ] && kill -TERM "$(cat "$DATA_DIR/run/server.pid")" 2> /dev/null && echo "BlockCore stopped." || echo "BlockCore is not running."
+        exit 0
+        ;;
+    "") ;;
+    *) sed -n '3,7p' "$0" | sed 's/^# //'; exit 2 ;;
+esac
+
+mkdir -p "$DATA_DIR/db" "$DATA_DIR/logs" "$DATA_DIR/cds" "$DATA_DIR/run" "$DATA_DIR/tmp"
+[ -x "$JAVA" ] || fail "The Java runtime is missing ($JAVA). Please unpack BlockCore again."
+
+# already running: open another window only
+if port_in_use; then
+    if open_window; then
+        disown 2> /dev/null
+    else
+        xdg-open "$URL" > /dev/null 2>&1 &
+    fi
+    exit 0
+fi
+
+# the temporary files of the last session (generated programs) are not needed any more; the precompiled headers are kept
+find "$DATA_DIR/tmp" -mindepth 1 -maxdepth 1 ! -name blockcore-pch -exec rm -rf {} + 2> /dev/null
+
+JAVA_OPTIONS=(-XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss2m -Xmx768m --add-opens java.base/java.lang=ALL-UNNAMED -Dfile.encoding=UTF-8
+    "-Djava.io.tmpdir=$DATA_DIR/tmp" -cp "$APP_DIR/lib/*")
+LOG="$DATA_DIR/logs/server.log"
+[ -f "$LOG" ] && mv -f "$LOG" "$DATA_DIR/logs/server.old.log"
+
+# start window: a pulsating progress dialog while the server starts (zenity), else a notification
+PROGRESS_PID=""
+if command -v zenity > /dev/null 2>&1; then
+    (while sleep 1; do echo "# Starting BlockCore …"; done) | zenity --progress --pulsate --no-cancel --auto-close --title="BlockCore" \
+        --text="Starting BlockCore …" --width=360 2> /dev/null &
+    PROGRESS_PID=$!
+elif command -v notify-send > /dev/null 2>&1; then
+    notify-send "BlockCore" "Starting BlockCore …" 2> /dev/null
+fi
+stop_progress() {
+    [ -n "$PROGRESS_PID" ] && pkill -P "$PROGRESS_PID" > /dev/null 2>&1
+    [ -n "$PROGRESS_PID" ] && kill "$PROGRESS_PID" > /dev/null 2>&1
+    PROGRESS_PID=""
+}
+
+# first start: an empty database
+if [ ! -f "$DATA_DIR/db/openroberta-db.script" ]; then
+    "$JAVA" "${JAVA_OPTIONS[@]}" de.fhg.iais.roberta.main.Administration create-empty-db "jdbc:hsqldb:file:$DATA_DIR/db/openroberta-db" >> "$LOG" 2>&1 ||
+        { stop_progress; fail "The database could not be created."; }
+fi
+
+# avrdude: the one of BlockCore, or the one of the system, if that does not run here
+AVRDUDE_PROPERTY=()
+if ! "$RSC/avrdude/bin/avrdude" "-?" > /dev/null 2>&1; then
+    if command -v avrdude > /dev/null 2>&1; then
+        AVRDUDE_PROPERTY=(-d "server.local.avrdude.dir=$(dirname "$(dirname "$(command -v avrdude)")")")
+        echo "the avrdude of BlockCore does not run on this system, $(command -v avrdude) is used" >> "$LOG"
+    else
+        echo "the avrdude of BlockCore does not run on this system and no avrdude is installed: uploads will fail" >> "$LOG"
+    fi
+fi
+
+# the server reads its standard input from this pipe: when this script closes it (or ends), the server stops normally
+PIPE="$DATA_DIR/run/server.stdin"
+rm -f "$PIPE"
+mkfifo "$PIPE" || fail "The pipe $PIPE could not be created."
+"$JAVA" "${JAVA_OPTIONS[@]}" -XX:+AutoCreateSharedArchive "-XX:SharedArchiveFile=$DATA_DIR/cds/blockcore.jsa" -Xlog:cds=off -Xlog:cds+dynamic=off \
+    de.fhg.iais.roberta.main.ServerStarter \
+    -d database.mode=embedded -d "database.parentdir=$DATA_DIR/db" -d database.name=openroberta-db \
+    -d "server.staticresources.dir=$APP_DIR/staticResources" -d "robot.crosscompiler.resourcebase=$APP_DIR/ora-cc-rsc" \
+    -d server.ip=127.0.0.1 -d "server.port=$PORT" -d server.local.serial=true -d server.local.exitWithStdin=true \
+    -d "robot.whitelist=uno, nano, mega" -d robot.default=uno -d "server.admin.dir=$DATA_DIR" ${AVRDUDE_PROPERTY[@]+"${AVRDUDE_PROPERTY[@]}"} \
+    < "$PIPE" >> "$LOG" 2>&1 &
+SERVER_PID=$!
+exec 3> "$PIPE"
+echo "$SERVER_PID" > "$DATA_DIR/run/server.pid"
+
+stop_server() {
+    exec 3>&- # end of the standard input: the server stops normally
+    local i
+    for i in $(seq 1 30); do
+        kill -0 "$SERVER_PID" 2> /dev/null || break
+        sleep 0.5
+    done
+    kill -0 "$SERVER_PID" 2> /dev/null && kill -KILL "$SERVER_PID" 2> /dev/null
+    rm -f "$PIPE" "$DATA_DIR/run/server.pid"
+}
+trap 'stop_progress; stop_server; exit 0' INT TERM HUP
+
+for i in $(seq 1 $((2 * START_TIMEOUT_SECONDS))); do
+    kill -0 "$SERVER_PID" 2> /dev/null || { stop_progress; rm -f "$PIPE"; fail "The BlockCore server stopped unexpectedly."; }
+    port_in_use && break
+    sleep 0.5
+done
+port_in_use || { stop_progress; stop_server; fail "The BlockCore server did not answer in time."; }
+stop_progress
+serial_permission_hint
+
+if open_window; then
+    wait "$BROWSER_PID" 2> /dev/null
+else
+    xdg-open "$URL" > /dev/null 2>&1
+    message "BlockCore" "BlockCore is running in your browser ($URL).
+
+Click OK to quit BlockCore."
+    if ! command -v zenity > /dev/null 2>&1 && ! command -v kdialog > /dev/null 2>&1; then
+        echo "BlockCore runs in your browser: $URL - press Enter here (or run './BlockCore --stop') to quit." >&2
+        read -r _ < /dev/tty 2> /dev/null || wait "$SERVER_PID"
+    fi
+fi
+stop_server

@@ -8,10 +8,12 @@ the notices of the Open Roberta Lab it is based on.
 | Part | License | File |
 |---|---|---|
 | Source code (all modules, the launcher and the build scripts) | [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) | [`LICENSE`](LICENSE), [`NOTICE`](NOTICE) |
-| Documentation, images and the BlockCore logo (`docs/`, README files, `Resources/windowsStandalone/branding/`) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | [`docs/LICENSE`](docs/LICENSE) |
+| Documentation, images and the BlockCore logo (`docs/`, README files, `Resources/standalone/branding/`) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | [`docs/LICENSE`](docs/LICENSE) |
 
 The code is a modified version of the [Open Roberta Lab](https://github.com/OpenRoberta/openroberta-lab) (© Fraunhofer IAIS, Apache 2.0).
-The changes are listed in the [README](README.md) and in the git history. The screenshots in `docs/images/` show the user interface of
+The changes are listed in the [README](README.md) and in the git history. The software of other authors that BlockCore ships (Java
+runtime, compiler, avrdude, Arduino core and libraries, Java and JavaScript libraries) keeps its own licence: see
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). The screenshots in `docs/images/` show the user interface of
 that software.
 
 ## Attribution

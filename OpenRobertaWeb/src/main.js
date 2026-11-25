@@ -10,7 +10,6 @@ require.config({
         'bootstrap-tagsinput': 'libs/bootstrap/bootstrap-tagsinput.min',
         'bootstrap.wysiwyg': 'libs/bootstrap/bootstrap-wysiwyg.min',
         enjoyHint: 'libs/enjoyHint/enjoyhint.min',
-        huebee: 'libs/huebee/huebee.min',
         jquery: 'libs/jquery/jquery.min',
         'jquery-scrollto': 'libs/jquery/jquery.scrollTo-2.1.2.min',
         'jquery-validate': 'libs/jquery/jquery.validate-1.17.0.min',
@@ -183,7 +182,6 @@ require.config({
 
 require([
     'require',
-    'huebee',
     'wrap',
     'log',
     'bootstrap-table-locals',

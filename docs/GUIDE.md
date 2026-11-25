@@ -1,6 +1,6 @@
 # BlockCore – Guide
 
-BlockCore is block programming for the Arduino that runs completely on your Windows PC. You need no internet and no extra program:
+BlockCore is block programming for the Arduino that runs completely on your Windows or Linux PC. You need no internet and no extra program:
 plug in the Arduino, snap blocks together, press ▶.
 
 ![BlockCore](images/hero.jpg)
@@ -12,6 +12,10 @@ plug in the Arduino, snap blocks together, press ▶.
 3. Done – **BlockCore** is now on the desktop and in the start menu. No admin rights are needed.
 
 Without installing: unzip `BlockCore-portable.zip` and start `BlockCore.exe`.
+
+**Linux:** download `BlockCore-linux-x64.tar.gz`, unpack it (`tar -xzf BlockCore-linux-x64.tar.gz`) and start `BlockCore/BlockCore`.
+`BlockCore/BlockCore --install` puts BlockCore into the application menu. Once, so that uploads work:
+`sudo usermod -aG dialout $USER`, then log out and in again. The port is called `/dev/ttyACM0` or `/dev/ttyUSB0` instead of `COM3`.
 
 ## Getting started
 

@@ -52,4 +52,22 @@ public class ArduinoCompilerWorkerTest {
         Assert.assertFalse(Files.exists(sourceDir.resolve("TCS34725/TCS34725.h")));
         Assert.assertFalse(Files.exists(sourceDir.resolve("L293DMotor/L293DMotor.h")));
     }
+
+    @Test
+    public void precompiledHeader_isUsedOnlyForProgramsWithTheNepoHeaders() {
+        Assert.assertTrue(ArduinoAvrDirectBuild.usesPchHeaders("#include <Arduino.h>\n#include <Wire.h>\n#include <NEPODefs.h>\nvoid setup() {}"));
+        Assert.assertFalse(ArduinoAvrDirectBuild.usesPchHeaders("#include <Arduino.h>\nvoid setup() {}"));
+        Assert.assertFalse(ArduinoAvrDirectBuild.usesPchHeaders("#define _ARDUINO_STL_NOT_NEEDED\n#include <Arduino.h>\n#include <NEPODefs.h>\n"));
+    }
+
+    @Test
+    public void precompiledHeader_dependsOnCompilerAndOptions() {
+        java.util.List<String> uno = ArduinoAvrDirectBuild.compileOptions("/r", "standard", "atmega328p", "ARDUINO_AVR_UNO", "avr");
+        java.util.List<String> mega = ArduinoAvrDirectBuild.compileOptions("/r", "mega", "atmega2560", "ARDUINO_AVR_MEGA2560", "avr");
+        Assert.assertEquals(ArduinoAvrDirectBuild.fingerprint("avr-g++", uno), ArduinoAvrDirectBuild.fingerprint("avr-g++", uno));
+        Assert.assertNotEquals(ArduinoAvrDirectBuild.fingerprint("avr-g++", uno), ArduinoAvrDirectBuild.fingerprint("avr-g++", mega));
+        Assert.assertNotEquals(ArduinoAvrDirectBuild.fingerprint("avr-g++", uno), ArduinoAvrDirectBuild.fingerprint("/other/avr-g++", uno));
+        Assert.assertTrue(uno.contains("-mmcu=atmega328p"));
+        Assert.assertFalse(uno.contains("-c"));
+    }
 }
