@@ -34,6 +34,17 @@ Choose the board (Uno, Nano, Mega) in the **robot** menu under **Board**:
 Switch the language (English / German) in the **languages** menu. BlockCore saves your programs on this PC – you do not need an
 account.
 
+## Keyboard shortcuts
+
+| Keys | Action |
+|---|---|
+| **Ctrl + Z** | undo (also a deleted block comes back) |
+| **Ctrl + Y** or **Ctrl + Shift + Z** | redo |
+| **Ctrl + C / Ctrl + V** | copy / paste the selected block |
+| **Del** | delete the selected block |
+
+They work in **PROGRAM** and in **ROBOT CONFIGURATION**; while you type in a field, they change the text instead.
+
 ## Version and updates
 
 The version (e.g. `v1.0.15`) is shown below the BlockCore logo and in **Settings → Apps**. When BlockCore starts, it asks GitHub

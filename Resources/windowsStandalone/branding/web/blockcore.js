@@ -529,6 +529,94 @@
         check();
     }
 
+    /*
+     * the lab's Blockly loads only NEPO XML (<instance x y><block/></instance>). Blockly's own undo and redo hand it plain <block>
+     * elements (redo of a new block, undo of a deleted block), which were silently ignored: wrap them into instances.
+     */
+    function patchUndoXml() {
+        var Xml = window.Blockly && window.Blockly.Xml;
+        if (!Xml || Xml.domToWorkspace.blockcorePatched) {
+            return;
+        }
+        var original = Xml.domToWorkspace;
+        var patched = function (xml, workspace) {
+            if (xml && xml.childNodes && !(xml instanceof window.Blockly.Workspace)) {
+                Array.prototype.slice.call(xml.childNodes).forEach(function (node) {
+                    var name = String(node.nodeName || '').toLowerCase();
+                    if (name === 'block' || name === 'shadow') {
+                        var instance = document.createElementNS(xml.namespaceURI || null, 'instance');
+                        instance.setAttribute('x', node.getAttribute('x') || '0');
+                        instance.setAttribute('y', node.getAttribute('y') || '0');
+                        xml.replaceChild(instance, node);
+                        instance.appendChild(node);
+                    }
+                });
+            }
+            return original.apply(this, arguments);
+        };
+        patched.blockcorePatched = true;
+        Xml.domToWorkspace = patched;
+    }
+
+    /*
+     * undo and redo with the keyboard: Ctrl+Z undoes, Ctrl+Y and Ctrl+Shift+Z redo (Cmd on a Mac), in the workspace that is shown
+     * (program or configuration). Blockly itself only knows Ctrl+Z and Ctrl+Shift+Z, and only while the workspace has the focus.
+     * Typing in a text field, a block field or the source code editor keeps its own undo.
+     */
+    function setupUndoRedo() {
+        patchUndoXml();
+        function isTyping(target) {
+            if (!target || !target.closest) {
+                return false;
+            }
+            if (target.isContentEditable || target.closest('.ace_editor, .blocklyHtmlInput, .blocklyWidgetDiv')) {
+                return true;
+            }
+            var tag = String(target.tagName || '').toLowerCase();
+            return tag === 'textarea' || tag === 'select' || (tag === 'input' && !/^(checkbox|radio|button|submit)$/i.test(target.type || ''));
+        }
+        function visibleWorkspace() {
+            var G = window.require('guiState.controller');
+            var configuration = document.getElementById('bricklyDiv');
+            if (configuration && configuration.offsetParent !== null && G.getBricklyWorkspace) {
+                return G.getBricklyWorkspace();
+            }
+            return G.getBlocklyWorkspace ? G.getBlocklyWorkspace() : window.Blockly && window.Blockly.getMainWorkspace();
+        }
+        document.addEventListener('keydown', function (event) {
+            if (!(event.ctrlKey || event.metaKey) || event.altKey || isTyping(event.target)) {
+                return;
+            }
+            var key = String(event.key || '').toLowerCase();
+            var undo = (key === 'z' || event.keyCode === 90) && !event.shiftKey;
+            var redo = ((key === 'y' || event.keyCode === 89) && !event.shiftKey) || ((key === 'z' || event.keyCode === 90) && event.shiftKey);
+            if (!undo && !redo) {
+                return;
+            }
+            if (document.querySelector('.modal.show')) {
+                return; // a dialog is open
+            }
+            var workspace;
+            try {
+                workspace = visibleWorkspace();
+            } catch (e) {
+                return;
+            }
+            if (!workspace || typeof workspace.undo !== 'function') {
+                return;
+            }
+            if (window.Blockly && window.Blockly.dragMode_ && window.Blockly.dragMode_ !== 0) {
+                return; // a block is being dragged
+            }
+            event.preventDefault();
+            event.stopImmediatePropagation(); // Blockly would undo a second time
+            if (window.Blockly && window.Blockly.hideChaff) {
+                window.Blockly.hideChaff();
+            }
+            workspace.undo(redo);
+        }, true);
+    }
+
     whenLabReady(function () {
         modules(['guiState.controller', 'robot.controller', 'user.model'], function (G, R, U) {
             setupLanguages(G);
@@ -536,6 +624,7 @@
             setupUploadDisplay(G);
             setupVersion(G);
             setupResizeFix();
+            setupUndoRedo();
             autoLogin(G, U);
             // the robot or the language can change elsewhere (e.g. loading a program): keep the check marks right
             setInterval(function () {

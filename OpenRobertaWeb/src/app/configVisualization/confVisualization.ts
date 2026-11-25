@@ -126,6 +126,10 @@ export class CircuitVisualization {
             blockId = event.blockId;
         }
         var block = this.workspace.getBlockById(blockId);
+        if (!block && event.type !== (<any>window).Blockly.Events.DELETE) {
+            // the block does not exist any more, e.g. events that are fired after undo removed the block
+            return;
+        }
 
         switch (event.type) {
             case (<any>window).Blockly.Events.CREATE:
